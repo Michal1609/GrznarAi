@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GrznarAi.Web.Client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+45c4292dfe2768d99210c0f7c071a4f0f3213f3f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dc12a7cdfcb4fa35a661c44e7aeff6c9cc7427ff")]
 [assembly: System.Reflection.AssemblyProductAttribute("GrznarAi.Web.Client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GrznarAi.Web.Client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

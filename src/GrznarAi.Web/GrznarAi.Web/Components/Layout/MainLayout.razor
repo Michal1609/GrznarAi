@@ -17,7 +17,7 @@
                 <NavMenu />
 
                 <div class="ms-auto d-flex align-items-center">
-                    <button @onclick="ToggleTheme" class="theme-toggle btn btn-link me-3" title="Toggle theme">
+                    <button @onclick="ToggleTheme" class="theme-toggle me-3" title="@(isDarkTheme ? "Switch to light mode" : "Switch to dark mode")">
                         @if (isDarkTheme)
                         {
                             <i class="bi bi-sun-fill"></i>
@@ -94,18 +94,50 @@
 
     private async Task ToggleTheme()
     {
-        isDarkTheme = !isDarkTheme;
-        await JSRuntime.InvokeVoidAsync("toggleTheme", isDarkTheme);
+        try
+        {
+            isDarkTheme = !isDarkTheme;
+            bool success = await JSRuntime.InvokeAsync<bool>("toggleTheme", isDarkTheme);
+            Console.WriteLine($"Theme toggled to: {(isDarkTheme ? "dark" : "light")}, Success: {success}");
+
+            // Force re-render
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling theme: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Check system preference for dark mode
+            isDarkTheme = await JSRuntime.InvokeAsync<bool>("isDarkModePreferred");
+            Console.WriteLine($"Theme preference detected in MainLayout: {(isDarkTheme ? "dark" : "light")}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error detecting theme preference: {ex.Message}");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Check system preference for dark mode
-            isDarkTheme = await JSRuntime.InvokeAsync<bool>("isDarkModePreferred");
-            await JSRuntime.InvokeVoidAsync("toggleTheme", isDarkTheme);
-            StateHasChanged();
+            try
+            {
+                // Apply theme
+                bool success = await JSRuntime.InvokeAsync<bool>("toggleTheme", isDarkTheme);
+                Console.WriteLine($"Theme initialized in MainLayout: {(isDarkTheme ? "dark" : "light")}, Success: {success}");
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing theme: {ex.Message}");
+            }
         }
     }
 }

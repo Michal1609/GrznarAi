@@ -1,7 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\Michal\\Vibe\\MyWeb\\src\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B11A295E-9734-4DFE-8D71-14ECF60084AF}|GrznarAi.Web\\GrznarAi.Web\\GrznarAi.Web.csproj|d:\\michal\\vibe\\myweb\\src\\grznarai.web\\grznarai.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B11A295E-9734-4DFE-8D71-14ECF60084AF}|GrznarAi.Web\\GrznarAi.Web\\GrznarAi.Web.csproj|solutionrelative:grznarai.web\\grznarai.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 14,
           "Children": [
             {
               "$type": "Bookmark",
@@ -66,6 +71,19 @@
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\Program.cs",
+              "RelativeDocumentMoniker": "GrznarAi.Web\\GrznarAi.Web\\Program.cs",
+              "ToolTip": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\Program.cs",
+              "RelativeToolTip": "GrznarAi.Web\\GrznarAi.Web\\Program.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAAACMAAABJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-17T08:18:51.456Z",
+              "EditorCaption": ""
             }
           ]
         }

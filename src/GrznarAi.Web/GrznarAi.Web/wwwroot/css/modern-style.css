@@ -30,13 +30,40 @@
   --hover-bg: rgba(255, 255, 255, 0.05);
 }
 
+html {
+  transition: color-scheme 0.5s ease;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
   margin: 0;
   padding: 0;
+}
+
+/* Additional theme classes for more control */
+body.dark-theme {
+  --background-color: #121212;
+  --card-background: #1e1e1e;
+  --text-color: #f8f9fa;
+  --text-muted: #adb5bd;
+  --border-color: #343a40;
+  --navbar-bg: linear-gradient(90deg, #e67e22 0%, #d35400 100%);
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --hover-bg: rgba(255, 255, 255, 0.05);
+}
+
+body.light-theme {
+  --background-color: #f8f9fa;
+  --card-background: #ffffff;
+  --text-color: #333333;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+  --navbar-bg: linear-gradient(90deg, #f39c12 0%, #e67e22 100%);
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --hover-bg: rgba(0, 0, 0, 0.05);
 }
 
 /* Main Layout Styles */
@@ -168,7 +195,7 @@ main {
 
 /* Theme Toggle */
 .theme-toggle {
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   color: var(--navbar-text);
   cursor: pointer;
@@ -177,10 +204,18 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .theme-toggle:hover {
-  background-color: var(--hover-bg);
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: rotate(15deg);
+}
+
+.theme-toggle i {
+  font-size: 1.25rem;
 }
 
 /* Cards */

@@ -1,0 +1,1 @@
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json

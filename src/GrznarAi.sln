@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrznarAi.Web", "GrznarAi.Web\GrznarAi.Web\GrznarAi.Web.csproj", "{B11A295E-9734-4DFE-8D71-14ECF60084AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrznarAi.Web.Client", "GrznarAi.Web\GrznarAi.Web.Client\GrznarAi.Web.Client.csproj", "{ECCD721B-3B9E-44CA-AC74-907778DEFC3A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B11A295E-9734-4DFE-8D71-14ECF60084AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B11A295E-9734-4DFE-8D71-14ECF60084AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B11A295E-9734-4DFE-8D71-14ECF60084AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B11A295E-9734-4DFE-8D71-14ECF60084AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECCD721B-3B9E-44CA-AC74-907778DEFC3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECCD721B-3B9E-44CA-AC74-907778DEFC3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECCD721B-3B9E-44CA-AC74-907778DEFC3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECCD721B-3B9E-44CA-AC74-907778DEFC3A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D2ABF73-2855-469B-96DB-D1711B37E237}
+	EndGlobalSection
+EndGlobal

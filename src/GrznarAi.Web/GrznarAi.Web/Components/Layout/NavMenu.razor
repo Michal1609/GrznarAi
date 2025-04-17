@@ -26,7 +26,26 @@
         <NavLink class="nav-link" href="meteo">
             <span class="nav-icon-wrapper"><i class="bi bi-cloud-sun"></i></span> Meteo
         </NavLink>
-    </li> 
+    </li>
+    <!-- Administration Section -->
+    <AuthorizeView>
+        <Authorized>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="nav-icon-wrapper"><i class="bi bi-shield-lock-fill"></i></span> Administrace
+                </a>
+                <ul class="dropdown-menu">
+                    <li>
+                        <NavLink class="dropdown-item" href="admin/projects">
+                             <span class="nav-icon-wrapper"><i class="bi bi-kanban"></i></span> Projects
+                        </NavLink>
+                    </li>
+                    <!-- Add other admin links here -->
+                </ul>
+            </li>
+        </Authorized>
+    </AuthorizeView>
+    <!-- End Administration Section -->
 </ul>
 
 <AuthorizeView>

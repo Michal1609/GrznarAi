@@ -2,6 +2,7 @@ using GrznarAi.Web.Client.Pages;
 using GrznarAi.Web.Components;
 using GrznarAi.Web.Components.Account;
 using GrznarAi.Web.Data;
+using GrznarAi.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(opt => opt.UseSqlServer(connectionString));
 
+// Register ProjectService
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -56,7 +59,6 @@ else
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 

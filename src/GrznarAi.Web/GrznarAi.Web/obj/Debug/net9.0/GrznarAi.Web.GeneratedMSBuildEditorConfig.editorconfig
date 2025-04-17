@@ -180,6 +180,18 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBYm91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/EditProject.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxFZGl0UHJvamVjdC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/NewProject.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxOZXdQcm9qZWN0LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/ProjectAdmin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxQcm9qZWN0QWRtaW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Blog/Blog.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xCbG9nXEJsb2cucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 

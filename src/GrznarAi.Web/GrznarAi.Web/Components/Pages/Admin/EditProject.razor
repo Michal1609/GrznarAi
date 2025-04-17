@@ -1,0 +1,93 @@
+@page "/admin/projects/edit/{ProjectId:int}"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@inject NavigationManager NavigationManager
+@inject IProjectService ProjectService
+
+<PageTitle>Edit Project</PageTitle>
+
+<h1>Edit Project</h1>
+
+@if (project == null)
+{
+    <p><em>Loading project...</em></p>
+}
+else
+{
+    <EditForm Model="project" OnValidSubmit="HandleValidSubmit" FormName="EditProjectForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" />
+
+        <div class="mb-3">
+            <label for="projectName" class="form-label">Project Name</label>
+            <InputText id="projectName" class="form-control" @bind-Value="project.Name" />
+            <ValidationMessage For="() => project.Name" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label for="githubUrl" class="form-label">GitHub URL</label>
+            <InputText id="githubUrl" type="url" class="form-control" @bind-Value="project.GitHubUrl" />
+            <ValidationMessage For="() => project.GitHubUrl" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label for="projectDescription" class="form-label">Short Description</label>
+            <InputTextArea id="projectDescription" class="form-control" @bind-Value="project.Description" rows="3" />
+            <ValidationMessage For="() => project.Description" class="text-danger" />
+        </div>
+
+        <div class="mb-3">
+            <label for="projectContent" class="form-label">Content (Detailed Description)</label>
+            <InputTextArea id="projectContent" class="form-control" @bind-Value="project.Content" rows="15" />
+            <ValidationMessage For="() => project.Content" class="text-danger" />
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int ProjectId { get; set; }
+
+    [SupplyParameterFromForm]
+    private Project? project { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        project = await ProjectService.GetProjectByIdAsync(ProjectId);
+        if (project == null)
+        {
+           // Handle case where project is not found (e.g., navigate back or show error)
+           Console.WriteLine($"Project with ID {ProjectId} not found.");
+           // NavigationManager.NavigateTo("/admin/projects"); // Option: Navigate back
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (project is null) return;
+
+        try
+        {
+            await ProjectService.UpdateProjectAsync(project);
+            NavigationManager.NavigateTo("/admin/projects");
+        }
+        catch (Exception ex)
+        {
+            // Log error, show message
+            Console.WriteLine($"Error updating project: {ex.Message}");
+            // Optionally set an error message property to display on the page
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/projects");
+    }
+} 

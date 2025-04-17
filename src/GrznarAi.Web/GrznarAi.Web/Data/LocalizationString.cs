@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GrznarAi.Web.Data
 {
-    [Index(nameof(Key), IsUnique = true)] // Ensure keys are unique
+    // Define a composite unique index on Key and LanguageCode
+    [Index(nameof(Key), nameof(LanguageCode), IsUnique = true)]
     public class LocalizationString
     {
         public int Id { get; set; }
@@ -13,12 +14,13 @@ namespace GrznarAi.Web.Data
         public string Key { get; set; } = string.Empty;
 
         [Required]
-        public string ValueCs { get; set; } = string.Empty;
+        [StringLength(10)] // e.g., "cs", "en", "de-CH"
+        public string LanguageCode { get; set; } = string.Empty;
 
         [Required]
-        public string ValueEn { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
 
-        // Optional: Description for admin context
+        // Optional: Description for admin context (can describe the key's purpose)
         public string? Description { get; set; }
     }
 } 

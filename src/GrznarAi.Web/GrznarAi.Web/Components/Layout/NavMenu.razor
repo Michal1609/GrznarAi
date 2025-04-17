@@ -55,12 +55,12 @@
 
 <!-- Language Selector -->
 <div class="dropdown me-2">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-translate"></i> Language
+    <button class="btn btn-secondary dropdown-toggle text-truncate" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="max-width: 150px;"> 
+        <i class="bi bi-translate me-1"></i> @currentCulture.NativeName
     </button>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-        <li><a class="dropdown-item @(IsCurrentCulture("cs") ? "active" : "")" href="@GetSetCultureUrl("cs")"> <img src="/images/flags/cz.svg" alt="CZ Flag" width="16" height="11" class="me-2"> Čeština</a></li>
-        <li><a class="dropdown-item @(IsCurrentCulture("en") ? "active" : "")" href="@GetSetCultureUrl("en")"> <img src="/images/flags/gb.svg" alt="GB Flag" width="16" height="11" class="me-2"> English</a></li>
+        <li><a class="dropdown-item @(IsCurrentCulture("cs") ? "active" : "")" href="@GetSetCultureUrl("cs")">Čeština</a></li>
+        <li><a class="dropdown-item @(IsCurrentCulture("en") ? "active" : "")" href="@GetSetCultureUrl("en")">English</a></li>
     </ul>
 </div>
 <!-- End Language Selector -->

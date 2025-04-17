@@ -11,40 +11,42 @@
 @inject NavigationManager NavigationManager
 @inject ILocalizationService LocalizationService
 @inject ILogger<LocalizationEdit> Logger
+@inject IJSRuntime JSRuntime
 
-<PageTitle>@(IsEditMode ? "Edit" : "Add New") Localization String</PageTitle>
+<PageTitle>@(IsEditMode ? "Edit" : "Add New") Localization Entry</PageTitle>
 
-<h1>@(IsEditMode ? "Edit" : "Add New") Localization String</h1>
+<h1>@(IsEditMode ? "Edit" : "Add New") Localization Entry</h1>
 
 <EditForm Model="@Model" OnValidSubmit="HandleValidSubmit" FormName="LocalizationEditForm">
     <DataAnnotationsValidator />
-    <ValidationSummary />
+    <ValidationSummary class="text-danger"/>
 
     <div class="mb-3">
         <label for="key" class="form-label">Key:</label>
-        <InputText id="key" class="form-control" @bind-Value="Model.Key" />
-        <ValidationMessage For="() => Model.Key" />
+        <InputText id="key" class="form-control" @bind-Value="Model.Key" readonly="@IsEditMode" />
+        <ValidationMessage For="() => Model.Key" class="text-danger" />
     </div>
 
     <div class="mb-3">
-        <label for="valuecs" class="form-label">Value (CS):</label>
-        <InputTextArea id="valuecs" class="form-control" @bind-Value="Model.ValueCs" rows="3"/>
-        <ValidationMessage For="() => Model.ValueCs" />
+        <label for="languagecode" class="form-label">Language Code (e.g., cs, en):</label>
+        <InputText id="languagecode" class="form-control" @bind-Value="Model.LanguageCode" readonly="@IsEditMode" />
+        <ValidationMessage For="() => Model.LanguageCode" class="text-danger" />
     </div>
 
     <div class="mb-3">
-        <label for="valueen" class="form-label">Value (EN):</label>
-        <InputTextArea id="valueen" class="form-control" @bind-Value="Model.ValueEn" rows="3"/>
-        <ValidationMessage For="() => Model.ValueEn" />
+        <label for="value" class="form-label">Value:</label>
+        <InputTextArea id="value" class="form-control" @bind-Value="Model.Value" rows="3"/>
+        <ValidationMessage For="() => Model.Value" class="text-danger" />
     </div>
 
     <div class="mb-3">
         <label for="description" class="form-label">Description (Optional):</label>
         <InputTextArea id="description" class="form-control" @bind-Value="Model.Description" rows="2"/>
+         <small class="form-text text-muted">Contextual description for administrators.</small>
     </div>
 
     <div class="d-flex justify-content-between">
-        <button type="submit" class="btn btn-success">@(IsEditMode ? "Save Changes" : "Add String")</button>
+        <button type="submit" class="btn btn-success" disabled="@isSaving">@(IsEditMode ? "Save Changes" : "Add Entry")</button>
         <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
     </div>
 
@@ -57,55 +59,74 @@
     [SupplyParameterFromForm]
     private LocalizationString Model { get; set; } = new();
 
-    private bool IsEditMode => Id.HasValue;
+    private bool IsEditMode => Id.HasValue && Id.Value > 0;
+    private bool isLoading = false;
+    private bool isSaving = false;
+    private string? errorMessage = null;
 
     protected override async Task OnParametersSetAsync()
     {
+        isLoading = true;
+        errorMessage = null;
         if (IsEditMode)
         {
-            var existingString = await LocalizationService.GetStringByIdAsync(Id.Value);
-            if (existingString != null)
+            try
             {
-                Model = existingString;
+                Model = await LocalizationService.GetSingleStringAdminAsync(Id.Value);
+                if (Model == null)
+                {
+                    Logger.LogWarning("Localization string entry with ID {Id} not found for editing.", Id.Value);
+                    errorMessage = $"Localization entry with ID {Id.Value} not found.";
+                    Model = new(); // Reset model
+                }
             }
-            else
+            catch(Exception ex)
             {
-                Logger.LogWarning("Localization string with ID {Id} not found for editing.", Id.Value);
-                NavigationManager.NavigateTo("/admin/localization"); // Redirect if not found
+                Logger.LogError(ex, "Error loading localization string entry with ID {Id}", Id.Value);
+                errorMessage = "Error loading localization entry.";
+                Model = new();
             }
         }
         else
         {
             Model = new LocalizationString(); // Initialize for new entry
         }
+        isLoading = false;
     }
 
     private async Task HandleValidSubmit()
     {
+        isSaving = true;
+        errorMessage = null;
         try
         {
             if (IsEditMode)
             {
                 await LocalizationService.UpdateStringAsync(Model);
-                Logger.LogInformation("Updated localization string with ID {Id}", Model.Id);
+                Logger.LogInformation("Updated localization string entry with ID {Id}", Model.Id);
             }
             else
             {
                 await LocalizationService.AddStringAsync(Model);
-                Logger.LogInformation("Added new localization string with Key '{Key}'", Model.Key);
+                Logger.LogInformation("Added new localization string entry with Key '{Key}' and Language '{LanguageCode}'", Model.Key, Model.LanguageCode);
             }
             NavigationManager.NavigateTo("/admin/localization");
         }
-        catch (DbUpdateException dbEx) when (dbEx.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && sqlEx.Number == 2601) // Unique constraint violation
-        {
-             Logger.LogError(dbEx, "Error saving localization string - Key '{Key}' already exists.", Model.Key);
-             // TODO: Show a user-friendly error message on the form
-             // Maybe add a custom validation error to the Key field
+        catch (InvalidOperationException ex) // Catch specific exception for duplicates from service
+        { 
+            Logger.LogWarning(ex, "Error saving localization string entry - possible duplicate.");
+            errorMessage = ex.Message; // Display the specific error from the service
+            await JSRuntime.InvokeVoidAsync("alert", errorMessage); 
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving localization string (ID: {Id}, Key: {Key})", Model.Id, Model.Key);
-            // TODO: Show a generic error message to the user
+            Logger.LogError(ex, "Error saving localization string entry (ID: {Id}, Key: {Key}, Lang: {Lang})", Model?.Id, Model?.Key, Model?.LanguageCode);
+            errorMessage = "An unexpected error occurred while saving.";
+            await JSRuntime.InvokeVoidAsync("alert", errorMessage);
+        }
+        finally
+        {
+            isSaving = false;
         }
     }
 

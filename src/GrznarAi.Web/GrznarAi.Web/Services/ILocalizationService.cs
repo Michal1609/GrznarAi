@@ -12,10 +12,10 @@ namespace GrznarAi.Web.Services
 
         // Methods for administration
         Task<List<LocalizationString>> GetAllStringsAdminAsync();
-        Task<LocalizationString?> GetStringByIdAsync(int id);
+        Task<LocalizationString?> GetSingleStringAdminAsync(int id); // Added: Get a specific entry by its Id for editing
         Task AddStringAsync(LocalizationString localizationString);
         Task UpdateStringAsync(LocalizationString localizationString);
-        Task DeleteStringAsync(int id);
+        Task DeleteStringAsync(int id); // Id now refers to the specific language entry row
         Task ReloadCacheAsync(); // Method to reload cache after admin changes
     }
 } 

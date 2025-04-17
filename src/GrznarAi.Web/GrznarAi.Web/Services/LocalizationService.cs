@@ -59,28 +59,22 @@ namespace GrznarAi.Web.Services
 
                 foreach (var locString in allStrings)
                 {
-                    // Add CS value
-                    if (!newCache.TryGetValue("cs", out var csDict))
+                    var cultureCode = GetBaseCulture(locString.LanguageCode);
+                    if (!newCache.TryGetValue(cultureCode, out var cultureDict))
                     {
-                        csDict = new ConcurrentDictionary<string, string>();
-                        newCache.TryAdd("cs", csDict);
+                        cultureDict = new ConcurrentDictionary<string, string>();
+                        newCache.TryAdd(cultureCode, cultureDict);
                     }
-                    csDict.TryAdd(locString.Key, locString.ValueCs);
-
-                    // Add EN value
-                    if (!newCache.TryGetValue("en", out var enDict))
-                    {
-                        enDict = new ConcurrentDictionary<string, string>();
-                        newCache.TryAdd("en", enDict);
-                    }
-                    enDict.TryAdd(locString.Key, locString.ValueEn);
+                    // Add or update the value for the key in the specific culture dictionary
+                    cultureDict[locString.Key] = locString.Value; 
                 }
                 
                 // Atomically replace the cache
                 Interlocked.Exchange(ref _cache, newCache);
-                _logger.LogInformation("Localization cache reloaded successfully with strings for {CountCs} CS keys and {CountEn} EN keys.", 
-                    _cache.TryGetValue("cs", out var cs) ? cs.Count : 0,
-                    _cache.TryGetValue("en", out var en) ? en.Count : 0);
+
+                // Log counts per culture
+                var cultureCounts = newCache.Keys.Select(c => $"{c.ToUpper()}: {newCache[c].Count}");
+                _logger.LogInformation("Localization cache reloaded successfully. Key counts: {Counts}", string.Join(", ", cultureCounts));
              }
             catch (Exception ex)
             {
@@ -97,7 +91,7 @@ namespace GrznarAi.Web.Services
         // Get string based on specific culture
         public string GetString(string key, string culture)
         {
-            var cultureCode = GetBaseCulture(culture); // e.g., "cs-CZ" -> "cs"
+            var cultureCode = GetBaseCulture(culture);
 
             if (_cache.TryGetValue(cultureCode, out var cultureDict) && cultureDict.TryGetValue(key, out var value))
             {
@@ -118,7 +112,8 @@ namespace GrznarAi.Web.Services
             }
             catch (CultureNotFoundException)
             {
-                return "en"; // Default to English if culture is invalid
+                _logger.LogWarning("Invalid culture code '{Culture}' provided. Defaulting to 'en'.", culture);
+                return "en"; // Default to English if culture is invalid or not found
             }
         }
 
@@ -128,10 +123,11 @@ namespace GrznarAi.Web.Services
         {
             await using var scope = _scopeFactory.CreateAsyncScope();
             await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            return await dbContext.LocalizationStrings.OrderBy(s => s.Key).ToListAsync();
+            // Order by Key then LanguageCode for better grouping in potential UI
+            return await dbContext.LocalizationStrings.OrderBy(s => s.Key).ThenBy(s => s.LanguageCode).ToListAsync();
         }
 
-        public async Task<LocalizationString?> GetStringByIdAsync(int id)
+        public async Task<LocalizationString?> GetSingleStringAdminAsync(int id)
         {
             await using var scope = _scopeFactory.CreateAsyncScope();
             await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -140,20 +136,65 @@ namespace GrznarAi.Web.Services
 
         public async Task AddStringAsync(LocalizationString localizationString)
         {
+            // Basic validation
+            if (string.IsNullOrWhiteSpace(localizationString.Key) || string.IsNullOrWhiteSpace(localizationString.LanguageCode))
+            {
+                throw new ArgumentException("Key and LanguageCode cannot be empty.");
+            }
+
             await using var scope = _scopeFactory.CreateAsyncScope();
             await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            
+            // Check for duplicates explicitly before adding (due to composite key)
+            bool exists = await dbContext.LocalizationStrings.AnyAsync(ls => ls.Key == localizationString.Key && ls.LanguageCode == localizationString.LanguageCode);
+            if(exists)
+            {
+                 throw new InvalidOperationException($"Localization string with Key '{localizationString.Key}' and LanguageCode '{localizationString.LanguageCode}' already exists.");
+            }
+
             dbContext.LocalizationStrings.Add(localizationString);
             await dbContext.SaveChangesAsync();
-            await ReloadCacheAsync(); // Reload cache after adding
+            await ReloadCacheAsync();
         }
 
         public async Task UpdateStringAsync(LocalizationString localizationString)
         {
-             await using var scope = _scopeFactory.CreateAsyncScope();
+             if (localizationString.Id <= 0)
+            {
+                throw new ArgumentException("Cannot update a localization string without a valid Id.");
+            }
+
+            await using var scope = _scopeFactory.CreateAsyncScope();
             await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            dbContext.Entry(localizationString).State = EntityState.Modified;
-            await dbContext.SaveChangesAsync();
-            await ReloadCacheAsync(); // Reload cache after updating
+            
+            // Ensure the Key/LanguageCode combination isn't changing to conflict with another existing entry
+            // (This check might be complex depending on desired behavior - basic check here)
+            bool conflictingEntryExists = await dbContext.LocalizationStrings
+                .AnyAsync(ls => ls.Id != localizationString.Id && ls.Key == localizationString.Key && ls.LanguageCode == localizationString.LanguageCode);
+
+            if (conflictingEntryExists)
+            {
+                throw new InvalidOperationException($"Another localization string with Key '{localizationString.Key}' and LanguageCode '{localizationString.LanguageCode}' already exists.");
+            }
+
+
+            // Attach and mark as modified (or fetch then update)
+            dbContext.Entry(localizationString).State = EntityState.Modified; 
+            // Alternatively: 
+            // var existing = await dbContext.LocalizationStrings.FindAsync(localizationString.Id);
+            // if (existing != null) { /* update properties */ }
+
+            try
+            {
+                await dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                 _logger.LogError(ex, "Concurrency error updating localization string with Id {Id}", localizationString.Id);
+                // Handle concurrency conflict (e.g., re-fetch and notify user)
+                throw; // Re-throw for now
+            }
+            await ReloadCacheAsync();
         }
 
         public async Task DeleteStringAsync(int id)
@@ -165,7 +206,11 @@ namespace GrznarAi.Web.Services
             {
                 dbContext.LocalizationStrings.Remove(item);
                 await dbContext.SaveChangesAsync();
-                await ReloadCacheAsync(); // Reload cache after deleting
+                await ReloadCacheAsync();
+            }
+            else
+            {
+                 _logger.LogWarning("Attempted to delete non-existent localization string with Id {Id}", id);
             }
         }
     }

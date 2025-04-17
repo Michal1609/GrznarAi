@@ -1,4 +1,0 @@
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\wwwroot\appsettings.Development.json
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\wwwroot\appsettings.json
-wwwroot\appsettings.Development.json
-wwwroot\appsettings.json

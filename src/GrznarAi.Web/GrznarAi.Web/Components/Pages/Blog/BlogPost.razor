@@ -1,0 +1,521 @@
+@page "/blog/{Slug}"
+
+<PageTitle>@(post?.Title ?? "Blog Post") - GrznarAI</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            @if (post != null)
+            {
+                <article class="blog-post">
+                    <h1 class="blog-post-title">@post.Title</h1>
+                    <p class="blog-post-meta">
+                        @post.PublishedDate.ToString("MMMM d, yyyy") by <a href="#">@post.Author</a>
+                    </p>
+
+                    <div class="mb-3">
+                        @foreach (var tag in post.Tags)
+                        {
+                            <span class="badge bg-secondary me-1">@tag</span>
+                        }
+                    </div>
+
+                    <div class="blog-post-content">
+                        @((MarkupString)ConvertMarkdownToHtml(post.Content))
+                    </div>
+
+                    <hr class="my-5">
+
+                    <!-- Author info -->
+                    <div class="card mb-5">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <img src="/images/logo.svg" alt="Author" class="rounded-circle" width="60" height="60">
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>@post.Author</h5>
+                                    <p class="text-muted mb-0">Software developer with a passion for .NET, AI, and meteorology.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments section -->
+                    @if (post.AllowComments)
+                    {
+                        <div class="comments-section">
+                            <h3 class="mb-4">Comments (@comments.Count)</h3>
+
+                            <!-- Comment form -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h4 class="mb-3">Leave a Comment</h4>
+                                    <form>
+                                        <div class="mb-3">
+                                            <label for="commentName" class="form-label">Name</label>
+                                            <input type="text" class="form-control" id="commentName" @bind="newCommentName">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="commentEmail" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="commentEmail" @bind="newCommentEmail">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="commentContent" class="form-label">Comment</label>
+                                            <textarea class="form-control" id="commentContent" rows="4" @bind="newCommentContent"></textarea>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" @onclick="AddComment">Submit Comment</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Comments list -->
+                            @foreach (var comment in comments)
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="mb-0">@comment.Name</h5>
+                                            <small class="text-muted">@comment.Date.ToString("MMM d, yyyy h:mm tt")</small>
+                                        </div>
+                                        <p class="mb-0">@comment.Content</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <h3>Blog post not found</h3>
+                    <p>The blog post you're looking for doesn't exist or has been removed.</p>
+                    <a href="/blog" class="btn btn-primary">Back to Blog</a>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="blog-sidebar">
+                <!-- Related Posts -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Related Posts</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            @foreach (var relatedPost in relatedPosts)
+                            {
+                                <li class="mb-3">
+                                    <a href="/blog/@relatedPost.Slug">@relatedPost.Title</a>
+                                    <div class="text-muted small">@relatedPost.PublishedDate.ToString("MMM d, yyyy")</div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Popular Tags -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Popular Tags</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var tag in popularTags)
+                            {
+                                <a href="/blog?tag=@tag" class="badge bg-secondary text-decoration-none">@tag</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Share</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex gap-2">
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="bi bi-facebook"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="bi bi-twitter"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="bi bi-linkedin"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="bi bi-envelope"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Slug { get; set; }
+
+    private BlogPostModel post;
+    private List<BlogPostModel> relatedPosts = new List<BlogPostModel>();
+    private List<string> popularTags = new List<string> { "C#", ".NET", "Blazor", "AI", "Machine Learning", "SQL", "Entity Framework", "Web Development" };
+
+    private string newCommentName = "";
+    private string newCommentEmail = "";
+    private string newCommentContent = "";
+
+    private List<Comment> comments = new List<Comment>();
+
+    protected override void OnInitialized()
+    {
+        // In a real application, you would fetch the blog post from a service
+        // For this sample, we'll create a mock post
+        post = GetSamplePost(Slug);
+
+        if (post != null)
+        {
+            // Generate sample related posts
+            relatedPosts = GetRelatedPosts(post);
+
+            // Generate sample comments
+            GenerateSampleComments();
+        }
+    }
+
+    private BlogPostModel GetSamplePost(string slug)
+    {
+        // This would be replaced with a database query in a real application
+        var samplePosts = new List<BlogPostModel>
+        {
+            new BlogPostModel
+            {
+                Id = 1,
+                Title = "Getting Started with Blazor WebAssembly",
+                Slug = "getting-started-with-blazor-webassembly",
+                Author = "Michal",
+                PublishedDate = DateTime.Now.AddDays(-2),
+                Content = @"# Getting Started with Blazor WebAssembly
+
+Blazor WebAssembly is a single-page app framework for building interactive client-side web apps with .NET. Blazor WebAssembly uses open web standards without plugins or code transpilation and works in all modern web browsers, including mobile browsers.
+
+## What is Blazor?
+
+Blazor is a framework for building interactive client-side web UI with .NET:
+
+- Create rich interactive UIs using C# instead of JavaScript.
+- Share server-side and client-side app logic written in .NET.
+- Render the UI as HTML and CSS for wide browser support, including mobile browsers.
+
+Using .NET for client-side web development offers the following advantages:
+
+- Write code in C# instead of JavaScript.
+- Leverage the existing .NET ecosystem of .NET libraries.
+- Share app logic across server and client.
+- Benefit from .NET's performance, reliability, and security.
+- Stay productive with Visual Studio on Windows, Linux, and macOS.
+- Build on a common set of languages, frameworks, and tools that are stable, feature-rich, and easy to use.
+
+## Getting Started
+
+To get started with Blazor WebAssembly, you'll need:
+
+1. Install the [.NET SDK](https://dotnet.microsoft.com/download)
+2. Create a new Blazor WebAssembly project:
+
+```csharp
+dotnet new blazorwasm -o MyBlazorApp
+cd MyBlazorApp
+dotnet run
+```
+
+## Components
+
+Blazor apps are built using components. A component in Blazor is an element of UI, such as a page, dialog, or data entry form.
+
+Components are .NET classes built into .NET assemblies that:
+
+- Define flexible UI rendering logic.
+- Handle user events.
+- Can be nested and reused.
+- Can be shared and distributed as Razor class libraries or NuGet packages.
+
+Here's a simple counter component:
+
+```csharp
+@page ""/counter""
+
+<h1>Counter</h1>
+
+<p>Current count: @currentCount</p>
+
+<button class=""btn btn-primary"" @onclick=""IncrementCount"">Click me</button>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}
+```
+
+## Conclusion
+
+Blazor WebAssembly offers a powerful way to build client-side web applications using .NET. It's a great choice for .NET developers who want to build modern web applications without having to learn a new language or framework.
+
+In future posts, we'll explore more advanced topics like authentication, API integration, and deployment.",
+                Excerpt = "Learn how to build interactive web applications with Blazor WebAssembly, a powerful framework for .NET developers.",
+                Tags = new List<string> { "Programming", "Web Development", "Blazor", ".NET" },
+                IsPublished = true,
+                AllowComments = true
+            },
+            new BlogPostModel
+            {
+                Id = 2,
+                Title = "Introduction to Entity Framework Core",
+                Slug = "introduction-to-entity-framework-core",
+                Author = "Michal",
+                PublishedDate = DateTime.Now.AddDays(-5),
+                Content = @"# Introduction to Entity Framework Core
+
+Entity Framework Core is a modern object-database mapper for .NET. It supports LINQ queries, change tracking, updates, and schema migrations. EF Core works with SQL Server, Azure SQL Database, SQLite, Azure Cosmos DB, MySQL, PostgreSQL, and other databases through a provider plugin API.
+
+## What is Entity Framework Core?
+
+Entity Framework (EF) Core is a lightweight, extensible, open-source, and cross-platform version of the popular Entity Framework data access technology. EF Core can serve as an object-relational mapper (O/RM), which:
+
+- Enables .NET developers to work with a database using .NET objects.
+- Eliminates the need for most of the data-access code that typically needs to be written.
+
+## Getting Started
+
+To get started with EF Core, you'll need:
+
+1. Install the EF Core package for your database provider:
+
+```csharp
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+```
+
+2. Define your model:
+
+```csharp
+public class BloggingContext : DbContext
+{
+    public DbSet<Blog> Blogs { get; set; }
+    public DbSet<Post> Posts { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlServer(
+            @""Server=(localdb)\\mssqllocaldb;Database=Blogging;Trusted_Connection=True"");
+    }
+}
+
+public class Blog
+{
+    public int BlogId { get; set; }
+    public string Url { get; set; }
+    public List<Post> Posts { get; set; }
+}
+
+public class Post
+{
+    public int PostId { get; set; }
+    public string Title { get; set; }
+    public string Content { get; set; }
+    public int BlogId { get; set; }
+    public Blog Blog { get; set; }
+}
+```
+
+3. Create the database:
+
+```csharp
+using (var context = new BloggingContext())
+{
+    context.Database.EnsureCreated();
+}
+```
+
+## Basic Operations
+
+### Creating Data
+
+```csharp
+using (var context = new BloggingContext())
+{
+    var blog = new Blog { Url = ""http://example.com"" };
+    context.Blogs.Add(blog);
+    context.SaveChanges();
+}
+```
+
+### Reading Data
+
+```csharp
+using (var context = new BloggingContext())
+{
+    var blogs = context.Blogs.ToList();
+    var blog = context.Blogs
+        .Include(b => b.Posts)
+        .FirstOrDefault(b => b.BlogId == 1);
+}
+```
+
+### Updating Data
+
+```csharp
+using (var context = new BloggingContext())
+{
+    var blog = context.Blogs.FirstOrDefault(b => b.BlogId == 1);
+    blog.Url = ""http://example.com/updated"";
+    context.SaveChanges();
+}
+```
+
+### Deleting Data
+
+```csharp
+using (var context = new BloggingContext())
+{
+    var blog = context.Blogs.FirstOrDefault(b => b.BlogId == 1);
+    context.Blogs.Remove(blog);
+    context.SaveChanges();
+}
+```
+
+## Conclusion
+
+Entity Framework Core is a powerful ORM that simplifies database access in .NET applications. It provides a high-level abstraction over the database, allowing developers to focus on their domain model rather than the details of data access.
+
+In future posts, we'll explore more advanced topics like migrations, complex queries, and performance optimization.",
+                Excerpt = "Discover how to use Entity Framework Core to simplify database access in your .NET applications.",
+                Tags = new List<string> { "Programming", "Database", "Entity Framework", ".NET" },
+                IsPublished = true,
+                AllowComments = true
+            }
+        };
+
+        return samplePosts.FirstOrDefault(p => p.Slug == slug);
+    }
+
+    private List<BlogPostModel> GetRelatedPosts(BlogPostModel currentPost)
+    {
+        // In a real application, you would fetch related posts based on tags or categories
+        // For this sample, we'll create some mock related posts
+        return new List<BlogPostModel>
+        {
+            new BlogPostModel
+            {
+                Title = "Advanced Blazor Component Techniques",
+                Slug = "advanced-blazor-component-techniques",
+                PublishedDate = DateTime.Now.AddDays(-10)
+            },
+            new BlogPostModel
+            {
+                Title = "Authentication in Blazor Applications",
+                Slug = "authentication-in-blazor-applications",
+                PublishedDate = DateTime.Now.AddDays(-15)
+            },
+            new BlogPostModel
+            {
+                Title = "Building Reusable Components in Blazor",
+                Slug = "building-reusable-components-in-blazor",
+                PublishedDate = DateTime.Now.AddDays(-20)
+            }
+        };
+    }
+
+    private void GenerateSampleComments()
+    {
+        comments = new List<Comment>
+        {
+            new Comment
+            {
+                Name = "John Doe",
+                Email = "john@example.com",
+                Content = "Great article! I've been looking for a good introduction to Blazor WebAssembly.",
+                Date = DateTime.Now.AddDays(-1).AddHours(-3)
+            },
+            new Comment
+            {
+                Name = "Jane Smith",
+                Email = "jane@example.com",
+                Content = "Thanks for sharing this. I'm new to Blazor and this helped me understand the basics.",
+                Date = DateTime.Now.AddDays(-1).AddHours(-1)
+            }
+        };
+    }
+
+    private void AddComment()
+    {
+        if (!string.IsNullOrWhiteSpace(newCommentName) && !string.IsNullOrWhiteSpace(newCommentContent))
+        {
+            comments.Add(new Comment
+            {
+                Name = newCommentName,
+                Email = newCommentEmail,
+                Content = newCommentContent,
+                Date = DateTime.Now
+            });
+
+            // Clear the form
+            newCommentName = "";
+            newCommentEmail = "";
+            newCommentContent = "";
+        }
+    }
+
+    private string ConvertMarkdownToHtml(string markdown)
+    {
+        // In a real application, you would use a Markdown parser like Markdig
+        // For this sample, we'll just return the markdown as HTML
+        // This is a very simplified version and doesn't handle all Markdown features
+
+        // Replace headers
+        markdown = System.Text.RegularExpressions.Regex.Replace(markdown, @"^# (.+)$", "<h1>$1</h1>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        markdown = System.Text.RegularExpressions.Regex.Replace(markdown, @"^## (.+)$", "<h2>$1</h2>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        markdown = System.Text.RegularExpressions.Regex.Replace(markdown, @"^### (.+)$", "<h3>$1</h3>", System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // Replace code blocks
+        markdown = System.Text.RegularExpressions.Regex.Replace(markdown, @"```csharp\s*([\s\S]*?)\s*```", "<pre><code class=\"language-csharp\">$1</code></pre>", System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // Replace paragraphs
+        markdown = System.Text.RegularExpressions.Regex.Replace(markdown, @"^([^<#\s].+)$", "<p>$1</p>", System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // Replace line breaks
+        markdown = markdown.Replace("\n\n", "<br>");
+
+        return markdown;
+    }
+
+    public class BlogPostModel
+    {
+        public int Id { get; set; }
+        public string Slug { get; set; }
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public DateTime PublishedDate { get; set; }
+        public bool IsPublished { get; set; }
+        public bool AllowComments { get; set; }
+        public string Content { get; set; }
+        public string Excerpt { get; set; }
+        public List<string> Tags { get; set; }
+    }
+
+    public class Comment
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Content { get; set; }
+        public DateTime Date { get; set; }
+    }
+}

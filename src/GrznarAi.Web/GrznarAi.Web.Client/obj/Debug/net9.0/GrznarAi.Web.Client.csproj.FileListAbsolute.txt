@@ -6,8 +6,6 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwro
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\dotnet.native.3c4wvb350q.wasm
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\dotnet.runtime.cymp1amu5g.js
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\dotnet.runtime.js.map
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.mgknzb1fx7.pdb
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.ppw1fk7x9i.wasm
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\icudt_CJK.tjcz0u77k5.dat
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\icudt_EFIGS.tptq2av103.dat
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\icudt_no_CJK.lfu7j35m59.dat
@@ -217,7 +215,6 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwro
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.Runtime.Loader.er8lbvj98m.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.Net.Ping.9fz83usnsr.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.Collections.Concurrent.kb0mdoldj7.wasm.gz
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.mgknzb1fx7.pdb.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.Globalization.Extensions.hal5qdz64m.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.Runtime.InteropServices.RuntimeInformation.87gs2gbjoc.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\netstandard.d82br99ghv.wasm.gz
@@ -318,7 +315,6 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwro
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\Microsoft.Extensions.Configuration.Json.u8iuy20vvu.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.ComponentModel.73xofid0hk.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.Net.NetworkInformation.22njzxzqxw.wasm.gz
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.ppw1fk7x9i.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\Microsoft.AspNetCore.Authorization.gf26ou9jj9.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.IO.FileSystem.DriveInfo.0zghtgeywx.wasm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\System.Security.AccessControl.5e7zoanr8x.wasm.gz
@@ -1025,9 +1021,6 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compr
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\c0efxzohgq-tjcz0u77k5.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\pcg4ymkcsy-tptq2av103.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\ufyqjuofy9-lfu7j35m59.gz
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\i48uxlo3ds-ppw1fk7x9i.gz
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\1slh0kq7g8-mgknzb1fx7.gz
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\dxuaqbp2ep-qdxvh1qf4x.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.development.json
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.endpoints.json
@@ -1037,9 +1030,16 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\stati
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.GrznarAi.Web.Client.props
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.GrznarAi.Web.Client.props
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.pack.json
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\GrznarAi.B98355AD.Up2Date
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\GrznarAi.Web.Client.dll
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\refint\GrznarAi.Web.Client.dll
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\GrznarAi.Web.Client.pdb
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\ref\GrznarAi.Web.Client.dll
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.ghyh8a17g7.pdb
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.oymcsiqxsz.wasm
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.ghyh8a17g7.pdb.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\bin\Debug\net9.0\wwwroot\_framework\GrznarAi.Web.Client.oymcsiqxsz.wasm.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\GrznarAi.Web.Client.sourcelink.json
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\i48uxlo3ds-oymcsiqxsz.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\1slh0kq7g8-ghyh8a17g7.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\compressed\dxuaqbp2ep-v0yyr18yda.gz

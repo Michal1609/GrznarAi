@@ -9,8 +9,32 @@
       "PackagePath": "staticwebassets\\app.css"
     },
     {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\css\\modern-style.css",
+      "PackagePath": "staticwebassets\\css\\modern-style.css"
+    },
+    {
       "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\favicon.png",
       "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\favicon.svg",
+      "PackagePath": "staticwebassets\\favicon.svg"
+    },
+    {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\images\\hero-1.svg",
+      "PackagePath": "staticwebassets\\images\\hero-1.svg"
+    },
+    {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\images\\hero-2.svg",
+      "PackagePath": "staticwebassets\\images\\hero-2.svg"
+    },
+    {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\images\\hero-3.svg",
+      "PackagePath": "staticwebassets\\images\\hero-3.svg"
+    },
+    {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\images\\logo.svg",
+      "PackagePath": "staticwebassets\\images\\logo.svg"
     },
     {
       "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",

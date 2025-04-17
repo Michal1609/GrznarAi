@@ -1,76 +1,108 @@
 ﻿@implements IDisposable
 
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">GrznarAi.Web</a>
-    </div>
-</div>
+<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+    <li class="nav-item">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <span class="nav-icon-wrapper"><i class="bi bi-house-door-fill"></i></span> Home
+        </NavLink>
+    </li>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <li class="nav-item">
+        <NavLink class="nav-link" href="blog">
+            <span class="nav-icon-wrapper"><i class="bi bi-journal-richtext"></i></span> Blog
+        </NavLink>
+    </li>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="projects">
+            <span class="nav-icon-wrapper"><i class="bi bi-code-square"></i></span> Projects
+        </NavLink>
+    </li>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="meteo">
+            <span class="nav-icon-wrapper"><i class="bi bi-cloud-sun"></i></span> Meteo
+        </NavLink>
+    </li>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="webhooks">
+            <span class="nav-icon-wrapper"><i class="bi bi-hdd-network"></i></span> Webhooks
+        </NavLink>
+    </li>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="counter">
+            <span class="nav-icon-wrapper"><i class="bi bi-plus-square-fill"></i></span> Counter
+        </NavLink>
+    </li>
 
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-    </nav>
-</div>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="weather">
+            <span class="nav-icon-wrapper"><i class="bi bi-list-nested"></i></span> Weather
+        </NavLink>
+    </li>
+
+    <li class="nav-item">
+        <NavLink class="nav-link" href="auth">
+            <span class="nav-icon-wrapper"><i class="bi bi-lock"></i></span> Auth Required
+        </NavLink>
+    </li>
+</ul>
+
+<AuthorizeView>
+    <Authorized>
+        <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" @onclick="ToggleDropdown" @onclick:preventDefault>
+                    <span class="nav-icon-wrapper"><i class="bi bi-person-fill"></i></span> @context.User.Identity?.Name
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end @(isDropdownOpen ? "show" : "")">
+                    <li>
+                        <NavLink class="dropdown-item" href="Account/Manage">
+                            <span class="nav-icon-wrapper"><i class="bi bi-gear"></i></span> Manage Account
+                        </NavLink>
+                    </li>
+                    <li>
+                        <form action="Account/Logout" method="post">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                            <button type="submit" class="dropdown-item">
+                                <span class="nav-icon-wrapper"><i class="bi bi-box-arrow-left"></i></span> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </Authorized>
+    <NotAuthorized>
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="Account/Register">
+                    <span class="nav-icon-wrapper"><i class="bi bi-person-plus"></i></span> Register
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="Account/Login">
+                    <span class="nav-icon-wrapper"><i class="bi bi-box-arrow-in-right"></i></span> Login
+                </NavLink>
+            </li>
+        </ul>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private string? currentUrl;
+    private bool isDropdownOpen = false;
+
+    private void ToggleDropdown()
+    {
+        isDropdownOpen = !isDropdownOpen;
+    }
 
     protected override void OnInitialized()
     {

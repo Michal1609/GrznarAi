@@ -1,18 +1,74 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JSRuntime
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/images/logo.svg" alt="GrznarAI Logo" class="logo" />
+                <span>GrznarAI</span>
+            </a>
+
+            <button type="button" class="navbar-toggler" @onclick="ToggleNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse @NavbarCssClass" id="navbarNav">
+                <NavMenu />
+
+                <div class="ms-auto d-flex align-items-center">
+                    <button @onclick="ToggleTheme" class="theme-toggle btn btn-link me-3" title="Toggle theme">
+                        @if (isDarkTheme)
+                        {
+                            <i class="bi bi-sun-fill"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-moon-fill"></i>
+                        }
+                    </button>
+                    <a href="/about" class="nav-link me-3">About</a>
+                    <a href="/contact" class="nav-link">Contact</a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
 
-        <article class="content px-4">
+        <article class="content">
             @Body
         </article>
+
+        <footer class="footer text-center">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h5>GrznarAI</h5>
+                        <p class="text-muted">Personal website with blog, projects and meteo data.</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>Links</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/blog">Blog</a></li>
+                            <li><a href="/projects">Projects</a></li>
+                            <li><a href="/meteo">Meteo</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>Connect</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="https://github.com/Michal1609" target="_blank">GitHub</a></li>
+                            <li><a href="/contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-muted">&copy; @DateTime.Now.Year GrznarAI. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
     </main>
 </div>
 
@@ -21,3 +77,35 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+<script src="js/site.js"></script>
+<script src="js/carousel.js"></script>
+
+@code {
+    private bool navbarVisible = false;
+    private bool isDarkTheme = false;
+
+    private string NavbarCssClass => navbarVisible ? "show" : "";
+
+    private void ToggleNavbar()
+    {
+        navbarVisible = !navbarVisible;
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+        await JSRuntime.InvokeVoidAsync("toggleTheme", isDarkTheme);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Check system preference for dark mode
+            isDarkTheme = await JSRuntime.InvokeAsync<bool>("isDarkModePreferred");
+            await JSRuntime.InvokeVoidAsync("toggleTheme", isDarkTheme);
+            StateHasChanged();
+        }
+    }
+}

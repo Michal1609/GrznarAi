@@ -1,0 +1,107 @@
+@page "/projects"
+
+<PageTitle>Projects - GrznarAI</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="mb-4">My Projects</h1>
+    
+    <p class="lead mb-5">
+        Here you can find my GitHub projects with documentation, changelogs, and demos.
+        These projects showcase my skills and interests in software development.
+    </p>
+    
+    <div class="row">
+        @foreach (var project in projects)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card project-card h-100">
+                    <div class="card-body">
+                        <h3 class="card-title">@project.Name</h3>
+                        <p class="card-text text-muted">@project.Language</p>
+                        <p class="card-text">@project.Description</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <span class="badge bg-primary me-2">@project.Stars <i class="bi bi-star-fill"></i></span>
+                                <span class="badge bg-secondary">@project.Forks <i class="bi bi-diagram-2"></i></span>
+                            </div>
+                            <a href="@project.Url" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-github me-1"></i> View on GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    // Sample project data - in a real application, this would come from a service or API
+    private List<ProjectModel> projects = new List<ProjectModel>
+    {
+        new ProjectModel
+        {
+            Name = "Neural Network Library",
+            Description = "A lightweight neural network library for machine learning applications with support for various activation functions and optimization algorithms.",
+            Language = "C#",
+            Stars = 42,
+            Forks = 15,
+            Url = "https://github.com/Michal1609/sample-project-1"
+        },
+        new ProjectModel
+        {
+            Name = "Weather Data Collector",
+            Description = "A service for collecting and processing weather data from multiple sources with a REST API for data access.",
+            Language = "C#",
+            Stars = 28,
+            Forks = 8,
+            Url = "https://github.com/Michal1609/sample-project-2"
+        },
+        new ProjectModel
+        {
+            Name = "Markdown Blog Engine",
+            Description = "A lightweight blog engine that uses Markdown files for content with support for tags, categories, and comments.",
+            Language = "C#",
+            Stars = 35,
+            Forks = 12,
+            Url = "https://github.com/Michal1609/sample-project-3"
+        },
+        new ProjectModel
+        {
+            Name = "Identity Server Extension",
+            Description = "Extensions for Identity Server with additional authentication providers and user management features.",
+            Language = "C#",
+            Stars = 19,
+            Forks = 5,
+            Url = "https://github.com/Michal1609/sample-project-4"
+        },
+        new ProjectModel
+        {
+            Name = "Webhook Manager",
+            Description = "A service for managing webhooks with support for retry policies, validation, and monitoring.",
+            Language = "C#",
+            Stars = 24,
+            Forks = 7,
+            Url = "https://github.com/Michal1609/sample-project-5"
+        },
+        new ProjectModel
+        {
+            Name = "Entity Framework Extensions",
+            Description = "Useful extensions for Entity Framework Core including audit logging, soft delete, and query filters.",
+            Language = "C#",
+            Stars = 31,
+            Forks = 9,
+            Url = "https://github.com/Michal1609/sample-project-6"
+        }
+    };
+
+    public class ProjectModel
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Language { get; set; }
+        public int Stars { get; set; }
+        public int Forks { get; set; }
+        public string Url { get; set; }
+    }
+}

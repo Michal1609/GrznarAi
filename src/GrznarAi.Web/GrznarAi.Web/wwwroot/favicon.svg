@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="256" cy="256" r="240" fill="url(#paint0_radial)" stroke="#3498DB" stroke-width="8"/>
+  
+  <!-- Neural network nodes -->
+  <circle cx="256" cy="256" r="20" fill="#3498DB"/>
+  
+  <circle cx="176" cy="176" r="16" fill="#3498DB"/>
+  <circle cx="336" cy="176" r="16" fill="#3498DB"/>
+  <circle cx="176" cy="336" r="16" fill="#3498DB"/>
+  <circle cx="336" cy="336" r="16" fill="#3498DB"/>
+  
+  <circle cx="136" cy="256" r="16" fill="#3498DB"/>
+  <circle cx="376" cy="256" r="16" fill="#3498DB"/>
+  <circle cx="256" cy="136" r="16" fill="#3498DB"/>
+  <circle cx="256" cy="376" r="16" fill="#3498DB"/>
+  
+  <!-- Neural network connections -->
+  <line x1="256" y1="256" x2="176" y2="176" stroke="#3498DB" stroke-width="3"/>
+  <line x1="256" y1="256" x2="336" y2="176" stroke="#3498DB" stroke-width="3"/>
+  <line x1="256" y1="256" x2="176" y2="336" stroke="#3498DB" stroke-width="3"/>
+  <line x1="256" y1="256" x2="336" y2="336" stroke="#3498DB" stroke-width="3"/>
+  
+  <line x1="256" y1="256" x2="136" y2="256" stroke="#3498DB" stroke-width="3"/>
+  <line x1="256" y1="256" x2="376" y2="256" stroke="#3498DB" stroke-width="3"/>
+  <line x1="256" y1="256" x2="256" y2="136" stroke="#3498DB" stroke-width="3"/>
+  <line x1="256" y1="256" x2="256" y2="376" stroke="#3498DB" stroke-width="3"/>
+  
+  <defs>
+    <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(240)">
+      <stop offset="0" stop-color="#ECF0F1"/>
+      <stop offset="1" stop-color="#BDC3C7"/>
+    </radialGradient>
+  </defs>
+</svg>

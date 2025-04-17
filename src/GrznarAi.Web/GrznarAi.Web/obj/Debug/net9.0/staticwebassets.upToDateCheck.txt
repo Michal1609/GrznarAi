@@ -1,5 +1,6 @@
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\images\hero-3.svg
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css
@@ -9,6 +10,7 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\cs
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\css\modern-style.css
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js.map
@@ -18,6 +20,7 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.js.map
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\images\logo.svg
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.js
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.min.css
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css.map
@@ -36,15 +39,24 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\cs
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.min.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\favicon.svg
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\images\hero-2.svg
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\images\hero-1.svg
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css.map
 wwwroot\app.css
+wwwroot\css\modern-style.css
 wwwroot\favicon.png
+wwwroot\favicon.svg
+wwwroot\images\hero-1.svg
+wwwroot\images\hero-2.svg
+wwwroot\images\hero-3.svg
+wwwroot\images\logo.svg
 wwwroot\lib\bootstrap\dist\css\bootstrap.css
 wwwroot\lib\bootstrap\dist\css\bootstrap.css.map
 wwwroot\lib\bootstrap\dist\css\bootstrap.min.css

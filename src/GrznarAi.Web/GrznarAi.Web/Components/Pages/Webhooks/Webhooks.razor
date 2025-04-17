@@ -1,0 +1,303 @@
+@page "/webhooks"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Webhooks - GrznarAI</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Webhooks</h1>
+
+    <p class="lead mb-5">
+        This page allows you to manage webhooks and view webhook logs.
+        You can test webhooks, create new endpoints, and monitor incoming webhook requests.
+    </p>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="mb-0">Your Webhook Endpoints</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var endpoint in webhookEndpoints)
+                        {
+                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">@endpoint.Name</h5>
+                                    <p class="mb-1 text-muted">@endpoint.Url</p>
+                                    <small>Created: @endpoint.CreatedDate.ToString("dd MMM yyyy")</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => ViewEndpointDetails(endpoint)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteEndpoint(endpoint)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <button class="btn btn-primary mt-3" @onclick="ShowCreateEndpointModal">
+                        <i class="bi bi-plus-circle me-2"></i> Create New Endpoint
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="mb-0">Test Webhook</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="endpointSelect" class="form-label">Select Endpoint</label>
+                        <select class="form-select" id="endpointSelect" @bind="selectedEndpointId">
+                            <option value="">-- Select Endpoint --</option>
+                            @foreach (var endpoint in webhookEndpoints)
+                            {
+                                <option value="@endpoint.Id">@endpoint.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="payloadTextarea" class="form-label">Payload (JSON)</label>
+                        <textarea class="form-control" id="payloadTextarea" rows="8" @bind="testPayload"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary" @onclick="SendTestWebhook" disabled="@string.IsNullOrEmpty(selectedEndpointId)">
+                        <i class="bi bi-send me-2"></i> Send Test Webhook
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Webhook Logs</h3>
+            <div class="d-flex">
+                <div class="input-group me-2" style="width: 300px;">
+                    <input type="text" class="form-control" placeholder="Search logs..." @bind="searchTerm" @bind:event="oninput">
+                    <button class="btn btn-outline-secondary" type="button" @onclick="SearchLogs">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <select class="form-select" style="width: 150px;" @bind="selectedEndpointFilter">
+                    <option value="">All Endpoints</option>
+                    @foreach (var endpoint in webhookEndpoints)
+                    {
+                        <option value="@endpoint.Id">@endpoint.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Endpoint</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in filteredLogs)
+                        {
+                            <tr>
+                                <td>@log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td>@webhookEndpoints.FirstOrDefault(e => e.Id == log.EndpointId)?.Name</td>
+                                <td>
+                                    @if (log.Success)
+                                    {
+                                        <span class="badge bg-success">Success</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Failed</span>
+                                    }
+                                </td>
+                                <td>@log.IpAddress</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewLogDetails(log)">
+                                        <i class="bi bi-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <button class="btn btn-outline-primary" @onclick="PreviousPage" disabled="@(currentPage == 1)">Previous</button>
+                <span>Page @currentPage of @totalPages</span>
+                <button class="btn btn-outline-primary" @onclick="NextPage" disabled="@(currentPage == totalPages)">Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchTerm = "";
+    private string selectedEndpointId = "";
+    private string selectedEndpointFilter = "";
+    private string testPayload = "{\n  \"event\": \"test\",\n  \"data\": {\n    \"message\": \"This is a test webhook\"\n  }\n}";
+
+    private int currentPage = 1;
+    private int logsPerPage = 10;
+    private int totalPages => (int)Math.Ceiling((double)filteredLogs.Count / logsPerPage);
+
+    private List<WebhookEndpoint> webhookEndpoints = new List<WebhookEndpoint>();
+    private List<WebhookLog> webhookLogs = new List<WebhookLog>();
+
+    private List<WebhookLog> filteredLogs => webhookLogs
+        .Where(log =>
+            (string.IsNullOrEmpty(searchTerm) ||
+             log.Payload.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(selectedEndpointFilter) ||
+             log.EndpointId == selectedEndpointFilter))
+        .Skip((currentPage - 1) * logsPerPage)
+        .Take(logsPerPage)
+        .ToList();
+
+    protected override void OnInitialized()
+    {
+        // Generate sample webhook endpoints and logs
+        GenerateSampleData();
+    }
+
+    private void GenerateSampleData()
+    {
+        // Sample webhook endpoints
+        webhookEndpoints = new List<WebhookEndpoint>
+        {
+            new WebhookEndpoint
+            {
+                Id = "endpoint1",
+                Name = "GitHub Integration",
+                Url = "https://example.com/webhooks/github",
+                Secret = "s3cr3t-k3y-1",
+                CreatedDate = DateTime.Now.AddMonths(-2)
+            },
+            new WebhookEndpoint
+            {
+                Id = "endpoint2",
+                Name = "Payment Notifications",
+                Url = "https://example.com/webhooks/payments",
+                Secret = "s3cr3t-k3y-2",
+                CreatedDate = DateTime.Now.AddMonths(-1)
+            },
+            new WebhookEndpoint
+            {
+                Id = "endpoint3",
+                Name = "Weather Updates",
+                Url = "https://example.com/webhooks/weather",
+                Secret = "s3cr3t-k3y-3",
+                CreatedDate = DateTime.Now.AddDays(-15)
+            }
+        };
+
+        // Sample webhook logs
+        Random random = new Random();
+        webhookLogs = new List<WebhookLog>();
+
+        for (int i = 0; i < 50; i++)
+        {
+            string endpointId = webhookEndpoints[random.Next(webhookEndpoints.Count)].Id;
+            bool success = random.Next(10) < 8; // 80% success rate
+
+            webhookLogs.Add(new WebhookLog
+            {
+                Id = $"log{i + 1}",
+                EndpointId = endpointId,
+                Timestamp = DateTime.Now.AddHours(-i * 2),
+                Success = success,
+                IpAddress = $"192.168.1.{random.Next(1, 255)}",
+                Payload = $"{{ \"event\": \"sample\", \"id\": \"{Guid.NewGuid()}\", \"data\": {{ \"value\": {random.Next(1, 100)} }} }}",
+                Headers = "Content-Type: application/json\nUser-Agent: Webhook-Tester/1.0",
+                ResponseCode = success ? 200 : 400,
+                ResponseBody = success ? "{ \"status\": \"success\" }" : "{ \"status\": \"error\", \"message\": \"Invalid payload\" }"
+            });
+        }
+
+        // Sort logs by timestamp (newest first)
+        webhookLogs = webhookLogs.OrderByDescending(log => log.Timestamp).ToList();
+    }
+
+    private void SearchLogs()
+    {
+        currentPage = 1;
+        // The filtering is handled by the filteredLogs property
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+        }
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+        }
+    }
+
+    private void ShowCreateEndpointModal()
+    {
+        // In a real application, this would show a modal for creating a new endpoint
+    }
+
+    private void ViewEndpointDetails(WebhookEndpoint endpoint)
+    {
+        // In a real application, this would show endpoint details
+    }
+
+    private void DeleteEndpoint(WebhookEndpoint endpoint)
+    {
+        // In a real application, this would delete the endpoint
+    }
+
+    private void ViewLogDetails(WebhookLog log)
+    {
+        // In a real application, this would show log details
+    }
+
+    private void SendTestWebhook()
+    {
+        // In a real application, this would send a test webhook
+    }
+
+    public class WebhookEndpoint
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Url { get; set; }
+        public string Secret { get; set; }
+        public DateTime CreatedDate { get; set; }
+    }
+
+    public class WebhookLog
+    {
+        public string Id { get; set; }
+        public string EndpointId { get; set; }
+        public DateTime Timestamp { get; set; }
+        public bool Success { get; set; }
+        public string IpAddress { get; set; }
+        public string Payload { get; set; }
+        public string Headers { get; set; }
+        public int ResponseCode { get; set; }
+        public string ResponseBody { get; set; }
+    }
+}

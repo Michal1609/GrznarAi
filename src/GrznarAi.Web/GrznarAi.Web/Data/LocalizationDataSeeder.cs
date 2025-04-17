@@ -1,6 +1,7 @@
 using GrznarAi.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GrznarAi.Web.Data
 {
@@ -9,16 +10,23 @@ namespace GrznarAi.Web.Data
         public static void Seed(ModelBuilder builder)
         {
             var localizationStrings = new List<LocalizationString>();
-            int idCounter = 1;
+            int idCounter = 1; // Reset counter to avoid gaps if previous migration is removed/recreated
 
             // Helper function to add both CS and EN entries
             void AddEntry(string key, string valueCs, string valueEn, string? description)
             {
-                localizationStrings.Add(new LocalizationString { Id = idCounter++, Key = key, LanguageCode = "cs", Value = valueCs, Description = description });
-                localizationStrings.Add(new LocalizationString { Id = idCounter++, Key = key, LanguageCode = "en", Value = valueEn, Description = description });
+                // Check for existing key/language combo before adding to list (basic prevention)
+                if (!localizationStrings.Any(l => l.Key == key && l.LanguageCode == "cs"))
+                {
+                    localizationStrings.Add(new LocalizationString { Id = idCounter++, Key = key, LanguageCode = "cs", Value = valueCs, Description = description });
+                }
+                if (!localizationStrings.Any(l => l.Key == key && l.LanguageCode == "en"))
+                {
+                    localizationStrings.Add(new LocalizationString { Id = idCounter++, Key = key, LanguageCode = "en", Value = valueEn, Description = description });
+                }
             }
 
-            // --- Seed Data --- 
+            // --- Home Page Seed Data --- 
             AddEntry("HomePage.Title", "GrznarAI - Osobní Web", "GrznarAI - Personal Website", "Home page title");
             // Carousel 1
             AddEntry("HomePage.Carousel1.Title", "Vítejte na GrznarAI", "Welcome to GrznarAI", "Home Carousel 1 Title");
@@ -48,7 +56,26 @@ namespace GrznarAi.Web.Data
             AddEntry("HomePage.LatestPosts.Title", "Nejnovější Příspěvky na Blogu", "Latest Blog Posts", "Latest Posts Section Title");
             AddEntry("HomePage.LatestPosts.ReadMore", "Číst Více", "Read More", "Latest Posts Button - Read More");
             AddEntry("HomePage.LatestPosts.ViewAll", "Zobrazit Všechny Příspěvky", "View All Posts", "Latest Posts Button - View All");
+            
+            // --- NavMenu Seed Data (Starts potentially after 42 if appended, but safer to recalculate IDs) ---
+            AddEntry("NavMenu.Home", "Domů", "Home", "NavMenu Link - Home");
+            AddEntry("NavMenu.Blog", "Blog", "Blog", "NavMenu Link - Blog");
+            AddEntry("NavMenu.Projects", "Projekty", "Projects", "NavMenu Link - Projects");
+            AddEntry("NavMenu.Meteo", "Meteo", "Meteo", "NavMenu Link - Meteo");
+            AddEntry("NavMenu.Admin.Title", "Administrace", "Administration", "NavMenu Dropdown - Admin");
+            AddEntry("NavMenu.Admin.Projects", "Projekty", "Projects", "NavMenu Admin Link - Projects");
+            AddEntry("NavMenu.Admin.Localization", "Lokalizace", "Localization", "NavMenu Admin Link - Localization");
+            AddEntry("NavMenu.User.ManageAccount", "Správa účtu", "Manage Account", "NavMenu User Dropdown - Manage");
+            AddEntry("NavMenu.User.Logout", "Odhlásit se", "Logout", "NavMenu User Dropdown - Logout");
+            AddEntry("NavMenu.Auth.Register", "Registrovat", "Register", "NavMenu Auth Link - Register");
+            AddEntry("NavMenu.Auth.Login", "Přihlásit se", "Login", "NavMenu Auth Link - Login");
             // --- End Seed Data --- 
+
+            // Ensure IDs are sequential if counter was reset
+            for(int i = 0; i < localizationStrings.Count; i++)
+            {
+                 localizationStrings[i].Id = i + 1;
+            }
 
             builder.Entity<LocalizationString>().HasData(localizationStrings);
         }

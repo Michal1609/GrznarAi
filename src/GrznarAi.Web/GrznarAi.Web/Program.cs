@@ -111,7 +111,14 @@ app.MapGet("/Culture/SetCulture", (string culture, string redirectUri, HttpConte
         );
     }
 
-    return Results.LocalRedirect(redirectUri ?? "/");
+    // Ensure the redirect URI is local. If not, redirect to root.
+    string localRedirectUri = "/"; // Default to root
+    if (!string.IsNullOrEmpty(redirectUri) && redirectUri.StartsWith("/"))
+    {
+        localRedirectUri = redirectUri;
+    }
+
+    return Results.LocalRedirect(localRedirectUri);
 });
 
 app.Run();

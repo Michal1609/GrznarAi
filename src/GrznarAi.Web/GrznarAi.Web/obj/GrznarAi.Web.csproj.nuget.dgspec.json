@@ -173,6 +173,10 @@
             "Microsoft.EntityFrameworkCore.Tools": {
               "target": "Package",
               "version": "[9.0.4, )"
+            },
+            "Octokit": {
+              "target": "Package",
+              "version": "[14.0.0, )"
             }
           },
           "imports": [

@@ -34,6 +34,10 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(opt => opt.UseSqlServ
 // Register ProjectService
 builder.Services.AddScoped<IProjectService, ProjectService>();
 
+// Register GitHubService (using Octokit)
+// Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();
+builder.Services.AddScoped<IGitHubService, GitHubService>(); // Register directly
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)

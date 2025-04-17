@@ -1,4 +1,9 @@
 @page "/projects"
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@inject IProjectService ProjectService
+@inject IGitHubService GitHubService
+@inject ILogger<Projects> Logger
 
 <PageTitle>Projects - GrznarAI</PageTitle>
 
@@ -6,102 +11,171 @@
     <h1 class="mb-4">My Projects</h1>
     
     <p class="lead mb-5">
-        Here you can find my GitHub projects with documentation, changelogs, and demos.
-        These projects showcase my skills and interests in software development.
+        Here you can find a selection of my projects, with details fetched directly from GitHub.
     </p>
     
-    <div class="row">
-        @foreach (var project in projects)
-        {
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card project-card h-100">
-                    <div class="card-body">
-                        <h3 class="card-title">@project.Name</h3>
-                        <p class="card-text text-muted">@project.Language</p>
-                        <p class="card-text">@project.Description</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div>
-                                <span class="badge bg-primary me-2">@project.Stars <i class="bi bi-star-fill"></i></span>
-                                <span class="badge bg-secondary">@project.Forks <i class="bi bi-diagram-2"></i></span>
+    @if (displayProjects == null)
+    {
+        <p><em>Loading projects...</em></p>
+    }
+    else if (!displayProjects.Any())
+    {
+        <p><em>No projects found or failed to load details from GitHub.</em></p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var project in displayProjects)
+            {
+                <div class="col-md-6 col-lg-4 mb-4 d-flex align-items-stretch">
+                    <div class="card project-card h-100 w-100">
+                        <div class="card-body d-flex flex-column">
+                            <h3 class="card-title">@project.DbName</h3>
+                            <div class="mb-2">
+                                @if (project.Languages.Any())
+                                {
+                                    @foreach(var lang in project.Languages)
+                                    {
+                                        <span class="badge @GetLanguageColorClass(lang) me-1">@lang</span>
+                                    }
+                                }
+                                else
+                                {
+                                     <span class="badge bg-secondary me-1">N/A</span>
+                                }
                             </div>
-                            <a href="@project.Url" target="_blank" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-github me-1"></i> View on GitHub
-                            </a>
+                            <p class="card-text flex-grow-1">@project.GitHubDescription</p>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-primary me-1" title="Stars"><i class="bi bi-star-fill"></i> @project.Stars</span>
+                                    <span class="badge bg-secondary" title="Forks"><i class="bi bi-diagram-2"></i> @project.Forks</span>
+                                </div>
+                                <div>
+                                    <a href="@project.GitHubUrl" target="_blank" class="btn btn-sm btn-outline-primary" disabled="string.IsNullOrEmpty(project.GitHubUrl)">
+                                        <i class="bi bi-github me-1"></i> GitHub
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-info disabled ms-1">Detail</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    // Sample project data - in a real application, this would come from a service or API
-    private List<ProjectModel> projects = new List<ProjectModel>
+    private class ProjectDisplayInfo
     {
-        new ProjectModel
-        {
-            Name = "Neural Network Library",
-            Description = "A lightweight neural network library for machine learning applications with support for various activation functions and optimization algorithms.",
-            Language = "C#",
-            Stars = 42,
-            Forks = 15,
-            Url = "https://github.com/Michal1609/sample-project-1"
-        },
-        new ProjectModel
-        {
-            Name = "Weather Data Collector",
-            Description = "A service for collecting and processing weather data from multiple sources with a REST API for data access.",
-            Language = "C#",
-            Stars = 28,
-            Forks = 8,
-            Url = "https://github.com/Michal1609/sample-project-2"
-        },
-        new ProjectModel
-        {
-            Name = "Markdown Blog Engine",
-            Description = "A lightweight blog engine that uses Markdown files for content with support for tags, categories, and comments.",
-            Language = "C#",
-            Stars = 35,
-            Forks = 12,
-            Url = "https://github.com/Michal1609/sample-project-3"
-        },
-        new ProjectModel
-        {
-            Name = "Identity Server Extension",
-            Description = "Extensions for Identity Server with additional authentication providers and user management features.",
-            Language = "C#",
-            Stars = 19,
-            Forks = 5,
-            Url = "https://github.com/Michal1609/sample-project-4"
-        },
-        new ProjectModel
-        {
-            Name = "Webhook Manager",
-            Description = "A service for managing webhooks with support for retry policies, validation, and monitoring.",
-            Language = "C#",
-            Stars = 24,
-            Forks = 7,
-            Url = "https://github.com/Michal1609/sample-project-5"
-        },
-        new ProjectModel
-        {
-            Name = "Entity Framework Extensions",
-            Description = "Useful extensions for Entity Framework Core including audit logging, soft delete, and query filters.",
-            Language = "C#",
-            Stars = 31,
-            Forks = 9,
-            Url = "https://github.com/Michal1609/sample-project-6"
-        }
-    };
-
-    public class ProjectModel
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Language { get; set; }
+        public string DbName { get; set; } = string.Empty;
+        public string? GitHubUrl { get; set; }
+        public string? GitHubDescription { get; set; }
+        public List<string> Languages { get; set; } = new List<string>();
         public int Stars { get; set; }
         public int Forks { get; set; }
-        public string Url { get; set; }
+    }
+
+    private List<ProjectDisplayInfo>? displayProjects;
+
+    protected override async Task OnInitializedAsync()
+    {
+        displayProjects = new List<ProjectDisplayInfo>();
+        List<Project> dbProjects = new List<Project>();
+
+        try
+        {
+            dbProjects = await ProjectService.GetProjectsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading projects from database.");
+            displayProjects = null;
+            return;
+        }
+
+        if (dbProjects == null || !dbProjects.Any())
+        {
+            Logger.LogInformation("No projects found in the database.");
+            return;
+        }
+
+        foreach (var dbProject in dbProjects)
+        {
+            GitHubRepositoryInfo? githubInfo = null;
+            if (!string.IsNullOrEmpty(dbProject.GitHubUrl))
+            {
+                var (owner, repoName) = ParseGitHubUrl(dbProject.GitHubUrl);
+                if (owner != null && repoName != null)
+                {
+                    try
+                    {
+                        githubInfo = await GitHubService.GetRepositoryDetailsAsync(owner, repoName);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Error fetching GitHub details for {Url}", dbProject.GitHubUrl);
+                    }
+                }
+                else
+                {
+                    Logger.LogWarning("Could not parse owner/repo from URL: {Url}", dbProject.GitHubUrl);
+                }
+            }
+
+            displayProjects.Add(new ProjectDisplayInfo
+            {
+                DbName = dbProject.Name,
+                GitHubUrl = dbProject.GitHubUrl,
+                GitHubDescription = githubInfo?.Description ?? dbProject.Description ?? "(No description available)",
+                Languages = githubInfo?.Languages ?? new List<string>(),
+                Stars = githubInfo?.Stars ?? 0,
+                Forks = githubInfo?.Forks ?? 0
+            });
+        }
+        
+        displayProjects = displayProjects.OrderBy(p => p.DbName).ToList();
+    }
+
+    private (string? owner, string? repoName) ParseGitHubUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return (null, null);
+        
+        if (!uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase))
+            return (null, null);
+
+        var pathSegments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (pathSegments.Length >= 2)
+        {
+            return (pathSegments[0], pathSegments[1]);
+        }
+
+        return (null, null);
+    }
+
+    // Helper method to get CSS class based on language
+    private string GetLanguageColorClass(string? language)
+    {
+        // Using switch expression for conciseness
+        return language?.ToLowerInvariant() switch
+        {
+            "c#" => "bg-primary",         // Blue
+            "javascript" => "bg-warning text-dark", // Yellow
+            "html" => "bg-danger",          // Red
+            "css" => "bg-info text-dark",    // Teal
+            "python" => "bg-success",         // Green
+            "typescript" => "bg-primary",     // Blue (same as C#)
+            "java" => "bg-secondary",       // Grey
+            "php" => "bg-secondary",        // Grey
+            "powershell" => "bg-dark",      // Dark
+            "shell" => "bg-dark",          // Dark
+            "dockerfile" => "bg-info text-dark", // Teal
+            "c++" => "bg-primary",         // Blue
+            "c" => "bg-secondary",        // Grey
+            "razor" => "bg-danger",         // Red (similar to HTML)
+            // Add more languages and colors as needed
+            _ => "bg-light text-dark",      // Default: Light Grey
+        };
     }
 }

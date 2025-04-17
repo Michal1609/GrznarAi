@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Services
+@using PSC.Blazor.Components.MarkdownEditor
 @inject NavigationManager NavigationManager
 @inject IProjectService ProjectService
 
@@ -35,7 +36,7 @@
 
     <div class="mb-3">
         <label for="projectContent" class="form-label">Content (Detailed Description)</label>
-        <InputTextArea id="projectContent" class="form-control" @bind-Value="project.Content" rows="15" />
+        <MarkdownEditor @bind-Value="project.Content" />
         <ValidationMessage For="() => project.Content" class="text-danger" />
     </div>
 

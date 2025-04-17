@@ -64,13 +64,13 @@
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\GrznarAi.Web.tm58dfkaxj.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-e6h0US\u002BD1qmNFvfz9ANOgVvUsLWL2eLrcl22OQwIpT0="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"8243"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022e6h0US\u002BD1qmNFvfz9ANOgVvUsLWL2eLrcl22OQwIpT0=\u0022"},{"Name":"Last-Modified","Value":"Thu, 17 Apr 2025 08:03:18 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"8243"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022e6h0US\u002BD1qmNFvfz9ANOgVvUsLWL2eLrcl22OQwIpT0=\u0022"},{"Name":"Last-Modified","Value":"Thu, 17 Apr 2025 14:23:14 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/GrznarAi.Web/GrznarAi.Web.tm58dfkaxj.bundle.scp.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\GrznarAi.Web.tm58dfkaxj.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"tm58dfkaxj"},{"Name":"integrity","Value":"sha256-e6h0US\u002BD1qmNFvfz9ANOgVvUsLWL2eLrcl22OQwIpT0="},{"Name":"label","Value":"_content/GrznarAi.Web/GrznarAi.Web.bundle.scp.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"8243"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022e6h0US\u002BD1qmNFvfz9ANOgVvUsLWL2eLrcl22OQwIpT0=\u0022"},{"Name":"Last-Modified","Value":"Thu, 17 Apr 2025 08:03:18 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"8243"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022e6h0US\u002BD1qmNFvfz9ANOgVvUsLWL2eLrcl22OQwIpT0=\u0022"},{"Name":"Last-Modified","Value":"Thu, 17 Apr 2025 14:23:14 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/GrznarAi.Web/images/hero-1.93fnzhtky3.svg">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\images\hero-1.svg'))</AssetFile>

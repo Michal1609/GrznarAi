@@ -30,7 +30,6 @@ public class ProjectService : IProjectService
     public async Task<Project> CreateProjectAsync(Project project)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
-        project.CreatedAt = DateTime.UtcNow;
         context.Projects.Add(project);
         await context.SaveChangesAsync();
         return project;
@@ -44,8 +43,7 @@ public class ProjectService : IProjectService
         {
             existingProject.Name = project.Name;
             existingProject.Description = project.Description;
-            existingProject.GitHubUrl = project.GitHubUrl;
-            context.Entry(existingProject).State = EntityState.Modified;
+            existingProject.Content = project.Content;
             await context.SaveChangesAsync();
         }
         else

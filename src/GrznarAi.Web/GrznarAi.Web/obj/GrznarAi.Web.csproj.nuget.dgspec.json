@@ -177,6 +177,10 @@
             "Octokit": {
               "target": "Package",
               "version": "[14.0.0, )"
+            },
+            "PSC.Blazor.Components.MarkdownEditor": {
+              "target": "Package",
+              "version": "[8.0.8, )"
             }
           },
           "imports": [

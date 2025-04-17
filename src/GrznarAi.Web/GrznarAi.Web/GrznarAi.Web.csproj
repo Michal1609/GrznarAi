@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Octokit" Version="14.0.0" />
+    <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" Version="8.0.8" />
     <ProjectReference Include="..\GrznarAi.Web.Client\GrznarAi.Web.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.4" />

@@ -252,7 +252,6 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\w
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\rfljcr39kj-rqf6uu838e.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\1yd9i3ybqm-tnel5ti2zm.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\ew0vtc3m58-1xokqux7de.gz
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\k418ddft6y-tm58dfkaxj.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\dkin0wa4ax-tm58dfkaxj.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\71qks4hacy-6q8bbuwooh.gz
 D:\tmp\11\GrznarAi-5b619ea10e958b61ce02ca36fed867e85667ae1f\src\GrznarAi.Web\GrznarAi.Web\bin\Debug\net9.0\appsettings.Development.json
@@ -518,3 +517,16 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\bin\Debug\net9.0\Octokit.dll
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\hyihx23xgp-2zm6kaef4m.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\rtakfl2nh7-8m7hgmefhy.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\bin\Debug\net9.0\PSC.Blazor.Components.Common.dll
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\bin\Debug\net9.0\PSC.Blazor.Components.MarkdownEditor.dll
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\vky5gwy8tv-bmodq5pdxh.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\1x95vk9ho6-jrtt0449ay.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\sns3a430wn-jooxqrzqvg.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\p63go29esi-qjcsuy7kvb.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\dmyciubgoj-ab76qa0wm4.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\kwirbab8vj-2isvx05c01.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\6770am3h3e-92mklnqvh0.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\mzr7dchsqb-j3udjwg4v7.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\l78uxfl99x-0dqgrd70m0.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\2ea750xdyy-xe26l4utcx.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\k418ddft6y-17w1kw5nzu.gz

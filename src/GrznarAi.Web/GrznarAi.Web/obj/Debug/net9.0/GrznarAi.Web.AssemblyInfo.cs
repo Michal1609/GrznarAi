@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GrznarAi.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+53afc35bb87e13c08b2107e00cafe1ae19616bae")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+178abfefaf5e9b39881799534e416bd228f641ff")]
 [assembly: System.Reflection.AssemblyProductAttribute("GrznarAi.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GrznarAi.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

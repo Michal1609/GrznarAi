@@ -1439,6 +1439,37 @@
           }
         }
       },
+      "PSC.Blazor.Components.Common/6.0.4": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.Web": "6.0.0"
+        },
+        "compile": {
+          "lib/net6.0/PSC.Blazor.Components.Common.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/PSC.Blazor.Components.Common.dll": {}
+        }
+      },
+      "PSC.Blazor.Components.MarkdownEditor/8.0.8": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.Web": "8.0.4",
+          "PSC.Blazor.Components.Common": "6.0.4"
+        },
+        "compile": {
+          "lib/net8.0/PSC.Blazor.Components.MarkdownEditor.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/PSC.Blazor.Components.MarkdownEditor.dll": {}
+        },
+        "build": {
+          "buildTransitive/PSC.Blazor.Components.MarkdownEditor.props": {}
+        },
+        "buildMultiTargeting": {
+          "buildMultiTargeting/PSC.Blazor.Components.MarkdownEditor.props": {}
+        }
+      },
       "System.ClientModel/1.0.0": {
         "type": "package",
         "dependencies": {
@@ -4527,6 +4558,49 @@
         "octokit.png"
       ]
     },
+    "PSC.Blazor.Components.Common/6.0.4": {
+      "sha512": "rs+k9ptxMiez8/ceEkHynONqMbNnS5ib3+LT/SNZSFclKXo7DL9gWTDPei+kExskrPdXDwUf/L8/WJG+4kwNSQ==",
+      "type": "package",
+      "path": "psc.blazor.components.common/6.0.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net6.0/PSC.Blazor.Components.Common.dll",
+        "psc.blazor.components.common.6.0.4.nupkg.sha512",
+        "psc.blazor.components.common.nuspec",
+        "psc_logo.png"
+      ]
+    },
+    "PSC.Blazor.Components.MarkdownEditor/8.0.8": {
+      "sha512": "0U3CQRHmIWLA12iyI26qMngt8ehYZs+i3mi3TuuRoi7LXDkHF7YHl6IBQ5UKuulwuQs2zOekiMRVhsotW3vG9A==",
+      "type": "package",
+      "path": "psc.blazor.components.markdowneditor/8.0.8",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "build/Microsoft.AspNetCore.StaticWebAssets.props",
+        "build/PSC.Blazor.Components.MarkdownEditor.props",
+        "buildMultiTargeting/PSC.Blazor.Components.MarkdownEditor.props",
+        "buildTransitive/PSC.Blazor.Components.MarkdownEditor.props",
+        "lib/net8.0/PSC.Blazor.Components.MarkdownEditor.dll",
+        "psc.blazor.components.markdowneditor.8.0.8.nupkg.sha512",
+        "psc.blazor.components.markdowneditor.nuspec",
+        "psc_logo.png",
+        "staticwebassets/PSC.Blazor.Components.MarkdownEditor.bundle.scp.css",
+        "staticwebassets/css/alert.css",
+        "staticwebassets/css/easymde.min.css",
+        "staticwebassets/css/markdowneditor.css",
+        "staticwebassets/css/textarearesize.css",
+        "staticwebassets/css/video.css",
+        "staticwebassets/grippie.png",
+        "staticwebassets/js/easymde.min.js",
+        "staticwebassets/js/markdownEditor.js",
+        "staticwebassets/js/mermaid.min.js",
+        "staticwebassets/js/textarearesize.min.js"
+      ]
+    },
     "System.ClientModel/1.0.0": {
       "sha512": "I3CVkvxeqFYjIVEP59DnjbeoGNfo/+SZrCLpRz2v/g0gpCHaEMPtWSY0s9k/7jR1rAsLNg2z2u1JRB76tPjnIw==",
       "type": "package",
@@ -5727,7 +5801,8 @@
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 9.0.4",
       "Microsoft.EntityFrameworkCore.SqlServer >= 9.0.4",
       "Microsoft.EntityFrameworkCore.Tools >= 9.0.4",
-      "Octokit >= 14.0.0"
+      "Octokit >= 14.0.0",
+      "PSC.Blazor.Components.MarkdownEditor >= 8.0.8"
     ]
   },
   "packageFolders": {
@@ -5808,6 +5883,10 @@
           "Octokit": {
             "target": "Package",
             "version": "[14.0.0, )"
+          },
+          "PSC.Blazor.Components.MarkdownEditor": {
+            "target": "Package",
+            "version": "[8.0.8, )"
           }
         },
         "imports": [

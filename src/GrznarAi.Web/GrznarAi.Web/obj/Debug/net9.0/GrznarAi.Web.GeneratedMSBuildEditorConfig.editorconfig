@@ -224,6 +224,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xNZXRlb1xNZXRlby5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/ProjectDetail.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm9qZWN0RGV0YWlsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Projects/Projects.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm9qZWN0c1xQcm9qZWN0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 

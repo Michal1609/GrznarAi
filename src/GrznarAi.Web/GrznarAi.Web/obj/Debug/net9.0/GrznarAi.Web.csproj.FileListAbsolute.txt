@@ -530,3 +530,4 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\l
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\2ea750xdyy-xe26l4utcx.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\k418ddft6y-17w1kw5nzu.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\bin\Debug\net9.0\Markdig.dll

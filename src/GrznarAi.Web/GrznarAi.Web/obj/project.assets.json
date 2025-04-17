@@ -60,6 +60,19 @@
           }
         }
       },
+      "Markdig/0.41.0": {
+        "type": "package",
+        "compile": {
+          "lib/net9.0/Markdig.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net9.0/Markdig.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.AspNetCore.Authorization/9.0.4": {
         "type": "package",
         "dependencies": {
@@ -2159,6 +2172,29 @@
         "lib/netstandard2.0/Humanizer.dll",
         "lib/netstandard2.0/Humanizer.xml",
         "logo.png"
+      ]
+    },
+    "Markdig/0.41.0": {
+      "sha512": "nEGSjfQ2i+MzJjvCZqoIBqW2x0iBALhhVogud48oPA/39a0n0jOhghdTYdm4xaDFBXmc4MxsVJAP5gtdvADvWQ==",
+      "type": "package",
+      "path": "markdig/0.41.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net462/Markdig.dll",
+        "lib/net462/Markdig.xml",
+        "lib/net8.0/Markdig.dll",
+        "lib/net8.0/Markdig.xml",
+        "lib/net9.0/Markdig.dll",
+        "lib/net9.0/Markdig.xml",
+        "lib/netstandard2.0/Markdig.dll",
+        "lib/netstandard2.0/Markdig.xml",
+        "lib/netstandard2.1/Markdig.dll",
+        "lib/netstandard2.1/Markdig.xml",
+        "markdig.0.41.0.nupkg.sha512",
+        "markdig.nuspec",
+        "markdig.png",
+        "readme.md"
       ]
     },
     "Microsoft.AspNetCore.Authorization/9.0.4": {
@@ -5796,6 +5832,7 @@
   "projectFileDependencyGroups": {
     "net9.0": [
       "GrznarAi.Web.Client >= 1.0.0",
+      "Markdig >= 0.41.0",
       "Microsoft.AspNetCore.Components.WebAssembly.Server >= 9.0.4",
       "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore >= 9.0.4",
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 9.0.4",
@@ -5860,6 +5897,10 @@
       "net9.0": {
         "targetAlias": "net9.0",
         "dependencies": {
+          "Markdig": {
+            "target": "Package",
+            "version": "[0.41.0, )"
+          },
           "Microsoft.AspNetCore.Components.WebAssembly.Server": {
             "target": "Package",
             "version": "[9.0.4, )"

@@ -1,0 +1,66 @@
+@page "/project/{ProjectId:int}"
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using Markdig
+@inject IProjectService ProjectService
+@inject ILogger<ProjectDetail> Logger
+
+<PageTitle>@(project?.Name ?? "Detail projektu")</PageTitle>
+
+@if (isLoading)
+{
+    <p><em>Načítání projektu...</em></p>
+}
+else if (project != null)
+{
+    @* Zobrazíme pouze vyrenderovaný Content *@
+    @if (!string.IsNullOrWhiteSpace(project.Content))
+    {
+        @((MarkupString)RenderedContent)
+    }
+    else
+    {
+        <p><em>Pro tento projekt není k dispozici žádný obsah.</em></p>
+    }
+}
+else
+{
+    <p class="alert alert-warning">Projekt nebyl nalezen.</p>
+}
+
+@code {
+    [Parameter]
+    public int ProjectId { get; set; }
+
+    private Project? project;
+    private bool isLoading = true;
+    private string RenderedContent { get; set; } = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        project = null;
+        RenderedContent = string.Empty;
+        try
+        {
+            project = await ProjectService.GetProjectByIdAsync(ProjectId);
+            if (project != null && !string.IsNullOrWhiteSpace(project.Content))
+            {
+                // Převede Markdown na HTML
+                RenderedContent = Markdown.ToHtml(project.Content);
+            }
+            else if (project == null)
+            {
+                Logger.LogWarning("ProjectDetail: Project with ID {ProjectId} not found.", ProjectId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "ProjectDetail: Error loading project with ID {ProjectId}", ProjectId);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+} 

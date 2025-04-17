@@ -54,7 +54,7 @@
                                     <a href="@project.GitHubUrl" target="_blank" class="btn btn-sm btn-outline-primary" disabled="string.IsNullOrEmpty(project.GitHubUrl)">
                                         <i class="bi bi-github me-1"></i> GitHub
                                     </a>
-                                    <a href="#" class="btn btn-sm btn-info disabled ms-1">Detail</a>
+                                    <a href="/project/@project.Id" class="btn btn-sm btn-info ms-1">Detail</a>
                                 </div>
                             </div>
                         </div>
@@ -68,6 +68,7 @@
 @code {
     private class ProjectDisplayInfo
     {
+        public int Id { get; set; }
         public string DbName { get; set; } = string.Empty;
         public string? GitHubUrl { get; set; }
         public string? GitHubDescription { get; set; }
@@ -125,6 +126,7 @@
 
             displayProjects.Add(new ProjectDisplayInfo
             {
+                Id = dbProject.Id,
                 DbName = dbProject.Name,
                 GitHubUrl = dbProject.GitHubUrl,
                 GitHubDescription = githubInfo?.Description ?? dbProject.Description ?? "(No description available)",

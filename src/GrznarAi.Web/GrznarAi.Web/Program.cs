@@ -6,6 +6,9 @@ using GrznarAi.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +45,20 @@ builder.Services.AddScoped<IGitHubService, GitHubService>(); // Register directl
 builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
 builder.Services.AddHostedService(sp => (LocalizationService)sp.GetRequiredService<ILocalizationService>());
 
+// Configure Localization
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[]
+    {
+        new CultureInfo("en"),
+        new CultureInfo("cs")
+    };
+    options.DefaultRequestCulture = new RequestCulture("en"); // Default to English
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider()); // Read from cookie first
+});
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
@@ -76,7 +93,25 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(GrznarAi.Web.Client._Imports).Assembly);
 
+// Use Localization Middleware - IMPORTANT: Place before MapRazorComponents
+app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
+
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+// Endpoint to set language preference in a cookie
+app.MapGet("/Culture/SetCulture", (string culture, string redirectUri, HttpContext context) =>
+{
+    if (culture != null && (culture == "cs" || culture == "en"))
+    {
+        context.Response.Cookies.Append(
+            CookieRequestCultureProvider.DefaultCookieName,
+            CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true } // Make cookie essential
+        );
+    }
+
+    return Results.LocalRedirect(redirectUri ?? "/");
+});
 
 app.Run();

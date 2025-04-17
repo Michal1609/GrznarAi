@@ -1,7 +1,8 @@
 ﻿@page "/"
 @inject IJSRuntime JSRuntime
+@inject GrznarAi.Web.Services.ILocalizationService Localizer
 
-<PageTitle>GrznarAI - Personal Website</PageTitle>
+<PageTitle>@Localizer.GetString("HomePage.Title")</PageTitle>
 
 <!-- Hero Carousel -->
 <div id="heroCarousel" class="carousel slide carousel-fade hero-carousel" data-bs-ride="carousel">
@@ -13,40 +14,40 @@
     <div class="carousel-inner">
         <div class="carousel-item active" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/images/hero-1.svg'); background-size: cover; background-position: center;">
             <div class="carousel-caption d-block">
-                <h1>Welcome to GrznarAI</h1>
-                <p class="lead">Personal website with blog, projects and meteo data</p>
+                <h1>@Localizer.GetString("HomePage.Carousel1.Title")</h1>
+                <p class="lead">@Localizer.GetString("HomePage.Carousel1.Lead")</p>
                 <div class="mt-4">
-                    <a href="/blog" class="btn btn-primary me-2">Read Blog</a>
-                    <a href="/projects" class="btn btn-outline-light">View Projects</a>
+                    <a href="/blog" class="btn btn-primary me-2">@Localizer.GetString("HomePage.Carousel.ReadBlogButton")</a>
+                    <a href="/projects" class="btn btn-outline-light">@Localizer.GetString("HomePage.Carousel.ViewProjectsButton")</a>
                 </div>
             </div>
         </div>
         <div class="carousel-item" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/images/hero-2.svg'); background-size: cover; background-position: center;">
             <div class="carousel-caption d-block">
-                <h1>Explore My Projects</h1>
-                <p class="lead">Check out my latest GitHub projects and experiments</p>
+                <h1>@Localizer.GetString("HomePage.Carousel2.Title")</h1>
+                <p class="lead">@Localizer.GetString("HomePage.Carousel2.Lead")</p>
                 <div class="mt-4">
-                    <a href="/projects" class="btn btn-primary">View Projects</a>
+                    <a href="/projects" class="btn btn-primary">@Localizer.GetString("HomePage.Carousel.ViewProjectsButton")</a>
                 </div>
             </div>
         </div>
         <div class="carousel-item" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('/images/hero-3.svg'); background-size: cover; background-position: center;">
             <div class="carousel-caption d-block">
-                <h1>Meteo Data</h1>
-                <p class="lead">Explore weather statistics from my personal meteo stations</p>
+                <h1>@Localizer.GetString("HomePage.Carousel3.Title")</h1>
+                <p class="lead">@Localizer.GetString("HomePage.Carousel3.Lead")</p>
                 <div class="mt-4">
-                    <a href="/meteo" class="btn btn-primary">View Meteo Data</a>
+                    <a href="/meteo" class="btn btn-primary">@Localizer.GetString("HomePage.Carousel.ViewMeteoButton")</a>
                 </div>
             </div>
         </div>
     </div>
     <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Previous</span>
+        <span class="visually-hidden">@Localizer.GetString("HomePage.Carousel.Previous")</span>
     </button>
     <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Next</span>
+        <span class="visually-hidden">@Localizer.GetString("HomePage.Carousel.Next")</span>
     </button>
 </div>
 
@@ -55,42 +56,42 @@
     <div class="row">
         <div class="col-md-4 mb-4">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column">
                     <div class="text-center mb-3">
                         <i class="bi bi-journal-richtext text-primary" style="font-size: 3rem;"></i>
                     </div>
-                    <h3 class="card-title text-center">Blog</h3>
-                    <p class="card-text">Share articles in Markdown format with full-text search and commenting capabilities.</p>
+                    <h3 class="card-title text-center">@Localizer.GetString("HomePage.Featured.Blog.Title")</h3>
+                    <p class="card-text">@Localizer.GetString("HomePage.Featured.Blog.Text")</p>
                     <div class="text-center mt-auto">
-                        <a href="/blog" class="btn btn-outline-primary">Read Blog</a>
+                        <a href="/blog" class="btn btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ReadBlogButton")</a>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4 mb-4">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column">
                     <div class="text-center mb-3">
                         <i class="bi bi-code-square text-primary" style="font-size: 3rem;"></i>
                     </div>
-                    <h3 class="card-title text-center">Projects</h3>
-                    <p class="card-text">Explore my GitHub projects with documentation, changelogs, and demos.</p>
+                    <h3 class="card-title text-center">@Localizer.GetString("HomePage.Featured.Projects.Title")</h3>
+                    <p class="card-text">@Localizer.GetString("HomePage.Featured.Projects.Text")</p>
                     <div class="text-center mt-auto">
-                        <a href="/projects" class="btn btn-outline-primary">View Projects</a>
+                        <a href="/projects" class="btn btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ViewProjectsButton")</a>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4 mb-4">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column">
                     <div class="text-center mb-3">
                         <i class="bi bi-cloud-sun text-primary" style="font-size: 3rem;"></i>
                     </div>
-                    <h3 class="card-title text-center">Meteo Data</h3>
-                    <p class="card-text">Access weather statistics and data from personal meteo stations.</p>
+                    <h3 class="card-title text-center">@Localizer.GetString("HomePage.Featured.Meteo.Title")</h3>
+                    <p class="card-text">@Localizer.GetString("HomePage.Featured.Meteo.Text")</p>
                     <div class="text-center mt-auto">
-                        <a href="/meteo" class="btn btn-outline-primary">View Meteo Data</a>
+                        <a href="/meteo" class="btn btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ViewMeteoButton")</a>
                     </div>
                 </div>
             </div>
@@ -100,7 +101,7 @@
 
 <!-- Latest Blog Posts -->
 <div class="container mt-5">
-    <h2 class="mb-4">Latest Blog Posts</h2>
+    <h2 class="mb-4">@Localizer.GetString("HomePage.LatestPosts.Title")</h2>
     <div class="row">
         <div class="col-md-4 mb-4">
             <div class="card">
@@ -108,7 +109,7 @@
                     <h5 class="card-title">Sample Blog Post 1</h5>
                     <p class="card-text text-muted">April 15, 2024</p>
                     <p class="card-text">This is a sample blog post that would be displayed on the homepage.</p>
-                    <a href="#" class="btn btn-sm btn-primary">Read More</a>
+                    <a href="#" class="btn btn-sm btn-primary">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
                 </div>
             </div>
         </div>
@@ -118,7 +119,7 @@
                     <h5 class="card-title">Sample Blog Post 2</h5>
                     <p class="card-text text-muted">April 10, 2024</p>
                     <p class="card-text">Another sample blog post that would be displayed on the homepage.</p>
-                    <a href="#" class="btn btn-sm btn-primary">Read More</a>
+                    <a href="#" class="btn btn-sm btn-primary">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
                 </div>
             </div>
         </div>
@@ -128,13 +129,13 @@
                     <h5 class="card-title">Sample Blog Post 3</h5>
                     <p class="card-text text-muted">April 5, 2024</p>
                     <p class="card-text">A third sample blog post that would be displayed on the homepage.</p>
-                    <a href="#" class="btn btn-sm btn-primary">Read More</a>
+                    <a href="#" class="btn btn-sm btn-primary">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
                 </div>
             </div>
         </div>
     </div>
     <div class="text-center mt-3">
-        <a href="/blog" class="btn btn-outline-primary">View All Posts</a>
+        <a href="/blog" class="btn btn-outline-primary">@Localizer.GetString("HomePage.LatestPosts.ViewAll")</a>
     </div>
 </div>
 

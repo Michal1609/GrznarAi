@@ -38,6 +38,10 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 // Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>(); // Register directly
 
+// Register LocalizationService as Singleton and Hosted Service
+builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
+builder.Services.AddHostedService(sp => (LocalizationService)sp.GetRequiredService<ILocalizationService>());
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)

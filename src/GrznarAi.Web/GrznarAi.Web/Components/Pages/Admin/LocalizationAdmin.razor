@@ -1,0 +1,94 @@
+@page "/admin/localization"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager NavigationManager
+@inject ILocalizationService LocalizationService
+@inject IJSRuntime JSRuntime
+@inject ILogger<LocalizationAdmin> Logger
+
+<PageTitle>Localization Management</PageTitle>
+
+<h1>Localization Management</h1>
+
+<div class="mb-3">
+    <a href="/admin/localization/new" class="btn btn-primary">Add New String</a>
+</div>
+
+@if (localizationStrings == null)
+{
+    <p><em>Loading strings...</em></p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Value (CS)</th>
+                    <th>Value (EN)</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in localizationStrings)
+                {
+                    <tr>
+                        <td><code>@item.Key</code></td>
+                        <td>@item.ValueCs</td>
+                        <td>@item.ValueEn</td>
+                        <td>@item.Description</td>
+                        <td>
+                            <a href="/admin/localization/edit/@item.Id" class="btn btn-sm btn-secondary me-1">Edit</a>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteString(item.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<LocalizationString>? localizationStrings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStrings();
+    }
+
+    private async Task LoadStrings()
+    {
+        try
+        {
+            localizationStrings = await LocalizationService.GetAllStringsAdminAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading localization strings for admin.");
+        }
+    }
+
+    private async Task DeleteString(int id)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this localization string?"))
+        {
+            try
+            {
+                await LocalizationService.DeleteStringAsync(id);
+                await LoadStrings(); // Reload list
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting localization string with ID {Id}", id);
+                // Optionally show an error message to the user
+            }
+        }
+    }
+} 

@@ -514,5 +514,5 @@ D:\tmp\11\GrznarAi-5b619ea10e958b61ce02ca36fed867e85667ae1f\src\GrznarAi.Web\Grz
 D:\tmp\11\GrznarAi-5b619ea10e958b61ce02ca36fed867e85667ae1f\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\GrznarAi.Web.genruntimeconfig.cache
 D:\tmp\11\GrznarAi-5b619ea10e958b61ce02ca36fed867e85667ae1f\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\ref\GrznarAi.Web.dll
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\jqf2ns4qat-w7mf952350.gz
-D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\bin\Debug\net9.0\Octokit.dll
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace GrznarAi.Web.Data
@@ -18,8 +19,8 @@ namespace GrznarAi.Web.Data
         [StringLength(200)]
         public string? GitHubUrl { get; set; }
 
-        [Required] 
-        public string Content { get; set; } = string.Empty;
+        // Navigační vlastnost pro vícejazyčný obsah
+        public ICollection<ProjectContent> Contents { get; set; } = new List<ProjectContent>();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -2,6 +2,7 @@
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Services
 @using Markdig
+@using System.Globalization
 @inject IProjectService ProjectService
 @inject ILogger<ProjectDetail> Logger
 
@@ -13,14 +14,14 @@
 }
 else if (project != null)
 {
-    @* Zobrazíme pouze vyrenderovaný Content *@
-    @if (!string.IsNullOrWhiteSpace(project.Content))
+    @* Zobrazíme pouze vyrenderovaný Content podle priority jazyka *@
+    @if (!string.IsNullOrWhiteSpace(RenderedContent))
     {
         @((MarkupString)RenderedContent)
     }
     else
     {
-        <p><em>Pro tento projekt není k dispozici žádný obsah.</em></p>
+        <p><em>Pro tento projekt není k dispozici žádný obsah v podporovaných jazycích.</em></p>
     }
 }
 else
@@ -35,21 +36,58 @@ else
     private Project? project;
     private bool isLoading = true;
     private string RenderedContent { get; set; } = string.Empty;
+    private Dictionary<string, string>? projectContents;
 
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
         project = null;
         RenderedContent = string.Empty;
+        projectContents = null;
+
         try
         {
             project = await ProjectService.GetProjectByIdAsync(ProjectId);
-            if (project != null && !string.IsNullOrWhiteSpace(project.Content))
+            if (project != null)
             {
-                // Převede Markdown na HTML
-                RenderedContent = Markdown.ToHtml(project.Content);
+                // Načteme všechny obsahy projektu
+                projectContents = await ProjectService.GetAllProjectContentsAsync(project.Id);
+                
+                // Získáme aktuální jazyk prohlížeče
+                string currentLang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
+                string? selectedContent = null;
+
+                // 1. Zkusíme obsah v aktuálním jazyce
+                if (projectContents.TryGetValue(currentLang, out string? currentLangContent))
+                {
+                    selectedContent = currentLangContent;
+                }
+                
+                // 2. Fallback na angličtinu, pokud je aktuální jazyk prázdný nebo obsah pro něj neexistuje
+                if (string.IsNullOrWhiteSpace(selectedContent) && projectContents.TryGetValue("en", out string? enContent))
+                {
+                    selectedContent = enContent;
+                }
+                
+                // 3. Fallback na češtinu, pokud je i angličtina prázdná nebo neexistuje
+                if (string.IsNullOrWhiteSpace(selectedContent) && projectContents.TryGetValue("cs", out string? csContent))
+                {
+                    selectedContent = csContent;
+                }
+                
+                // 4. Poslední možnost - vezmeme jakýkoliv dostupný obsah
+                if (string.IsNullOrWhiteSpace(selectedContent) && projectContents.Count > 0)
+                {
+                    selectedContent = projectContents.Values.FirstOrDefault();
+                }
+
+                // Převede Markdown na HTML, pokud byl nějaký obsah vybrán
+                if (!string.IsNullOrWhiteSpace(selectedContent))
+                {
+                    RenderedContent = Markdown.ToHtml(selectedContent);
+                }
             }
-            else if (project == null)
+            else
             {
                 Logger.LogWarning("ProjectDetail: Project with ID {ProjectId} not found.", ProjectId);
             }

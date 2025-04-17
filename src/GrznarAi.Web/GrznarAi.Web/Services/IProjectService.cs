@@ -11,5 +11,11 @@ namespace GrznarAi.Web.Services
         Task<Project> CreateProjectAsync(Project project);
         Task UpdateProjectAsync(Project project);
         Task DeleteProjectAsync(int id);
+
+        // Metody pro práci s vícejazyčným obsahem
+        Task<string?> GetProjectContentAsync(int projectId, string languageCode);
+        Task<Dictionary<string, string>> GetAllProjectContentsAsync(int projectId);
+        Task SetProjectContentAsync(int projectId, string languageCode, string content);
+        Task DeleteProjectContentAsync(int projectId, string languageCode);
     }
 } 

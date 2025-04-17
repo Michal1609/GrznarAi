@@ -8,16 +8,16 @@
 @inject NavigationManager NavigationManager
 @inject IProjectService ProjectService
 
-<PageTitle>Add New Project</PageTitle>
+<PageTitle>Přidat nový projekt</PageTitle>
 
-<h1>Add New Project</h1>
+<h1>Přidat nový projekt</h1>
 
 <EditForm Model="project" OnValidSubmit="HandleValidSubmit" FormName="NewProjectForm">
     <DataAnnotationsValidator />
     <ValidationSummary class="text-danger" />
 
     <div class="mb-3">
-        <label for="projectName" class="form-label">Project Name</label>
+        <label for="projectName" class="form-label">Název projektu</label>
         <InputText id="projectName" class="form-control" @bind-Value="project.Name" />
         <ValidationMessage For="() => project.Name" class="text-danger" />
     </div>
@@ -29,19 +29,56 @@
     </div>
 
     <div class="mb-3">
-        <label for="projectDescription" class="form-label">Short Description</label>
+        <label for="projectDescription" class="form-label">Krátký popis</label>
         <InputTextArea id="projectDescription" class="form-control" @bind-Value="project.Description" rows="3" />
         <ValidationMessage For="() => project.Description" class="text-danger" />
     </div>
 
-    <div class="mb-3">
-        <label for="projectContent" class="form-label">Content (Detailed Description)</label>
-        <MarkdownEditor @bind-Value="project.Content" />
-        <ValidationMessage For="() => project.Content" class="text-danger" />
+    <div class="card mb-4">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link @(selectedLanguage == "cs" ? "active" : "")" 
+                           id="cs-tab" 
+                           type="button" 
+                           role="tab" 
+                           aria-selected="@(selectedLanguage == "cs")" 
+                           @onclick="SelectCzechLanguage">
+                        Český obsah
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link @(selectedLanguage == "en" ? "active" : "")" 
+                           id="en-tab" 
+                           type="button" 
+                           role="tab" 
+                           aria-selected="@(selectedLanguage == "en")" 
+                           @onclick="SelectEnglishLanguage">
+                        Anglický obsah
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <div class="tab-pane fade @(selectedLanguage == "cs" ? "show active" : "")" id="cs-content" role="tabpanel" aria-labelledby="cs-tab">
+                    <div class="mb-3">
+                        <label for="csContent" class="form-label">Detailní popis (CZ)</label>
+                        <MarkdownEditor @bind-Value="contentCs" />
+                    </div>
+                </div>
+                <div class="tab-pane fade @(selectedLanguage == "en" ? "show active" : "")" id="en-content" role="tabpanel" aria-labelledby="en-tab">
+                    <div class="mb-3">
+                        <label for="enContent" class="form-label">Detailní popis (EN)</label>
+                        <MarkdownEditor @bind-Value="contentEn" />
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <button type="submit" class="btn btn-success">Create Project</button>
-    <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    <button type="submit" class="btn btn-success">Vytvořit projekt</button>
+    <button type="button" class="btn btn-secondary" @onclick="GoBack">Zrušit</button>
 
 </EditForm>
 
@@ -49,11 +86,28 @@
     [SupplyParameterFromForm]
     private Project project { get; set; } = new();
 
+    private string contentCs = string.Empty;
+    private string contentEn = string.Empty;
+    private string selectedLanguage = "cs"; // Výchozí jazyk
+
     private async Task HandleValidSubmit()
     {
         try
         {
-            await ProjectService.CreateProjectAsync(project);
+            // 1. Nejprve vytvoříme projekt
+            var createdProject = await ProjectService.CreateProjectAsync(project);
+
+            // 2. Poté uložíme obsahy pro jednotlivé jazyky (pokud nejsou prázdné)
+            if (!string.IsNullOrWhiteSpace(contentCs))
+            {
+                await ProjectService.SetProjectContentAsync(createdProject.Id, "cs", contentCs);
+            }
+
+            if (!string.IsNullOrWhiteSpace(contentEn))
+            {
+                await ProjectService.SetProjectContentAsync(createdProject.Id, "en", contentEn);
+            }
+
             NavigationManager.NavigateTo("/admin/projects");
         }
         catch (Exception ex)
@@ -67,5 +121,15 @@
     private void GoBack()
     {
         NavigationManager.NavigateTo("/admin/projects");
+    }
+
+    private void SelectCzechLanguage()
+    {
+        selectedLanguage = "cs";
+    }
+
+    private void SelectEnglishLanguage()
+    {
+        selectedLanguage = "en";
     }
 } 

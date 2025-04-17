@@ -516,3 +516,5 @@ D:\tmp\11\GrznarAi-5b619ea10e958b61ce02ca36fed867e85667ae1f\src\GrznarAi.Web\Grz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\jqf2ns4qat-w7mf952350.gz
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\bin\Debug\net9.0\Octokit.dll
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\hyihx23xgp-2zm6kaef4m.gz
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web\obj\Debug\net9.0\compressed\rtakfl2nh7-8m7hgmefhy.gz

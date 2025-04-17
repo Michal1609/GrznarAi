@@ -9,6 +9,10 @@
       "PackagePath": "staticwebassets\\app.css"
     },
     {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\css\\app.css",
+      "PackagePath": "staticwebassets\\css\\app.css"
+    },
+    {
       "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\css\\modern-style.css",
       "PackagePath": "staticwebassets\\css\\modern-style.css"
     },
@@ -35,6 +39,10 @@
     {
       "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\images\\logo.svg",
       "PackagePath": "staticwebassets\\images\\logo.svg"
+    },
+    {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\js\\site.js",
+      "PackagePath": "staticwebassets\\js\\site.js"
     },
     {
       "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",

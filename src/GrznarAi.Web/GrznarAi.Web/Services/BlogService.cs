@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Diagnostics;
+using GrznarAi.Web.Components.Pages.Blog.Models;
 
 namespace GrznarAi.Web.Services
 {
@@ -302,30 +304,46 @@ namespace GrznarAi.Web.Services
                 .ToList();
         }
         
-        public async Task<List<DateTime>> GetArchiveMonthsAsync(string languageCode)
+        public async Task<List<ArchiveMonthViewModel>> GetArchiveMonthsAsync(string languageCode)
         {
+            Debug.WriteLine($"BlogService.GetArchiveMonthsAsync: Získávám archivní měsíce pro jazyk {languageCode}");
+            
             await using var context = await _contextFactory.CreateDbContextAsync();
-            var dates = await context.BlogContents
+            
+            var blogContents = await context.BlogContents
                 .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished)
-                .Select(bc => bc.CreatedAt)
-                .Distinct()
                 .ToListAsync();
                 
-            // Seskupení podle roku a měsíce
-            return dates
-                .GroupBy(d => new { d.Year, d.Month })
-                .Select(g => new DateTime(g.Key.Year, g.Key.Month, 1))
-                .OrderByDescending(d => d)
+            // Seskupení podle roku a měsíce s počtem článků
+            var archiveMonths = blogContents
+                .GroupBy(bc => new { bc.CreatedAt.Year, bc.CreatedAt.Month })
+                .Select(g => new ArchiveMonthViewModel
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Count = g.Count()
+                })
+                .OrderByDescending(am => am.Year)
+                .ThenByDescending(am => am.Month)
                 .ToList();
+                
+            Debug.WriteLine($"BlogService.GetArchiveMonthsAsync: Nalezeno {archiveMonths.Count} archivních měsíců");
+            return archiveMonths;
         }
         
         public async Task<BlogContent?> GetBlogContentBySlugAsync(string languageCode, string slug)
         {
+            if (string.IsNullOrEmpty(languageCode) || string.IsNullOrEmpty(slug))
+            {
+                Debug.WriteLine("BlogService.GetBlogContentBySlugAsync: Jazykový kód nebo slug je prázdný");
+                return null;
+            }
+
             await using var context = await _contextFactory.CreateDbContextAsync();
             // Slug není v modelu, takže musíme použít alternativní strategii, např. slug = normalizovaný Title
             var blogContents = await context.BlogContents
                 .Include(bc => bc.Blog)
-                .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished)
+                .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished && !string.IsNullOrEmpty(bc.Title))
                 .ToListAsync();
                 
             // Vytvoření slugu z titulku a porovnání
@@ -334,8 +352,14 @@ namespace GrznarAi.Web.Services
         }
         
         // Pomocná metoda pro generování slugu z titulku
-        private string GenerateSlug(string title)
+        private string GenerateSlug(string? title)
         {
+            if (string.IsNullOrEmpty(title))
+            {
+                Debug.WriteLine("BlogService.GenerateSlug: Titulek je prázdný");
+                return string.Empty;
+            }
+
             // Jednoduchá implementace pro vytvoření slugu z titulku
             return title
                 .ToLowerInvariant()

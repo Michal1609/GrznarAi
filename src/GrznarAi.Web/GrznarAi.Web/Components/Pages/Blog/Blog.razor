@@ -234,7 +234,7 @@
                                 {
                                     <li>
                                         <a href="/blog/archive/@month.Year/@month.Month">
-                                            @month.ToString("MMMM yyyy")
+                                            @month.DisplayName (@month.Count)
                                         </a>
                                     </li>
                                 }
@@ -272,7 +272,7 @@
     
     private List<BlogViewModel> blogPosts = new List<BlogViewModel>();
     private List<string> popularTags = new List<string>();
-    private List<DateTime> archiveMonths = new List<DateTime>();
+    private List<ArchiveMonthViewModel> archiveMonths = new List<ArchiveMonthViewModel>();
     
     // Jazyk pro blog, můžeme později rozšířit pro vícejazyčnost
     private string languageCode = "cs";

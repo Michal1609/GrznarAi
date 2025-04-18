@@ -1,115 +1,234 @@
 @page "/blog"
+@page "/blog/tag/{Tag}"
+@page "/blog/archive/{Year:int}/{Month:int}"
+@using GrznarAi.Web.Services
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Components.Pages.Blog.Models
+@inject IBlogService BlogService
+@inject MarkdownService MarkdownService
+@inject NavigationManager NavigationManager
 
 <PageTitle>Blog - GrznarAI</PageTitle>
 
-<div class="container mt-4">
+<style>
+    .blog-card {
+        height: auto;
+        margin-bottom: 1.5rem;
+    }
+    
+    .blog-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .blog-post-title {
+        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+    }
+    
+    .blog-post-meta {
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .blog-card .card-text {
+        margin-bottom: 1rem;
+        max-height: 4.5em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+    
+    /* Styly pro sidebar */
+    .blog-sidebar .card {
+        margin-bottom: 1.25rem;
+    }
+    
+    .blog-sidebar .card-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .blog-sidebar .card-header h4 {
+        font-size: 1.15rem;
+        margin: 0;
+    }
+    
+    .blog-sidebar .card-body {
+        padding: 0.75rem 1rem;
+    }
+    
+    .blog-sidebar .list-unstyled li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .blog-sidebar .list-unstyled li:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Kompaktnější vyhledávání */
+    .search-container {
+        margin-bottom: 1rem;
+    }
+    
+    .search-container .input-group {
+        width: 100%;
+    }
+    
+    .blog-main-content {
+        min-height: 200px;
+    }
+    
+    .page-header {
+        margin-bottom: 1rem;
+    }
+    
+    .page-header h1 {
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<div class="container mt-3">
     <div class="row">
         <!-- Main content -->
         <div class="col-lg-8">
-            <h1 class="mb-4">Blog</h1>
-            
-            <!-- Search bar -->
-            <div class="card mb-4">
-                <div class="card-body">
+            <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+                <h1>
+                    Blog
+                    @if (!string.IsNullOrEmpty(Tag))
+                    {
+                        <small class="text-muted"> - Tag: @Tag</small>
+                    }
+                    @if (Year > 0 && Month > 0)
+                    {
+                        <small class="text-muted"> - Archive: @(new DateTime(Year, Month, 1).ToString("MMMM yyyy"))</small>
+                    }
+                </h1>
+                
+                <!-- Search bar - inline with header -->
+                <div class="search-container">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search blog posts..." @bind="searchTerm" @bind:event="oninput">
+                        <input type="text" class="form-control" placeholder="Hledejte v blogu..." @bind="searchTerm" @bind:event="oninput">
                         <button class="btn btn-primary" type="button" @onclick="Search">
-                            <i class="bi bi-search"></i> Search
+                            <i class="bi bi-search"></i>
                         </button>
                     </div>
                 </div>
             </div>
             
-            <!-- Blog posts -->
-            @foreach (var post in filteredPosts)
-            {
-                <div class="card mb-4 blog-post">
-                    <div class="card-body">
-                        <h2 class="card-title blog-post-title">@post.Title</h2>
-                        <p class="blog-post-meta">
-                            @post.PublishedDate.ToString("MMMM d, yyyy") by <a href="#">@post.Author</a>
-                            @foreach (var tag in post.Tags)
-                            {
-                                <span class="badge bg-secondary ms-2">@tag</span>
-                            }
-                        </p>
-                        <p class="card-text">@post.Excerpt</p>
-                        <a href="/blog/@post.Slug" class="btn btn-primary">Read More</a>
+            <div class="blog-main-content">
+                @if (isLoading)
+                {
+                    <div class="d-flex justify-content-center my-2">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Načítání...</span>
+                        </div>
                     </div>
-                </div>
-            }
-            
-            <!-- Pagination -->
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <a class="page-link" href="#" @onclick="PreviousPage" @onclick:preventDefault>Previous</a>
-                    </li>
-                    @for (int i = 1; i <= totalPages; i++)
+                }
+                else if (!blogPosts.Any())
+                {
+                    <div class="alert alert-info py-2" role="alert">
+                        <h5 class="alert-heading">Žádné příspěvky</h5>
+                        <p class="mb-0">Nebyly nalezeny žádné příspěvky odpovídající vašemu vyhledávání.</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Blog posts -->
+                    @foreach (var post in blogPosts)
                     {
-                        var pageNumber = i;
-                        <li class="page-item @(currentPage == pageNumber ? "active" : "")">
-                            <a class="page-link" href="#" @onclick="() => GoToPage(pageNumber)" @onclick:preventDefault>@pageNumber</a>
-                        </li>
+                        <div class="card blog-card">
+                            <div class="card-body">
+                                <h2 class="blog-post-title">@post.Title</h2>
+                                <div class="blog-post-meta text-muted">
+                                    @post.CreatedAt.ToString("d. MMMM yyyy")
+                                    @if (post.Tags.Any())
+                                    {
+                                        <span class="ms-1">|</span>
+                                        @foreach (var tag in post.Tags)
+                                        {
+                                            <a href="/blog/tag/@tag" class="badge bg-secondary ms-1 text-decoration-none">@tag</a>
+                                        }
+                                    }
+                                </div>
+                                <p class="card-text">@post.Description</p>
+                                <a href="/blog/@post.Slug" class="btn btn-sm btn-primary">Číst více</a>
+                            </div>
+                        </div>
                     }
-                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                        <a class="page-link" href="#" @onclick="NextPage" @onclick:preventDefault>Next</a>
-                    </li>
-                </ul>
-            </nav>
+                
+                    <!-- Pagination -->
+                    @if (totalPages > 1)
+                    {
+                        <nav aria-label="Page navigation" class="mt-3">
+                            <ul class="pagination pagination-sm justify-content-center">
+                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" @onclick="PreviousPage">Předchozí</a>
+                                </li>
+                                @for (int i = 1; i <= totalPages; i++)
+                                {
+                                    var pageNumber = i;
+                                    <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                                        <a class="page-link" href="javascript:void(0)" @onclick="() => GoToPage(pageNumber)">@pageNumber</a>
+                                    </li>
+                                }
+                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                    <a class="page-link" href="javascript:void(0)" @onclick="NextPage">Další</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
+            </div>
         </div>
         
         <!-- Sidebar -->
         <div class="col-lg-4">
-            <div class="blog-sidebar">
-                <!-- Categories -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4 class="mb-0">Categories</h4>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            @foreach (var category in categories)
-                            {
-                                <li class="mb-2">
-                                    <a href="#" @onclick="() => FilterByCategory(category)" @onclick:preventDefault class="d-flex justify-content-between align-items-center">
-                                        @category
-                                        <span class="badge bg-primary rounded-pill">@blogPosts.Count(p => p.Tags.Contains(category))</span>
-                                    </a>
-                                </li>
-                            }
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- Calendar -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4 class="mb-0">Archive</h4>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            @foreach (var month in archiveMonths)
-                            {
-                                <li class="mb-2">
-                                    <a href="#" @onclick="() => FilterByMonth(month)" @onclick:preventDefault>
-                                        @month.ToString("MMMM yyyy")
-                                    </a>
-                                </li>
-                            }
-                        </ul>
-                    </div>
-                </div>
-                
+            <div class="blog-sidebar">                
                 <!-- Popular Tags -->
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="mb-0">Popular Tags</h4>
+                        <h4>Populární tagy</h4>
                     </div>
                     <div class="card-body">
-                        @foreach (var tag in popularTags)
+                        @if (popularTags.Any())
                         {
-                            <a href="#" @onclick="() => FilterByCategory(tag)" @onclick:preventDefault class="badge bg-secondary text-decoration-none me-1 mb-1">@tag</a>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var tag in popularTags)
+                                {
+                                    <a href="/blog/tag/@tag" class="badge bg-secondary text-decoration-none">@tag</a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">Zatím nejsou žádné tagy</p>
+                        }
+                    </div>
+                </div>
+                
+                <!-- Archive -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Archiv</h4>
+                    </div>
+                    <div class="card-body">
+                        @if (archiveMonths.Any())
+                        {
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var month in archiveMonths)
+                                {
+                                    <li>
+                                        <a href="/blog/archive/@month.Year/@month.Month">
+                                            @month.ToString("MMMM yyyy")
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">Zatím není žádný archiv</p>
                         }
                     </div>
                 </div>
@@ -119,200 +238,230 @@
 </div>
 
 @code {
+    [Parameter]
+    public string? Tag { get; set; }
+    
+    [Parameter]
+    public int Year { get; set; }
+    
+    [Parameter]
+    public int Month { get; set; }
+    
     private string searchTerm = "";
+    private bool isSearching = false;
+    private bool isLoading = true;
+    
     private int currentPage = 1;
-    private int postsPerPage = 5;
-    private int totalPages => (int)Math.Ceiling((double)filteredPosts.Count / postsPerPage);
+    private int postsPerPage = 10;
+    private int totalPosts = 0;
+    private int totalPages => (int)Math.Ceiling((double)totalPosts / postsPerPage);
     
-    private List<BlogPost> blogPosts = new List<BlogPost>();
-    private List<BlogPost> filteredPosts => blogPosts
-        .Where(p => string.IsNullOrEmpty(searchTerm) || 
-                   p.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
-                   p.Content.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-        .Skip((currentPage - 1) * postsPerPage)
-        .Take(postsPerPage)
-        .ToList();
-    
-    private List<string> categories = new List<string> { "Technology", "Programming", "AI", "Machine Learning", "Web Development", "Data Science" };
-    private List<string> popularTags = new List<string> { "C#", ".NET", "Blazor", "AI", "Machine Learning", "SQL", "Entity Framework", "Web Development" };
+    private List<BlogViewModel> blogPosts = new List<BlogViewModel>();
+    private List<string> popularTags = new List<string>();
     private List<DateTime> archiveMonths = new List<DateTime>();
     
-    protected override void OnInitialized()
+    // Jazyk pro blog, můžeme později rozšířit pro vícejazyčnost
+    private string languageCode = "cs";
+    
+    protected override async Task OnInitializedAsync()
     {
-        // Generate sample blog posts
-        GenerateSampleBlogPosts();
+        await LoadDataAsync();
+    }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        // Pokud se změní URL parametry (Tag, Year, Month), resetujeme stránku a znovu načteme data
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+    
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
         
-        // Generate archive months
-        var startDate = DateTime.Now.AddMonths(-12);
-        for (int i = 0; i <= 12; i++)
+        try
         {
-            archiveMonths.Add(startDate.AddMonths(i));
+            // Načtení příspěvků podle parametrů URL
+            if (!string.IsNullOrEmpty(Tag))
+            {
+                var (posts, count) = await LoadPostsByTagAsync(Tag);
+                blogPosts = posts;
+                totalPosts = count;
+            }
+            else if (Year > 0 && Month > 0)
+            {
+                var (posts, count) = await LoadPostsByMonthAsync(Year, Month);
+                blogPosts = posts;
+                totalPosts = count;
+            }
+            else if (isSearching && !string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var (posts, count) = await LoadPostsBySearchAsync(searchTerm);
+                blogPosts = posts;
+                totalPosts = count;
+                isSearching = false;
+            }
+            else
+            {
+                var (posts, count) = await LoadAllPostsAsync();
+                blogPosts = posts;
+                totalPosts = count;
+            }
+            
+            // Načtení populárních tagů pro sidebar
+            popularTags = await BlogService.GetPopularTagsAsync(languageCode);
+            
+            // Načtení archivních měsíců pro sidebar
+            archiveMonths = await BlogService.GetArchiveMonthsAsync(languageCode);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading blog data: {ex.Message}");
+            // Můžeme zde implementovat lepší zpracování chyb
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
     
-    private void GenerateSampleBlogPosts()
+    private async Task<(List<BlogViewModel>, int)> LoadAllPostsAsync()
     {
-        blogPosts = new List<BlogPost>
+        var posts = await BlogService.GetPublishedBlogsAsync(
+            languageCode, 
+            skip: (currentPage - 1) * postsPerPage, 
+            take: postsPerPage);
+            
+        var totalCount = await BlogService.GetPublishedBlogsCountAsync(languageCode);
+        
+        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+    }
+    
+    private async Task<(List<BlogViewModel>, int)> LoadPostsByTagAsync(string tag)
+    {
+        var posts = await BlogService.GetBlogsByTagAsync(
+            languageCode,
+            tag,
+            skip: (currentPage - 1) * postsPerPage, 
+            take: postsPerPage);
+            
+        var totalCount = await BlogService.GetBlogsByTagCountAsync(languageCode, tag);
+        
+        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+    }
+    
+    private async Task<(List<BlogViewModel>, int)> LoadPostsByMonthAsync(int year, int month)
+    {
+        var posts = await BlogService.GetBlogsByMonthAsync(
+            languageCode,
+            year,
+            month,
+            skip: (currentPage - 1) * postsPerPage, 
+            take: postsPerPage);
+            
+        var totalCount = await BlogService.GetBlogsByMonthCountAsync(languageCode, year, month);
+        
+        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+    }
+    
+    private async Task<(List<BlogViewModel>, int)> LoadPostsBySearchAsync(string term)
+    {
+        var posts = await BlogService.SearchBlogsAsync(
+            languageCode,
+            term,
+            skip: (currentPage - 1) * postsPerPage, 
+            take: postsPerPage);
+            
+        var totalCount = await BlogService.SearchBlogsCountAsync(languageCode, term);
+        
+        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+    }
+    
+    private BlogViewModel MapBlogContentToViewModel(BlogContent blogContent)
+    {
+        return new BlogViewModel
         {
-            new BlogPost
-            {
-                Id = 1,
-                Title = "Getting Started with Blazor WebAssembly",
-                Slug = "getting-started-with-blazor-webassembly",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-2),
-                Content = "Blazor WebAssembly is a single-page app framework for building interactive client-side web apps with .NET. Blazor WebAssembly uses open web standards without plugins or code transpilation and works in all modern web browsers, including mobile browsers.",
-                Excerpt = "Learn how to build interactive web applications with Blazor WebAssembly, a powerful framework for .NET developers.",
-                Tags = new List<string> { "Programming", "Web Development", "Blazor", ".NET" },
-                IsPublished = true,
-                AllowComments = true
-            },
-            new BlogPost
-            {
-                Id = 2,
-                Title = "Introduction to Entity Framework Core",
-                Slug = "introduction-to-entity-framework-core",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-5),
-                Content = "Entity Framework Core is a modern object-database mapper for .NET. It supports LINQ queries, change tracking, updates, and schema migrations. EF Core works with SQL Server, Azure SQL Database, SQLite, Azure Cosmos DB, MySQL, PostgreSQL, and other databases through a provider plugin API.",
-                Excerpt = "Discover how to use Entity Framework Core to simplify database access in your .NET applications.",
-                Tags = new List<string> { "Programming", "Database", "Entity Framework", ".NET" },
-                IsPublished = true,
-                AllowComments = true
-            },
-            new BlogPost
-            {
-                Id = 3,
-                Title = "Building a Weather Station with Arduino",
-                Slug = "building-a-weather-station-with-arduino",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-10),
-                Content = "In this tutorial, we'll build a weather station using Arduino that can measure temperature, humidity, pressure, and wind speed. We'll connect various sensors to the Arduino board and write code to read and process the data.",
-                Excerpt = "Learn how to build your own weather station using Arduino and various sensors to collect meteorological data.",
-                Tags = new List<string> { "Technology", "Arduino", "IoT", "Weather" },
-                IsPublished = true,
-                AllowComments = true
-            },
-            new BlogPost
-            {
-                Id = 4,
-                Title = "Introduction to Machine Learning with ML.NET",
-                Slug = "introduction-to-machine-learning-with-ml-net",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-15),
-                Content = "ML.NET is an open-source, cross-platform machine learning framework for .NET developers. With ML.NET, you can create custom machine learning models using C# or F# without having to leave the .NET ecosystem.",
-                Excerpt = "Explore machine learning concepts and implementation using ML.NET, Microsoft's machine learning framework for .NET developers.",
-                Tags = new List<string> { "AI", "Machine Learning", "ML.NET", ".NET" },
-                IsPublished = true,
-                AllowComments = true
-            },
-            new BlogPost
-            {
-                Id = 5,
-                Title = "Implementing Authentication in ASP.NET Core",
-                Slug = "implementing-authentication-in-asp-net-core",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-20),
-                Content = "Authentication is a crucial aspect of web applications. In this article, we'll explore how to implement authentication in ASP.NET Core using Identity, JWT tokens, and external providers like Google and Facebook.",
-                Excerpt = "Learn how to secure your ASP.NET Core applications with various authentication methods and best practices.",
-                Tags = new List<string> { "Programming", "Web Development", "Security", "ASP.NET Core" },
-                IsPublished = true,
-                AllowComments = true
-            },
-            new BlogPost
-            {
-                Id = 6,
-                Title = "Working with SQL Server in .NET Applications",
-                Slug = "working-with-sql-server-in-net-applications",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-25),
-                Content = "SQL Server is a powerful relational database management system that works well with .NET applications. In this article, we'll explore different ways to interact with SQL Server from .NET, including ADO.NET, Entity Framework Core, and Dapper.",
-                Excerpt = "Discover various approaches to working with SQL Server databases in your .NET applications for optimal performance and maintainability.",
-                Tags = new List<string> { "Programming", "Database", "SQL Server", ".NET" },
-                IsPublished = true,
-                AllowComments = true
-            },
-            new BlogPost
-            {
-                Id = 7,
-                Title = "Creating a Neural Network from Scratch in C#",
-                Slug = "creating-a-neural-network-from-scratch-in-csharp",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-30),
-                Content = "Neural networks are the foundation of deep learning. In this article, we'll implement a simple neural network from scratch in C# to understand the underlying concepts and mathematics.",
-                Excerpt = "Build a simple neural network from scratch in C# to understand the fundamental concepts of deep learning and artificial intelligence.",
-                Tags = new List<string> { "AI", "Machine Learning", "Neural Networks", "C#" },
-                IsPublished = true,
-                AllowComments = true
-            },
-            new BlogPost
-            {
-                Id = 8,
-                Title = "Deploying .NET Applications to Azure",
-                Slug = "deploying-net-applications-to-azure",
-                Author = "Michal",
-                PublishedDate = DateTime.Now.AddDays(-35),
-                Content = "Azure provides a robust platform for hosting .NET applications. In this article, we'll explore different options for deploying .NET applications to Azure, including App Service, Azure Functions, and Azure Kubernetes Service.",
-                Excerpt = "Learn how to deploy your .NET applications to Microsoft Azure using various services and best practices for scalability and reliability.",
-                Tags = new List<string> { "Programming", "Cloud", "Azure", ".NET" },
-                IsPublished = true,
-                AllowComments = true
-            }
+            Id = blogContent.Id,
+            BlogId = blogContent.BlogId,
+            Title = blogContent.Title,
+            Slug = GenerateSlug(blogContent.Title),
+            Description = blogContent.Description ?? "",
+            Content = blogContent.Content,
+            Tags = ParseTags(blogContent.Tags),
+            CreatedAt = blogContent.CreatedAt,
+            UpdatedAt = blogContent.UpdatedAt ?? DateTime.UtcNow,
+            IsPublished = blogContent.IsPublished
         };
     }
     
-    private void Search()
+    private List<string> ParseTags(string? tags)
     {
-        currentPage = 1;
-        // The filtering is handled by the filteredPosts property
+        if (string.IsNullOrEmpty(tags))
+            return new List<string>();
+            
+        return tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => t.Trim())
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
     }
     
-    private void FilterByCategory(string category)
+    private string GenerateSlug(string title)
     {
-        searchTerm = category;
-        currentPage = 1;
+        // Jednoduchá implementace pro vytvoření slugu z titulku (stejná jako v BlogService)
+        return title
+            .ToLowerInvariant()
+            .Replace(" ", "-")
+            .Replace("č", "c")
+            .Replace("ř", "r")
+            .Replace("ž", "z")
+            .Replace("š", "s")
+            .Replace("ě", "e")
+            .Replace("ť", "t")
+            .Replace("ď", "d")
+            .Replace("ň", "n")
+            .Replace("ú", "u")
+            .Replace("ů", "u")
+            .Replace("á", "a")
+            .Replace("í", "i")
+            .Replace("é", "e")
+            .Replace("ý", "y")
+            .Replace("ó", "o");
     }
     
-    private void FilterByMonth(DateTime month)
+    private async Task Search()
     {
-        // In a real application, you would filter by month
-        // For this sample, we'll just reset the search
-        searchTerm = month.ToString("MMMM yyyy");
+        isSearching = !string.IsNullOrWhiteSpace(searchTerm);
         currentPage = 1;
+        await LoadDataAsync();
     }
     
-    private void PreviousPage()
+    private async Task PreviousPage()
     {
         if (currentPage > 1)
         {
             currentPage--;
+            await LoadDataAsync();
         }
     }
     
-    private void NextPage()
+    private async Task NextPage()
     {
         if (currentPage < totalPages)
         {
             currentPage++;
+            await LoadDataAsync();
         }
     }
     
-    private void GoToPage(int page)
+    private async Task GoToPage(int pageNumber)
     {
-        currentPage = page;
+        currentPage = pageNumber;
+        await LoadDataAsync();
     }
     
-    public class BlogPost
+    private void ResetSearch()
     {
-        public int Id { get; set; }
-        public string Slug { get; set; }
-        public string Title { get; set; }
-        public string Author { get; set; }
-        public DateTime PublishedDate { get; set; }
-        public bool IsPublished { get; set; }
-        public bool AllowComments { get; set; }
-        public string Content { get; set; }
-        public string Excerpt { get; set; }
-        public List<string> Tags { get; set; }
+        searchTerm = "";
+        isSearching = false;
     }
 }

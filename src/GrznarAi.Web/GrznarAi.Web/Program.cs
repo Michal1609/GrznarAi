@@ -127,4 +127,11 @@ app.MapGet("/Culture/SetCulture", (string culture, string redirectUri, HttpConte
     return Results.LocalRedirect(localRedirectUri);
 });
 
+// Seed localization data
+using (var scope = app.Services.CreateScope())
+{
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+    await LocalizationDataSeeder.SeedAsync(factory);
+}
+
 app.Run();

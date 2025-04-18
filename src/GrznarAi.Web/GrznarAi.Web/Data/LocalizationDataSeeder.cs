@@ -2,15 +2,17 @@ using GrznarAi.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace GrznarAi.Web.Data
 {
     public static class LocalizationDataSeeder
     {
-        public static void Seed(ModelBuilder builder)
+        public static async Task SeedAsync(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
+            using var context = await contextFactory.CreateDbContextAsync();
+            
             var localizationStrings = new List<LocalizationString>();
-            int idCounter = 1;
             var existingKeys = new HashSet<string>(); // Key_LanguageCode
 
             // Helper function to add entries if not already present
@@ -18,11 +20,11 @@ namespace GrznarAi.Web.Data
             {
                 if (existingKeys.Add($"{key}_cs"))
                 {
-                    localizationStrings.Add(new LocalizationString { Id = idCounter++, Key = key, LanguageCode = "cs", Value = valueCs, Description = description });
+                    localizationStrings.Add(new LocalizationString { Key = key, LanguageCode = "cs", Value = valueCs, Description = description });
                 }
                 if (existingKeys.Add($"{key}_en"))
                 {
-                    localizationStrings.Add(new LocalizationString { Id = idCounter++, Key = key, LanguageCode = "en", Value = valueEn, Description = description });
+                    localizationStrings.Add(new LocalizationString { Key = key, LanguageCode = "en", Value = valueEn, Description = description });
                 }
             }
 
@@ -63,15 +65,76 @@ namespace GrznarAi.Web.Data
             AddEntry("NavMenu.Auth.Login", "Přihlásit se", "Login", "NavMenu Auth Link - Login");
 
             // --- Footer Seed Data ---
-            // HomePage.Carousel1.Lead is already defined above for the description
             AddEntry("Footer.Links", "Odkazy", "Links", "Footer Heading - Links");
             AddEntry("Footer.Connect", "Spojte se", "Connect", "Footer Heading - Connect");
             AddEntry("Footer.GitHub", "GitHub", "GitHub", "Footer Link - GitHub"); // Same text, but good practice to have key
             AddEntry("Footer.Contact", "Kontakt", "Contact", "Footer Link - Contact");
             AddEntry("Footer.Copyright", "&copy; {0} GrznarAI. Všechna práva vyhrazena.", "&copy; {0} GrznarAI. All rights reserved.", "Footer Copyright Text (with year placeholder {0})");
+            
+            // --- Blog Seed Data ---
+            AddEntry("Blog.Title", "Blog", "Blog", "Blog page title");
+            AddEntry("Blog.Loading", "Načítání...", "Loading...", "Blog loading message");
+            AddEntry("Blog.NoPostsFound", "Nebyly nalezeny žádné příspěvky.", "No posts found.", "Message when no blog posts are found");
+            AddEntry("Blog.SearchResults", "Výsledky vyhledávání pro: {0}", "Search results for: {0}", "Search results message with search term placeholder");
+            AddEntry("Blog.ClearSearch", "Vymazat vyhledávání", "Clear search", "Clear search button text");
+            AddEntry("Blog.Search.Placeholder", "Hledat v blogu...", "Search blog...", "Search input placeholder");
+            AddEntry("Blog.Search.Button", "Hledat", "Search", "Search button text");
+            AddEntry("Blog.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title");
+            AddEntry("Blog.Archive", "Archiv", "Archive", "Archive section title");
+            AddEntry("Blog.ReadMore", "Číst více", "Read more", "Read more button text");
+            AddEntry("Blog.CreatedOn", "Vytvořeno: {0}", "Created on: {0}", "Blog post creation date with date placeholder");
+            AddEntry("Blog.Tags", "Štítky:", "Tags:", "Tags label");
+            
+            // Nové překlady pro blog
+            AddEntry("Blog.Sidebar.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title in sidebar");
+            AddEntry("Blog.Sidebar.Archive", "Archiv", "Archive", "Archive section title in sidebar");
+            
+            // --- BlogPost Seed Data ---
+            AddEntry("BlogPost.Title", "Blog Příspěvek", "Blog Post", "Blog post page title");
+            AddEntry("BlogPost.Loading", "Načítání příspěvku...", "Loading post...", "Blog post loading message");
+            AddEntry("BlogPost.NotFound", "Příspěvek nebyl nalezen.", "Post not found.", "Blog post not found message");
+            AddEntry("BlogPost.Error", "Při načítání příspěvku došlo k chybě.", "An error occurred while loading the post.", "Blog post error message");
+            AddEntry("BlogPost.CreatedOn", "Vytvořeno: {0}", "Created on: {0}", "Blog post creation date with date placeholder");
+            AddEntry("BlogPost.Tags", "Štítky:", "Tags:", "Tags label in blog post detail");
+            AddEntry("BlogPost.BackToBlog", "Zpět na blog", "Back to blog", "Back to blog button text");
+            
+            // Nové překlady pro blogpost
+            AddEntry("BlogPost.Share", "Sdílet", "Share", "Share button text for blog post");
+            AddEntry("BlogPost.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title in blog post");
+            AddEntry("BlogPost.RelatedPosts", "Související příspěvky", "Related Posts", "Related posts section title in blog post");
             // --- End Seed Data --- 
 
-            builder.Entity<LocalizationString>().HasData(localizationStrings);
+            try
+            {
+                // Načtení existujících klíčů z databáze
+                var existingDbKeys = await context.LocalizationStrings
+                    .Select(ls => new { ls.Key, ls.LanguageCode })
+                    .ToListAsync();
+
+                // Filtrování pouze nových lokalizačních klíčů
+                var newEntries = localizationStrings
+                    .Where(newItem => !existingDbKeys.Any(dbItem => 
+                        dbItem.Key == newItem.Key && 
+                        dbItem.LanguageCode == newItem.LanguageCode))
+                    .ToList();
+
+                // Přidání pouze nových klíčů do databáze
+                if (newEntries.Any())
+                {
+                    await context.LocalizationStrings.AddRangeAsync(newEntries);
+                    await context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Logování chyby
+                Console.WriteLine($"Chyba při seedování lokalizačních dat: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Vnitřní chyba: {ex.InnerException.Message}");
+                }
+                throw; // Předání chyby dál pro zpracování
+            }
         }
     }
 } 

@@ -7,8 +7,9 @@
 @inject MarkdownService MarkdownService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject ILocalizationService Localizer
 
-<PageTitle>@(blogViewModel?.Title ?? "Blog Post") - GrznarAI</PageTitle>
+<PageTitle>@(blogViewModel?.Title ?? Localizer.GetString("BlogPost.Title")) - GrznarAI</PageTitle>
 
 <div class="container mt-4">
     <div class="row">
@@ -17,7 +18,7 @@
             {
                 <div class="d-flex justify-content-center my-5">
                     <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Načítání...</span>
+                        <span class="visually-hidden">@Localizer.GetString("BlogPost.Loading")</span>
                     </div>
                 </div>
             }
@@ -63,9 +64,9 @@
             else
             {
                 <div class="alert alert-warning">
-                    <h3>Příspěvek nenalezen</h3>
-                    <p>Hledaný článek neexistuje nebo byl odstraněn.</p>
-                    <a href="/blog" class="btn btn-primary">Zpět na Blog</a>
+                    <h3>@Localizer.GetString("BlogPost.NotFound.Title")</h3>
+                    <p>@Localizer.GetString("BlogPost.NotFound.Description")</p>
+                    <a href="/blog" class="btn btn-primary">@Localizer.GetString("BlogPost.BackToBlog")</a>
                 </div>
             }
         </div>
@@ -77,7 +78,7 @@
                 {
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4 class="mb-0">Související příspěvky</h4>
+                            <h4 class="mb-0">@Localizer.GetString("BlogPost.RelatedPosts")</h4>
                         </div>
                         <div class="card-body">
                             <ul class="list-unstyled">
@@ -98,7 +99,7 @@
                 {
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h4 class="mb-0">Populární tagy</h4>
+                            <h4 class="mb-0">@Localizer.GetString("BlogPost.PopularTags")</h4>
                         </div>
                         <div class="card-body">
                             <div class="d-flex flex-wrap gap-2">
@@ -114,20 +115,20 @@
                 <!-- Sdílení -->
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="mb-0">Sdílet</h4>
+                        <h4 class="mb-0">@Localizer.GetString("BlogPost.Share")</h4>
                     </div>
                     <div class="card-body">
                         <div class="d-flex gap-2">
-                            <a href="javascript:void(0)" onclick="shareToFacebook()" class="btn btn-outline-primary">
+                            <a href="javascript:void(0)" onclick="shareToFacebook()" class="btn btn-outline-primary" title="@Localizer.GetString("BlogPost.Share.Facebook")">
                                 <i class="bi bi-facebook"></i>
                             </a>
-                            <a href="javascript:void(0)" onclick="shareToTwitter()" class="btn btn-outline-primary">
+                            <a href="javascript:void(0)" onclick="shareToTwitter()" class="btn btn-outline-primary" title="@Localizer.GetString("BlogPost.Share.Twitter")">
                                 <i class="bi bi-twitter"></i>
                             </a>
-                            <a href="javascript:void(0)" onclick="shareToLinkedIn()" class="btn btn-outline-primary">
+                            <a href="javascript:void(0)" onclick="shareToLinkedIn()" class="btn btn-outline-primary" title="@Localizer.GetString("BlogPost.Share.LinkedIn")">
                                 <i class="bi bi-linkedin"></i>
                             </a>
-                            <a href="javascript:void(0)" onclick="shareByEmail()" class="btn btn-outline-primary">
+                            <a href="javascript:void(0)" onclick="shareByEmail()" class="btn btn-outline-primary" title="@Localizer.GetString("BlogPost.Share.Email")">
                                 <i class="bi bi-envelope"></i>
                             </a>
                         </div>
@@ -317,7 +318,7 @@
     
     private async Task ShareToTwitter()
     {
-        string text = blogViewModel?.Title ?? "Blog post";
+        string text = blogViewModel?.Title ?? Localizer.GetString("BlogPost.Share.DefaultTitle");
         await JSRuntime.InvokeVoidAsync("window.open", $"https://twitter.com/intent/tweet?text={Uri.EscapeDataString(text)}&url={Uri.EscapeDataString(NavigationManager.Uri)}", "_blank");
     }
     
@@ -328,8 +329,8 @@
     
     private async Task ShareByEmail()
     {
-        string subject = blogViewModel?.Title ?? "Blog post";
-        string body = $"Podívej se na tento článek: {NavigationManager.Uri}";
+        string subject = blogViewModel?.Title ?? Localizer.GetString("BlogPost.Share.DefaultTitle");
+        string body = Localizer.GetString("BlogPost.Share.EmailBody", NavigationManager.Uri);
         await JSRuntime.InvokeVoidAsync("window.open", $"mailto:?subject={Uri.EscapeDataString(subject)}&body={Uri.EscapeDataString(body)}", "_blank");
     }
 }

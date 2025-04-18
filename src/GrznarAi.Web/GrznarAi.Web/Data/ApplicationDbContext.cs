@@ -15,11 +15,6 @@ namespace GrznarAi.Web.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-
-            // Call the external seeder for localization strings
-            LocalizationDataSeeder.Seed(builder);
-
-            // Other potential seeding or model configurations can go here
         }
     }
 }

@@ -108,7 +108,9 @@
                 <!-- Search bar - inline with header -->
                 <div class="search-container">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Hledejte v blogu..." @bind="searchTerm" @bind:event="oninput">
+                        <input type="text" class="form-control" placeholder="Hledejte v blogu..." 
+                               @bind="searchTerm" @bind:event="oninput" 
+                               @onkeyup="HandleSearchKeyPress">
                         <button class="btn btn-primary" type="button" @onclick="Search">
                             <i class="bi bi-search"></i>
                         </button>
@@ -134,6 +136,18 @@
                 }
                 else
                 {
+                    @if (isSearchActive && !string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        <div class="alert alert-light py-2 mt-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Výsledky vyhledávání pro: <strong>"@searchTerm"</strong> (@totalPosts)</span>
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="ClearSearch">
+                                    <i class="bi bi-x-lg"></i> Zrušit vyhledávání
+                                </button>
+                            </div>
+                        </div>
+                    }
+
                     <!-- Blog posts -->
                     @foreach (var post in blogPosts)
                     {
@@ -263,6 +277,8 @@
     // Jazyk pro blog, můžeme později rozšířit pro vícejazyčnost
     private string languageCode = "cs";
     
+    private bool isSearchActive = false;
+    
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
@@ -287,25 +303,32 @@
                 var (posts, count) = await LoadPostsByTagAsync(Tag);
                 blogPosts = posts;
                 totalPosts = count;
+                // Zrušíme vyhledávání, jelikož jsme v zobrazení podle tagu
+                isSearchActive = false;
             }
             else if (Year > 0 && Month > 0)
             {
                 var (posts, count) = await LoadPostsByMonthAsync(Year, Month);
                 blogPosts = posts;
                 totalPosts = count;
+                // Zrušíme vyhledávání, jelikož jsme v zobrazení podle měsíce
+                isSearchActive = false;
             }
             else if (isSearching && !string.IsNullOrWhiteSpace(searchTerm))
             {
+                // Aktivní vyhledávání
                 var (posts, count) = await LoadPostsBySearchAsync(searchTerm);
                 blogPosts = posts;
                 totalPosts = count;
-                isSearching = false;
+                isSearchActive = true;
             }
             else
             {
+                // Standardní zobrazení všech příspěvků
                 var (posts, count) = await LoadAllPostsAsync();
                 blogPosts = posts;
                 totalPosts = count;
+                isSearchActive = false;
             }
             
             // Načtení populárních tagů pro sidebar
@@ -322,6 +345,7 @@
         finally
         {
             isLoading = false;
+            isSearching = false; // Reset proměnné po dokončení načítání
         }
     }
     
@@ -428,9 +452,48 @@
             .Replace("ó", "o");
     }
     
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                if (isSearchActive)
+                {
+                    await ClearSearch();
+                }
+                return;
+            }
+            
+            isSearching = true;
+            isSearchActive = true;
+            currentPage = 1;
+            await LoadDataAsync();
+        }
+    }
+    
     private async Task Search()
     {
-        isSearching = !string.IsNullOrWhiteSpace(searchTerm);
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            if (isSearchActive)
+            {
+                await ClearSearch();
+            }
+            return;
+        }
+        
+        isSearching = true;
+        isSearchActive = true;
+        currentPage = 1;
+        await LoadDataAsync();
+    }
+    
+    private async Task ClearSearch()
+    {
+        searchTerm = "";
+        isSearching = false;
+        isSearchActive = false;
         currentPage = 1;
         await LoadDataAsync();
     }
@@ -457,11 +520,5 @@
     {
         currentPage = pageNumber;
         await LoadDataAsync();
-    }
-    
-    private void ResetSearch()
-    {
-        searchTerm = "";
-        isSearching = false;
     }
 }

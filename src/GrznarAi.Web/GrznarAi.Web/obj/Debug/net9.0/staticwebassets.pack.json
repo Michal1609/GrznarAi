@@ -41,6 +41,10 @@
       "PackagePath": "staticwebassets\\images\\logo.svg"
     },
     {
+      "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\js\\blog-comments.js",
+      "PackagePath": "staticwebassets\\js\\blog-comments.js"
+    },
+    {
       "Id": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

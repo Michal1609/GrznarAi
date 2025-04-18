@@ -1,0 +1,143 @@
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject ICommentService CommentService
+@inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
+
+<div class="comments-container">
+    <h3>@Localizer.GetString("Blog.Comments")</h3>
+    
+    @if (ShowCommentForm)
+    {
+        <CommentForm BlogId="@BlogId" OnCommentAdded="HandleCommentAdded" />
+    }
+    else
+    {
+        <button class="btn btn-primary mb-3" @onclick="() => ShowCommentForm = true">
+            @Localizer.GetString("Blog.AddComment")
+        </button>
+    }
+
+    @if (IsLoading)
+    {
+        <div class="text-center my-4">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@Localizer.GetString("Blog.Loading")</span>
+            </div>
+        </div>
+    }
+    else if (Comments == null || !Comments.Any())
+    {
+        <div class="alert alert-info">
+            @Localizer.GetString("Blog.NoComments")
+        </div>
+    }
+    else
+    {
+        <div class="comments-list">
+            @foreach (var comment in Comments)
+            {
+                <CommentItem 
+                    Comment="@comment" 
+                    BlogId="@BlogId" 
+                    OnCommentDeleted="HandleCommentDeleted" 
+                    OnReplyAdded="HandleCommentAdded" />
+            }
+        </div>
+        
+        @if (HasMoreComments)
+        {
+            <div class="d-flex justify-content-center mt-3">
+                <button class="btn btn-outline-primary" @onclick="LoadMoreComments">
+                    @Localizer.GetString("Blog.LoadMoreComments")
+                </button>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int BlogId { get; set; }
+    
+    [Parameter]
+    public bool AutoLoadComments { get; set; } = true;
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    
+    private List<Comment>? Comments { get; set; }
+    private bool IsLoading { get; set; } = true;
+    private bool ShowCommentForm { get; set; } = false;
+    private bool HasMoreComments { get; set; } = false;
+    private string? CurrentUserId { get; set; }
+    private string? UserCookieId { get; set; }
+    private bool _firstRender = true;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            var authState = await AuthenticationState;
+            CurrentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _firstRender = false;
+            
+            // Inicializuj JS systém komentářů
+            await JSRuntime.InvokeVoidAsync("initCommentSystem");
+            
+            // Získej nebo vytvoř cookie ID pro nepřihlášené uživatele
+            UserCookieId = await JSRuntime.InvokeAsync<string>("getUserCookieId");
+            
+            if (AutoLoadComments)
+            {
+                await LoadComments();
+                StateHasChanged();
+            }
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    
+    private async Task LoadComments()
+    {
+        IsLoading = true;
+        
+        try
+        {
+            Comments = await CommentService.GetCommentsForBlogAsync(BlogId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading comments: {ex.Message}");
+            Comments = new List<Comment>();
+        }
+        
+        IsLoading = false;
+    }
+    
+    private async Task LoadMoreComments()
+    {
+        // Implementovat načítání dalších komentářů podle potřeby
+        await Task.CompletedTask;
+    }
+    
+    private async Task HandleCommentAdded(Comment comment)
+    {
+        ShowCommentForm = false;
+        await LoadComments();
+    }
+    
+    private async Task HandleCommentDeleted(int commentId)
+    {
+        await LoadComments();
+    }
+} 

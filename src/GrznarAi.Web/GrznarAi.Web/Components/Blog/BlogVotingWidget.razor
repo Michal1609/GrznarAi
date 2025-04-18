@@ -1,0 +1,166 @@
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject ICommentService CommentService
+@inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
+
+<div class="blog-voting-widget">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="vote-buttons">
+            <div class="btn-group">
+                <button class="btn @(UserVote == true ? "btn-primary" : "btn-outline-primary")" 
+                        @onclick="() => VoteBlog(true)">
+                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                    <span class="ms-1">@LikesCount</span>
+                </button>
+                <button class="btn @(UserVote == false ? "btn-danger" : "btn-outline-danger")"
+                        @onclick="() => VoteBlog(false)">
+                    <i class="bi bi-hand-thumbs-down-fill"></i>
+                    <span class="ms-1">@DislikesCount</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="share-buttons">
+            <button class="btn btn-outline-secondary" @onclick="ShareBlog">
+                <i class="bi bi-share-fill"></i>
+                <span class="ms-1">@Localizer.GetString("BlogPost.Share")</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int BlogId { get; set; }
+    
+    [Parameter]
+    public int LikesCount { get; set; }
+    
+    [Parameter]
+    public int DislikesCount { get; set; }
+    
+    [Parameter]
+    public EventCallback<(int likes, int dislikes)> OnVotesChanged { get; set; }
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    
+    private bool IsAuthenticated { get; set; } = false;
+    private string? CurrentUserId { get; set; }
+    private string? UserCookieId { get; set; }
+    private bool? UserVote { get; set; } = null;
+    private bool _firstRender = true;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            var authState = await AuthenticationState;
+            var user = authState.User;
+            
+            IsAuthenticated = user.Identity?.IsAuthenticated == true;
+            
+            if (IsAuthenticated)
+            {
+                CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _firstRender = false;
+            
+            // Získej nebo vytvoř cookie ID pro nepřihlášené uživatele
+            UserCookieId = await JSRuntime.InvokeAsync<string>("getUserCookieId");
+            
+            // Načti informaci o hlasování uživatele
+            var userVoteInfo = await CommentService.GetUserVoteForBlogAsync(
+                BlogId, CurrentUserId, IsAuthenticated ? null : UserCookieId);
+            
+            if (userVoteInfo.HasVoted && userVoteInfo.IsLike.HasValue)
+            {
+                UserVote = userVoteInfo.IsLike.Value;
+                StateHasChanged();
+            }
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    
+    private async Task VoteBlog(bool isLike)
+    {
+        try
+        {
+            // Pokud uživatel klikne na stejné tlačítko znovu, odstraníme jeho hlas
+            if (UserVote.HasValue && UserVote.Value == isLike)
+            {
+                await CommentService.RemoveBlogVoteAsync(BlogId, CurrentUserId, IsAuthenticated ? null : UserCookieId);
+                UserVote = null;
+                
+                // Aktualizuj počty hlasů
+                if (isLike)
+                {
+                    LikesCount = Math.Max(0, LikesCount - 1);
+                }
+                else
+                {
+                    DislikesCount = Math.Max(0, DislikesCount - 1);
+                }
+            }
+            else
+            {
+                // Přidání nebo změna hlasu
+                await CommentService.AddOrUpdateBlogVoteAsync(BlogId, isLike, CurrentUserId, IsAuthenticated ? null : UserCookieId);
+                
+                // Pokud uživatel měl předchozí hlas, upravíme počty
+                if (UserVote.HasValue)
+                {
+                    if (UserVote.Value) // Měl like a teď dal dislike
+                    {
+                        LikesCount = Math.Max(0, LikesCount - 1);
+                        DislikesCount++;
+                    }
+                    else // Měl dislike a teď dal like
+                    {
+                        DislikesCount = Math.Max(0, DislikesCount - 1);
+                        LikesCount++;
+                    }
+                }
+                else // Nový hlas
+                {
+                    if (isLike)
+                        LikesCount++;
+                    else
+                        DislikesCount++;
+                }
+                
+                UserVote = isLike;
+            }
+            
+            // Informuj rodiče o změně počtu hlasů
+            await OnVotesChanged.InvokeAsync((LikesCount, DislikesCount));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error voting blog: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.ErrorVoting"));
+        }
+    }
+    
+    private async Task ShareBlog()
+    {
+        // Implementace sdílení blogu přes Web Share API
+        await JSRuntime.InvokeVoidAsync("shareBlog", 
+            new { 
+                title = Localizer.GetString("BlogPost.ShareTitle"),
+                text = Localizer.GetString("BlogPost.ShareText"),
+                url = $"{await JSRuntime.InvokeAsync<string>("getBaseUrl")}/blog/{BlogId}"
+            });
+    }
+} 

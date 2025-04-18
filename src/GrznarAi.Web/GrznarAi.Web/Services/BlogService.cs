@@ -9,6 +9,29 @@ using GrznarAi.Web.Components.Pages.Blog.Models;
 
 namespace GrznarAi.Web.Services
 {
+    public interface IBlogService
+    {
+        Task<List<Blog>> GetBlogsAsync();
+        Task<Blog?> GetBlogByIdAsync(int blogId);
+        Task<Blog> CreateBlogAsync();
+        Task DeleteBlogAsync(int id);
+        Task<BlogContent?> GetBlogContentAsync(int blogId, string languageCode);
+        Task<List<BlogContent>> GetBlogContentsByLanguageAsync(string languageCode);
+        Task<BlogContent> CreateOrUpdateBlogContentAsync(BlogContent blogContent);
+        Task DeleteBlogContentAsync(int blogContentId);
+        Task<List<BlogContent>> GetPublishedBlogsAsync(string languageCode, int skip = 0, int take = 10);
+        Task<int> GetPublishedBlogsCountAsync(string languageCode);
+        Task<List<BlogContent>> SearchBlogsAsync(string languageCode, string searchTerm, int skip = 0, int take = 10);
+        Task<int> SearchBlogsCountAsync(string languageCode, string searchTerm);
+        Task<List<BlogContent>> GetBlogsByTagAsync(string languageCode, string tag, int skip = 0, int take = 10);
+        Task<int> GetBlogsByTagCountAsync(string languageCode, string tag);
+        Task<List<BlogContent>> GetBlogsByMonthAsync(string languageCode, int year, int month, int skip = 0, int take = 10);
+        Task<int> GetBlogsByMonthCountAsync(string languageCode, int year, int month);
+        Task<List<string>> GetPopularTagsAsync(string languageCode, int count = 10);
+        Task<List<ArchiveMonthViewModel>> GetArchiveMonthsAsync(string languageCode);
+        Task<BlogContent?> GetBlogContentBySlugAsync(string languageCode, string slug);
+    }
+
     public class BlogService : IBlogService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
@@ -27,12 +50,10 @@ namespace GrznarAi.Web.Services
                 .ToListAsync();
         }
 
-        public async Task<Blog?> GetBlogByIdAsync(int id)
+        public async Task<Blog?> GetBlogByIdAsync(int blogId)
         {
-            await using var context = await _contextFactory.CreateDbContextAsync();
-            return await context.Blogs
-                .Include(b => b.Contents)
-                .FirstOrDefaultAsync(b => b.Id == id);
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Blogs.FindAsync(blogId);
         }
 
         public async Task<Blog> CreateBlogAsync()

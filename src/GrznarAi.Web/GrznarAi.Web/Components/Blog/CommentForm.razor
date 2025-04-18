@@ -1,0 +1,178 @@
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.ComponentModel.DataAnnotations
+@inject ICommentService CommentService
+@inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
+
+<div class="comment-form mb-4">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">
+                @if (ParentCommentId.HasValue)
+                {
+                    @Localizer.GetString("Blog.LeaveReply")
+                }
+                else
+                {
+                    @Localizer.GetString("Blog.LeaveComment")
+                }
+            </h5>
+            
+            <EditForm Model="@CommentModel" OnValidSubmit="HandleValidSubmit" FormName="commentForm">
+                <DataAnnotationsValidator />
+                
+                @if (IsAnonymous)
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="authorName" class="form-label">@Localizer.GetString("Blog.Comment.Name")</label>
+                            <InputText id="authorName" class="form-control" @bind-Value="CommentModel.AuthorName" />
+                            <ValidationMessage For="() => CommentModel.AuthorName" class="text-danger" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="authorEmail" class="form-label">@Localizer.GetString("Blog.Comment.Email")</label>
+                            <InputText id="authorEmail" class="form-control" @bind-Value="CommentModel.AuthorEmail" 
+                                placeholder="@Localizer.GetString("Blog.Comment.EmailOptional")" />
+                            <ValidationMessage For="() => CommentModel.AuthorEmail" class="text-danger" />
+                        </div>
+                    </div>
+                }
+                
+                <div class="mb-3">
+                    <label for="content" class="form-label">@Localizer.GetString("Blog.Comment.Content")</label>
+                    <InputTextArea id="content" class="form-control" @bind-Value="CommentModel.Content" rows="4" />
+                    <ValidationMessage For="() => CommentModel.Content" class="text-danger" />
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary" disabled="@IsSaving">
+                        @if (IsSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="ms-1">@Localizer.GetString("Blog.Comment.Saving")</span>
+                        }
+                        else
+                        {
+                            @Localizer.GetString("Blog.Comment.Submit")
+                        }
+                    </button>
+                    
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CancelComment">
+                        @Localizer.GetString("Blog.Comment.Cancel")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int BlogId { get; set; }
+    
+    [Parameter]
+    public int? ParentCommentId { get; set; }
+    
+    [Parameter]
+    public EventCallback<Comment> OnCommentAdded { get; set; }
+    
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    
+    private CommentViewModel CommentModel { get; set; } = new();
+    private bool IsSaving { get; set; } = false;
+    private bool IsAnonymous { get; set; } = true;
+    private string? CurrentUserId { get; set; }
+    private string? UserCookieId { get; set; }
+    private bool _firstRender = true;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            var authState = await AuthenticationState;
+            var user = authState.User;
+            
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                IsAnonymous = false;
+                CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                CommentModel.AuthorName = user.Identity.Name ?? string.Empty;
+            }
+        }
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _firstRender = false;
+            
+            // Získej nebo vytvoř cookie ID pro nepřihlášené uživatele
+            UserCookieId = await JSRuntime.InvokeAsync<string>("getUserCookieId");
+            StateHasChanged();
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    
+    private async Task HandleValidSubmit()
+    {
+        IsSaving = true;
+        
+        try
+        {
+            var comment = new Comment
+            {
+                BlogId = BlogId,
+                Content = CommentModel.Content,
+                AuthorName = CommentModel.AuthorName,
+                AuthorEmail = CommentModel.AuthorEmail,
+                ApplicationUserId = CurrentUserId,
+                UserCookieId = IsAnonymous ? UserCookieId : null,
+                ParentCommentId = ParentCommentId,
+                IsApproved = !IsAnonymous, // Automaticky schválit komentáře přihlášených uživatelů
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            var savedComment = await CommentService.AddCommentAsync(comment);
+            
+            CommentModel = new(); // Reset formuláře
+            await OnCommentAdded.InvokeAsync(savedComment);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving comment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.Comment.ErrorSaving"));
+        }
+        
+        IsSaving = false;
+    }
+    
+    private async Task CancelComment()
+    {
+        await OnCancel.InvokeAsync();
+    }
+    
+    // Model pro formulář komentáře s validacemi
+    public class CommentViewModel
+    {
+        [Required(ErrorMessage = "Jméno je povinné")]
+        [StringLength(100, ErrorMessage = "Jméno nesmí být delší než 100 znaků")]
+        public string AuthorName { get; set; } = string.Empty;
+        
+        [EmailAddress(ErrorMessage = "Neplatný formát e-mailu")]
+        [StringLength(100, ErrorMessage = "E-mail nesmí být delší než 100 znaků")]
+        public string? AuthorEmail { get; set; }
+        
+        [Required(ErrorMessage = "Obsah komentáře je povinný")]
+        [StringLength(1000, ErrorMessage = "Komentář nesmí být delší než 1000 znaků")]
+        public string Content { get; set; } = string.Empty;
+    }
+} 

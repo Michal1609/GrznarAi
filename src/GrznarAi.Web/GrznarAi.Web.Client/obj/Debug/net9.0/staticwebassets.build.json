@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "xTLuhnlwFFgfCRx9r8EUkc/lX1K0aaklUzXXzB3iRHI=",
+  "Hash": "bGv7nKhCrgkJPPwtx4NrTK8m+hk9BZ4mAil9RmqUvQg=",
   "Source": "GrznarAi.Web.Client",
   "BasePath": "/",
   "Mode": "Default",
@@ -52,8 +52,8 @@
       "RelatedAsset": "",
       "AssetTraitName": "WasmResource",
       "AssetTraitValue": "manifest",
-      "Fingerprint": "6janjzgsgb",
-      "Integrity": "EvRn9HskBZd73+X5MtL/eIUuh0SmmuuFpq6aOo10PKM=",
+      "Fingerprint": "yhxqzvf1xx",
+      "Integrity": "FjuDFGps7hF6yQHDuPejjcPXwk2mYNppg//dnObCUKg=",
       "CopyToOutputDirectory": "PreserveNewest",
       "CopyToPublishDirectory": "Never",
       "OriginalItemSpec": "obj\\Debug\\net9.0\\blazor.boot.json"
@@ -220,8 +220,8 @@
       "RelatedAsset": "",
       "AssetTraitName": "WasmResource",
       "AssetTraitValue": "symbol",
-      "Fingerprint": "6aj1rmbr3u",
-      "Integrity": "ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI=",
+      "Fingerprint": "jcgqhwzpx0",
+      "Integrity": "vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs=",
       "CopyToOutputDirectory": "PreserveNewest",
       "CopyToPublishDirectory": "Never",
       "OriginalItemSpec": "obj\\Debug\\net9.0\\GrznarAi.Web.Client.pdb"
@@ -241,8 +241,8 @@
       "RelatedAsset": "",
       "AssetTraitName": "WasmResource",
       "AssetTraitValue": "runtime",
-      "Fingerprint": "z2s79nhqyn",
-      "Integrity": "FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4=",
+      "Fingerprint": "p5730hvp5i",
+      "Integrity": "A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0=",
       "CopyToOutputDirectory": "PreserveNewest",
       "CopyToPublishDirectory": "Never",
       "OriginalItemSpec": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\webcil\\GrznarAi.Web.Client.wasm"
@@ -4637,12 +4637,12 @@
       "OriginalItemSpec": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\System.Collections.Concurrent.wasm"
     },
     {
-      "Identity": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-6aj1rmbr3u.gz",
+      "Identity": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-jcgqhwzpx0.gz",
       "SourceId": "GrznarAi.Web.Client",
       "SourceType": "Computed",
       "ContentRoot": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "/",
-      "RelativePath": "_framework/GrznarAi.Web.Client#[.{fingerprint=6aj1rmbr3u}]!.pdb.gz",
+      "RelativePath": "_framework/GrznarAi.Web.Client#[.{fingerprint=jcgqhwzpx0}]!.pdb.gz",
       "AssetKind": "Build",
       "AssetMode": "All",
       "AssetRole": "Alternative",
@@ -4651,8 +4651,8 @@
       "RelatedAsset": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\GrznarAi.Web.Client.pdb",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "8akmyxww1s",
-      "Integrity": "MJYBGDJQ/useam8p9soB+inBp4BRjqBHtcb0DcMlQc4=",
+      "Fingerprint": "p8fageissy",
+      "Integrity": "qZOIc9GyiklRgJa4sRGbCaQASKJKsTpSZM+8qOvm2Zk=",
       "CopyToOutputDirectory": "PreserveNewest",
       "CopyToPublishDirectory": "Never",
       "OriginalItemSpec": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\GrznarAi.Web.Client.pdb"
@@ -6212,7 +6212,7 @@
       "OriginalItemSpec": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\System.Security.Cryptography.X509Certificates.wasm"
     },
     {
-      "Identity": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\dxuaqbp2ep-6janjzgsgb.gz",
+      "Identity": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\dxuaqbp2ep-yhxqzvf1xx.gz",
       "SourceId": "GrznarAi.Web.Client",
       "SourceType": "Computed",
       "ContentRoot": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\",
@@ -6226,8 +6226,8 @@
       "RelatedAsset": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\blazor.boot.json",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "tpv77a4vii",
-      "Integrity": "UWuznOfnr4N5Gw8cvVwyAha+dt3sJamcPrbG4pJipBw=",
+      "Fingerprint": "djlhbf27cn",
+      "Integrity": "txFwStK/k3DEtOecwtK/uERCSPRpCtsQhBY9xu3K2Zs=",
       "CopyToOutputDirectory": "PreserveNewest",
       "CopyToPublishDirectory": "Never",
       "OriginalItemSpec": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\blazor.boot.json"
@@ -6800,12 +6800,12 @@
       "OriginalItemSpec": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\System.Net.NetworkInformation.wasm"
     },
     {
-      "Identity": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-z2s79nhqyn.gz",
+      "Identity": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-p5730hvp5i.gz",
       "SourceId": "GrznarAi.Web.Client",
       "SourceType": "Computed",
       "ContentRoot": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\",
       "BasePath": "/",
-      "RelativePath": "_framework/GrznarAi.Web.Client#[.{fingerprint=z2s79nhqyn}]!.wasm.gz",
+      "RelativePath": "_framework/GrznarAi.Web.Client#[.{fingerprint=p5730hvp5i}]!.wasm.gz",
       "AssetKind": "Build",
       "AssetMode": "All",
       "AssetRole": "Alternative",
@@ -6814,8 +6814,8 @@
       "RelatedAsset": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\GrznarAi.Web.Client.wasm",
       "AssetTraitName": "Content-Encoding",
       "AssetTraitValue": "gzip",
-      "Fingerprint": "m3n34wun0e",
-      "Integrity": "TsRexu/l9cySQ4CM9r1SyFzCScACrRioi5i5rr0Jz/4=",
+      "Fingerprint": "apxl8pfqp2",
+      "Integrity": "IuZDTbtv09zwcAls5//ErlqdHVz4mnDvVRjSHA4PXVs=",
       "CopyToOutputDirectory": "PreserveNewest",
       "CopyToPublishDirectory": "Never",
       "OriginalItemSpec": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\GrznarAi.Web.Client.wasm"
@@ -8952,11 +8952,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"EvRn9HskBZd73+X5MtL/eIUuh0SmmuuFpq6aOo10PKM=\""
+          "Value": "\"FjuDFGps7hF6yQHDuPejjcPXwk2mYNppg//dnObCUKg=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
+          "Value": "Fri, 18 Apr 2025 17:24:08 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -8966,18 +8966,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-EvRn9HskBZd73+X5MtL/eIUuh0SmmuuFpq6aOo10PKM="
+          "Value": "sha256-FjuDFGps7hF6yQHDuPejjcPXwk2mYNppg//dnObCUKg="
         }
       ]
     },
     {
       "Route": "_framework/blazor.boot.json",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\dxuaqbp2ep-6janjzgsgb.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\dxuaqbp2ep-yhxqzvf1xx.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000079865825"
+          "Quality": "0.000080121785"
         }
       ],
       "ResponseHeaders": [
@@ -8987,15 +8987,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "12520"
+          "Value": "12480"
         },
         {
           "Name": "ETag",
-          "Value": "\"UWuznOfnr4N5Gw8cvVwyAha+dt3sJamcPrbG4pJipBw=\""
+          "Value": "\"txFwStK/k3DEtOecwtK/uERCSPRpCtsQhBY9xu3K2Zs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:13:32 GMT"
+          "Value": "Fri, 18 Apr 2025 17:23:20 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -9015,19 +9015,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"EvRn9HskBZd73+X5MtL/eIUuh0SmmuuFpq6aOo10PKM=\""
+          "Value": "W/\"FjuDFGps7hF6yQHDuPejjcPXwk2mYNppg//dnObCUKg=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-EvRn9HskBZd73+X5MtL/eIUuh0SmmuuFpq6aOo10PKM="
+          "Value": "sha256-FjuDFGps7hF6yQHDuPejjcPXwk2mYNppg//dnObCUKg="
         }
       ]
     },
     {
       "Route": "_framework/blazor.boot.json.gz",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\dxuaqbp2ep-6janjzgsgb.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\dxuaqbp2ep-yhxqzvf1xx.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -9036,7 +9036,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "12520"
+          "Value": "12480"
         },
         {
           "Name": "Content-Type",
@@ -9044,11 +9044,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"UWuznOfnr4N5Gw8cvVwyAha+dt3sJamcPrbG4pJipBw=\""
+          "Value": "\"txFwStK/k3DEtOecwtK/uERCSPRpCtsQhBY9xu3K2Zs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:13:32 GMT"
+          "Value": "Fri, 18 Apr 2025 17:23:20 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -9066,7 +9066,7 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-UWuznOfnr4N5Gw8cvVwyAha+dt3sJamcPrbG4pJipBw="
+          "Value": "sha256-txFwStK/k3DEtOecwtK/uERCSPRpCtsQhBY9xu3K2Zs="
         }
       ]
     },
@@ -10996,7 +10996,7 @@
       ]
     },
     {
-      "Route": "_framework/GrznarAi.Web.Client.6aj1rmbr3u.pdb",
+      "Route": "_framework/GrznarAi.Web.Client.jcgqhwzpx0.pdb",
       "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\GrznarAi.Web.Client.pdb",
       "Selectors": [],
       "ResponseHeaders": [
@@ -11006,7 +11006,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "18956"
+          "Value": "19020"
         },
         {
           "Name": "Content-Type",
@@ -11014,11 +11014,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI=\""
+          "Value": "\"vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:31 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11028,7 +11028,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "6aj1rmbr3u"
+          "Value": "jcgqhwzpx0"
         },
         {
           "Name": "label",
@@ -11036,18 +11036,18 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI="
+          "Value": "sha256-vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs="
         }
       ]
     },
     {
-      "Route": "_framework/GrznarAi.Web.Client.6aj1rmbr3u.pdb",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-6aj1rmbr3u.gz",
+      "Route": "_framework/GrznarAi.Web.Client.jcgqhwzpx0.pdb",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-jcgqhwzpx0.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000078733958"
+          "Quality": "0.000078308536"
         }
       ],
       "ResponseHeaders": [
@@ -11057,15 +11057,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "12700"
+          "Value": "12769"
         },
         {
           "Name": "ETag",
-          "Value": "\"MJYBGDJQ/useam8p9soB+inBp4BRjqBHtcb0DcMlQc4=\""
+          "Value": "\"qZOIc9GyiklRgJa4sRGbCaQASKJKsTpSZM+8qOvm2Zk=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11085,13 +11085,13 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI=\""
+          "Value": "W/\"vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "6aj1rmbr3u"
+          "Value": "jcgqhwzpx0"
         },
         {
           "Name": "label",
@@ -11099,13 +11099,13 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI="
+          "Value": "sha256-vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs="
         }
       ]
     },
     {
-      "Route": "_framework/GrznarAi.Web.Client.6aj1rmbr3u.pdb.gz",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-6aj1rmbr3u.gz",
+      "Route": "_framework/GrznarAi.Web.Client.jcgqhwzpx0.pdb.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-jcgqhwzpx0.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -11114,7 +11114,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "12700"
+          "Value": "12769"
         },
         {
           "Name": "Content-Type",
@@ -11122,11 +11122,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"MJYBGDJQ/useam8p9soB+inBp4BRjqBHtcb0DcMlQc4=\""
+          "Value": "\"qZOIc9GyiklRgJa4sRGbCaQASKJKsTpSZM+8qOvm2Zk=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11144,7 +11144,7 @@
       "EndpointProperties": [
         {
           "Name": "fingerprint",
-          "Value": "6aj1rmbr3u"
+          "Value": "jcgqhwzpx0"
         },
         {
           "Name": "label",
@@ -11152,7 +11152,168 @@
         },
         {
           "Name": "integrity",
-          "Value": "sha256-MJYBGDJQ/useam8p9soB+inBp4BRjqBHtcb0DcMlQc4="
+          "Value": "sha256-qZOIc9GyiklRgJa4sRGbCaQASKJKsTpSZM+8qOvm2Zk="
+        }
+      ]
+    },
+    {
+      "Route": "_framework/GrznarAi.Web.Client.p5730hvp5i.wasm",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\GrznarAi.Web.Client.wasm",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "11029"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "application/wasm"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "p5730hvp5i"
+        },
+        {
+          "Name": "label",
+          "Value": "_framework/GrznarAi.Web.Client.wasm"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0="
+        }
+      ]
+    },
+    {
+      "Route": "_framework/GrznarAi.Web.Client.p5730hvp5i.wasm",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-p5730hvp5i.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000203998368"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4901"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"IuZDTbtv09zwcAls5//ErlqdHVz4mnDvVRjSHA4PXVs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "application/wasm"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "p5730hvp5i"
+        },
+        {
+          "Name": "label",
+          "Value": "_framework/GrznarAi.Web.Client.wasm"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0="
+        }
+      ]
+    },
+    {
+      "Route": "_framework/GrznarAi.Web.Client.p5730hvp5i.wasm.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-p5730hvp5i.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4901"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "application/wasm"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"IuZDTbtv09zwcAls5//ErlqdHVz4mnDvVRjSHA4PXVs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "p5730hvp5i"
+        },
+        {
+          "Name": "label",
+          "Value": "_framework/GrznarAi.Web.Client.wasm.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-IuZDTbtv09zwcAls5//ErlqdHVz4mnDvVRjSHA4PXVs="
         }
       ]
     },
@@ -11167,7 +11328,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "18956"
+          "Value": "19020"
         },
         {
           "Name": "Content-Type",
@@ -11175,11 +11336,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI=\""
+          "Value": "\"vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:31 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11189,18 +11350,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI="
+          "Value": "sha256-vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs="
         }
       ]
     },
     {
       "Route": "_framework/GrznarAi.Web.Client.pdb",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-6aj1rmbr3u.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-jcgqhwzpx0.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000078733958"
+          "Quality": "0.000078308536"
         }
       ],
       "ResponseHeaders": [
@@ -11210,15 +11371,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "12700"
+          "Value": "12769"
         },
         {
           "Name": "ETag",
-          "Value": "\"MJYBGDJQ/useam8p9soB+inBp4BRjqBHtcb0DcMlQc4=\""
+          "Value": "\"qZOIc9GyiklRgJa4sRGbCaQASKJKsTpSZM+8qOvm2Zk=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11238,19 +11399,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI=\""
+          "Value": "W/\"vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-ImWP34eipsSGVSfbUS+8ELrvmbxcBPFqa+Y3bu7oqyI="
+          "Value": "sha256-vYlw7MINNhfODPovObKWt8FMpoJ/N0aJJds7HYb1JDs="
         }
       ]
     },
     {
       "Route": "_framework/GrznarAi.Web.Client.pdb.gz",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-6aj1rmbr3u.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\1slh0kq7g8-jcgqhwzpx0.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -11259,7 +11420,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "12700"
+          "Value": "12769"
         },
         {
           "Name": "Content-Type",
@@ -11267,11 +11428,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"MJYBGDJQ/useam8p9soB+inBp4BRjqBHtcb0DcMlQc4=\""
+          "Value": "\"qZOIc9GyiklRgJa4sRGbCaQASKJKsTpSZM+8qOvm2Zk=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11289,7 +11450,7 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-MJYBGDJQ/useam8p9soB+inBp4BRjqBHtcb0DcMlQc4="
+          "Value": "sha256-qZOIc9GyiklRgJa4sRGbCaQASKJKsTpSZM+8qOvm2Zk="
         }
       ]
     },
@@ -11312,11 +11473,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4=\""
+          "Value": "\"A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:31 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11326,18 +11487,18 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4="
+          "Value": "sha256-A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0="
         }
       ]
     },
     {
       "Route": "_framework/GrznarAi.Web.Client.wasm",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-z2s79nhqyn.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-p5730hvp5i.gz",
       "Selectors": [
         {
           "Name": "Content-Encoding",
           "Value": "gzip",
-          "Quality": "0.000207727462"
+          "Quality": "0.000203998368"
         }
       ],
       "ResponseHeaders": [
@@ -11347,15 +11508,15 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "4813"
+          "Value": "4901"
         },
         {
           "Name": "ETag",
-          "Value": "\"TsRexu/l9cySQ4CM9r1SyFzCScACrRioi5i5rr0Jz/4=\""
+          "Value": "\"IuZDTbtv09zwcAls5//ErlqdHVz4mnDvVRjSHA4PXVs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11375,19 +11536,19 @@
         },
         {
           "Name": "ETag",
-          "Value": "W/\"FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4=\""
+          "Value": "W/\"A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0=\""
         }
       ],
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4="
+          "Value": "sha256-A6X0q0RAZZXNyl622ZgjZQBF5xEdkw9hOQsrUYfjjq0="
         }
       ]
     },
     {
       "Route": "_framework/GrznarAi.Web.Client.wasm.gz",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-z2s79nhqyn.gz",
+      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-p5730hvp5i.gz",
       "Selectors": [],
       "ResponseHeaders": [
         {
@@ -11396,7 +11557,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "4813"
+          "Value": "4901"
         },
         {
           "Name": "Content-Type",
@@ -11404,11 +11565,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"TsRexu/l9cySQ4CM9r1SyFzCScACrRioi5i5rr0Jz/4=\""
+          "Value": "\"IuZDTbtv09zwcAls5//ErlqdHVz4mnDvVRjSHA4PXVs=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
+          "Value": "Fri, 18 Apr 2025 16:50:09 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -11426,168 +11587,7 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-TsRexu/l9cySQ4CM9r1SyFzCScACrRioi5i5rr0Jz/4="
-        }
-      ]
-    },
-    {
-      "Route": "_framework/GrznarAi.Web.Client.z2s79nhqyn.wasm",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\bin\\Debug\\net9.0\\wwwroot\\_framework\\GrznarAi.Web.Client.wasm",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "11029"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "application/wasm"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:31 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "max-age=31536000, immutable"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "fingerprint",
-          "Value": "z2s79nhqyn"
-        },
-        {
-          "Name": "label",
-          "Value": "_framework/GrznarAi.Web.Client.wasm"
-        },
-        {
-          "Name": "integrity",
-          "Value": "sha256-FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4="
-        }
-      ]
-    },
-    {
-      "Route": "_framework/GrznarAi.Web.Client.z2s79nhqyn.wasm",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-z2s79nhqyn.gz",
-      "Selectors": [
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip",
-          "Quality": "0.000207727462"
-        }
-      ],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "4813"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"TsRexu/l9cySQ4CM9r1SyFzCScACrRioi5i5rr0Jz/4=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "max-age=31536000, immutable"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "application/wasm"
-        },
-        {
-          "Name": "ETag",
-          "Value": "W/\"FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4=\""
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "fingerprint",
-          "Value": "z2s79nhqyn"
-        },
-        {
-          "Name": "label",
-          "Value": "_framework/GrznarAi.Web.Client.wasm"
-        },
-        {
-          "Name": "integrity",
-          "Value": "sha256-FYGOXhImEt3LzNcCrg5flqlC2iiysZavReUHmdOpJN4="
-        }
-      ]
-    },
-    {
-      "Route": "_framework/GrznarAi.Web.Client.z2s79nhqyn.wasm.gz",
-      "AssetFile": "D:\\Michal\\Vibe\\MyWeb\\src\\GrznarAi.Web\\GrznarAi.Web.Client\\obj\\Debug\\net9.0\\compressed\\i48uxlo3ds-z2s79nhqyn.gz",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "4813"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "application/wasm"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"TsRexu/l9cySQ4CM9r1SyFzCScACrRioi5i5rr0Jz/4=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Fri, 18 Apr 2025 11:28:32 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "max-age=31536000, immutable"
-        },
-        {
-          "Name": "Content-Encoding",
-          "Value": "gzip"
-        },
-        {
-          "Name": "Vary",
-          "Value": "Content-Encoding"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "fingerprint",
-          "Value": "z2s79nhqyn"
-        },
-        {
-          "Name": "label",
-          "Value": "_framework/GrznarAi.Web.Client.wasm.gz"
-        },
-        {
-          "Name": "integrity",
-          "Value": "sha256-TsRexu/l9cySQ4CM9r1SyFzCScACrRioi5i5rr0Jz/4="
+          "Value": "sha256-IuZDTbtv09zwcAls5//ErlqdHVz4mnDvVRjSHA4PXVs="
         }
       ]
     },

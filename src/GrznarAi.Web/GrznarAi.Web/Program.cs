@@ -43,6 +43,9 @@ builder.Services.AddScoped<IBlogService, BlogService>();
 // Register MarkdownService
 builder.Services.AddScoped<MarkdownService>();
 
+// Register CommentService
+builder.Services.AddScoped<ICommentService, CommentService>();
+
 // Register GitHubService (using Octokit)
 // Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>(); // Register directly

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 
 namespace GrznarAi.Web.Data
 {
@@ -75,6 +76,7 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.Title", "Blog", "Blog", "Blog page title");
             AddEntry("Blog.Loading", "Načítání...", "Loading...", "Blog loading message");
             AddEntry("Blog.NoPostsFound", "Nebyly nalezeny žádné příspěvky.", "No posts found.", "Message when no blog posts are found");
+            AddEntry("Blog.NoPostsFoundInLanguage", "Nebyly nalezeny žádné příspěvky v aktuálním jazyce. Zobrazuji příspěvky v jiných jazycích.", "No posts found in current language. Showing posts in other languages.", "Message when no blog posts are found in current language");
             AddEntry("Blog.SearchResults", "Výsledky vyhledávání pro: {0}", "Search results for: {0}", "Search results message with search term placeholder");
             AddEntry("Blog.ClearSearch", "Vymazat vyhledávání", "Clear search", "Clear search button text");
             AddEntry("Blog.Search.Placeholder", "Hledat v blogu...", "Search blog...", "Search input placeholder");
@@ -84,6 +86,23 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.ReadMore", "Číst více", "Read more", "Read more button text");
             AddEntry("Blog.CreatedOn", "Vytvořeno: {0}", "Created on: {0}", "Blog post creation date with date placeholder");
             AddEntry("Blog.Tags", "Štítky:", "Tags:", "Tags label");
+            AddEntry("Blog.NoTags", "Žádné štítky", "No tags", "Message when blog post has no tags");
+            AddEntry("Blog.Pagination.Next", "Další", "Next", "Next page button text");
+            AddEntry("Blog.Pagination.Previous", "Předchozí", "Previous", "Previous page button text");
+            AddEntry("Blog.Pagination.Page", "Strana {0}", "Page {0}", "Page number indicator");
+            AddEntry("Blog.Pagination.Of", "z {0}", "of {0}", "Page count indicator");
+            AddEntry("Blog.Date.January", "Leden", "January", "Month name - January");
+            AddEntry("Blog.Date.February", "Únor", "February", "Month name - February");
+            AddEntry("Blog.Date.March", "Březen", "March", "Month name - March");
+            AddEntry("Blog.Date.April", "Duben", "April", "Month name - April");
+            AddEntry("Blog.Date.May", "Květen", "May", "Month name - May");
+            AddEntry("Blog.Date.June", "Červen", "June", "Month name - June");
+            AddEntry("Blog.Date.July", "Červenec", "July", "Month name - July");
+            AddEntry("Blog.Date.August", "Srpen", "August", "Month name - August");
+            AddEntry("Blog.Date.September", "Září", "September", "Month name - September");
+            AddEntry("Blog.Date.October", "Říjen", "October", "Month name - October");
+            AddEntry("Blog.Date.November", "Listopad", "November", "Month name - November");
+            AddEntry("Blog.Date.December", "Prosinec", "December", "Month name - December");
             
             // Nové překlady pro blog
             AddEntry("Blog.Sidebar.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title in sidebar");
@@ -102,6 +121,33 @@ namespace GrznarAi.Web.Data
             AddEntry("BlogPost.Share", "Sdílet", "Share", "Share button text for blog post");
             AddEntry("BlogPost.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title in blog post");
             AddEntry("BlogPost.RelatedPosts", "Související příspěvky", "Related Posts", "Related posts section title in blog post");
+            AddEntry("BlogPost.ShareTitle", "Podívejte se na tento blog", "Check out this blog post", "Title for blog sharing");
+            AddEntry("BlogPost.ShareText", "Myslím, že by vás mohl zajímat tento blog", "I thought you might be interested in this blog post", "Text for blog sharing");
+            
+            // Komentáře a hlasování
+            AddEntry("Blog.Comments", "Komentáře", "Comments", "Comments section title");
+            AddEntry("Blog.AddComment", "Přidat komentář", "Add a comment", "Add comment button text");
+            AddEntry("Blog.NoComments", "Zatím žádné komentáře. Buďte první!", "No comments yet. Be the first to comment!", "Message shown when no comments exist");
+            AddEntry("Blog.LoadMoreComments", "Načíst další komentáře", "Load more comments", "Button to load more comments");
+            AddEntry("Blog.LeaveComment", "Napsat komentář", "Leave a comment", "Title for comment form");
+            AddEntry("Blog.LeaveReply", "Odpovědět", "Leave a reply", "Title for reply form");
+            AddEntry("Blog.Comment.Name", "Jméno", "Name", "Name label in comment form");
+            AddEntry("Blog.Comment.Email", "E-mail", "Email", "Email label in comment form");
+            AddEntry("Blog.Comment.EmailOptional", "E-mail (nepovinné)", "Email (optional)", "Optional email placeholder");
+            AddEntry("Blog.Comment.Content", "Váš komentář", "Your comment", "Comment content label");
+            AddEntry("Blog.Comment.Submit", "Odeslat", "Submit", "Submit button text for comment form");
+            AddEntry("Blog.Comment.Cancel", "Zrušit", "Cancel", "Cancel button for comment form");
+            AddEntry("Blog.Comment.Saving", "Ukládání...", "Saving...", "Saving message for comment form");
+            AddEntry("Blog.Comment.Edit", "Upravit", "Edit", "Edit comment button text");
+            AddEntry("Blog.Comment.Delete", "Smazat", "Delete", "Delete comment button text");
+            AddEntry("Blog.Comment.Reply", "Odpovědět", "Reply", "Reply to comment button text");
+            AddEntry("Blog.Comment.Save", "Uložit", "Save", "Save edited comment button text");
+            AddEntry("Blog.Comment.ErrorSaving", "Chyba při ukládání komentáře. Zkuste to prosím znovu.", "Error saving comment. Please try again.", "Error message when saving comment fails");
+            AddEntry("Blog.Comment.ErrorUpdating", "Chyba při aktualizaci komentáře. Zkuste to prosím znovu.", "Error updating comment. Please try again.", "Error message when updating comment fails");
+            AddEntry("Blog.Comment.ErrorDeleting", "Chyba při mazání komentáře. Zkuste to prosím znovu.", "Error deleting comment. Please try again.", "Error message when deleting comment fails");
+            AddEntry("Blog.Comment.ConfirmDelete", "Opravdu chcete smazat tento komentář?", "Are you sure you want to delete this comment?", "Confirmation message for comment deletion");
+            AddEntry("Blog.Comment.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when voting fails");
+            AddEntry("Blog.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when blog voting fails");
             // --- End Seed Data --- 
 
             try

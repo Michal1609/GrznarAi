@@ -1,0 +1,327 @@
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.ComponentModel.DataAnnotations
+@inject ICommentService CommentService
+@inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
+
+<div class="comment-item @(IsReply ? "ms-5" : "") mb-3">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="card-subtitle mb-0">
+                    <strong>@Comment.AuthorName</strong>
+                    <small class="text-muted ms-2">
+                        @Comment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                    </small>
+                </h6>
+                
+                @if (IsAuthenticated && (IsAuthor || IsAdmin))
+                {
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            @if (IsAuthor)
+                            {
+                                <li><button class="dropdown-item" @onclick="() => IsEditing = true">@Localizer.GetString("Blog.Comment.Edit")</button></li>
+                            }
+                            <li><button class="dropdown-item text-danger" @onclick="DeleteComment">@Localizer.GetString("Blog.Comment.Delete")</button></li>
+                        </ul>
+                    </div>
+                }
+            </div>
+            
+            @if (IsEditing)
+            {
+                <EditForm Model="@EditModel" OnValidSubmit="UpdateComment" FormName="editCommentForm">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="mb-3">
+                        <InputTextArea class="form-control" @bind-Value="EditModel.Content" rows="3" />
+                        <ValidationMessage For="() => EditModel.Content" class="text-danger" />
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary" disabled="@IsSaving">
+                            @if (IsSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span class="ms-1">@Localizer.GetString("Blog.Comment.Saving")</span>
+                            }
+                            else
+                            {
+                                @Localizer.GetString("Blog.Comment.Save")
+                            }
+                        </button>
+                        
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelEditing">
+                            @Localizer.GetString("Blog.Comment.Cancel")
+                        </button>
+                    </div>
+                </EditForm>
+            }
+            else
+            {
+                <p class="card-text">@Comment.Content</p>
+                
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div class="comment-actions">
+                        <div class="btn-group me-2">
+                            <button class="btn btn-sm @(UserVote == true ? "btn-primary" : "btn-outline-primary")" 
+                                    @onclick="() => VoteComment(true)">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
+                                <span class="ms-1">@Comment.LikesCount</span>
+                            </button>
+                            <button class="btn btn-sm @(UserVote == false ? "btn-danger" : "btn-outline-danger")"
+                                    @onclick="() => VoteComment(false)">
+                                <i class="bi bi-hand-thumbs-down-fill"></i>
+                                <span class="ms-1">@Comment.DislikesCount</span>
+                            </button>
+                        </div>
+                        
+                        @if (!IsShowingReplyForm)
+                        {
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => IsShowingReplyForm = true">
+                                <i class="bi bi-reply-fill"></i>
+                                <span class="ms-1">@Localizer.GetString("Blog.Comment.Reply")</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    
+    @if (IsShowingReplyForm)
+    {
+        <div class="mt-3 ms-4">
+            <CommentForm BlogId="@BlogId" ParentCommentId="@Comment.Id" 
+                OnCommentAdded="HandleReplyAdded" OnCancel="() => IsShowingReplyForm = false" />
+        </div>
+    }
+    
+    @if (Comment.Replies != null && Comment.Replies.Any())
+    {
+        <div class="replies mt-2">
+            @foreach (var reply in Comment.Replies.OrderBy(r => r.CreatedAt))
+            {
+                <CommentItem Comment="@reply" BlogId="@BlogId" IsReply="true" 
+                    OnCommentDeleted="HandleReplyDeleted" OnReplyAdded="HandleReplyAdded" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Comment Comment { get; set; } = null!;
+    
+    [Parameter]
+    public int BlogId { get; set; }
+    
+    [Parameter]
+    public bool IsReply { get; set; } = false;
+    
+    [Parameter]
+    public EventCallback<int> OnCommentDeleted { get; set; }
+    
+    [Parameter]
+    public EventCallback<Comment> OnReplyAdded { get; set; }
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    
+    private bool IsAuthenticated { get; set; } = false;
+    private bool IsAdmin { get; set; } = false;
+    private bool IsAuthor { get; set; } = false;
+    private bool IsEditing { get; set; } = false;
+    private bool IsSaving { get; set; } = false;
+    private bool IsShowingReplyForm { get; set; } = false;
+    private string? CurrentUserId { get; set; }
+    private string? UserCookieId { get; set; }
+    private bool? UserVote { get; set; } = null;
+    private bool _firstRender = true;
+    
+    private EditCommentViewModel EditModel { get; set; } = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            var authState = await AuthenticationState;
+            var user = authState.User;
+            
+            IsAuthenticated = user.Identity?.IsAuthenticated == true;
+            IsAdmin = IsAuthenticated && user.IsInRole("Admin");
+            
+            if (IsAuthenticated)
+            {
+                CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                IsAuthor = CurrentUserId == Comment.ApplicationUserId;
+            }
+        }
+        
+        // Inicializuj model pro editaci
+        EditModel.Content = Comment.Content;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _firstRender = false;
+            
+            // Získej nebo vytvoř cookie ID pro nepřihlášené uživatele
+            UserCookieId = await JSRuntime.InvokeAsync<string>("getUserCookieId");
+            
+            // Načti informaci o hlasování uživatele
+            var userVoteInfo = await CommentService.GetUserVoteForCommentAsync(
+                Comment.Id, CurrentUserId, IsAuthenticated ? null : UserCookieId);
+            
+            if (userVoteInfo.HasVoted && userVoteInfo.IsLike.HasValue)
+            {
+                UserVote = userVoteInfo.IsLike.Value;
+                StateHasChanged();
+            }
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    
+    private async Task VoteComment(bool isLike)
+    {
+        try
+        {
+            // Pokud uživatel klikne na stejné tlačítko znovu, odstraníme jeho hlas
+            if (UserVote.HasValue && UserVote.Value == isLike)
+            {
+                await CommentService.RemoveVoteAsync(Comment.Id, CurrentUserId, IsAuthenticated ? null : UserCookieId);
+                UserVote = null;
+                
+                // Aktualizuj počty hlasů
+                Comment.LikesCount = isLike ? Math.Max(0, Comment.LikesCount - 1) : Comment.LikesCount;
+                Comment.DislikesCount = !isLike ? Math.Max(0, Comment.DislikesCount - 1) : Comment.DislikesCount;
+            }
+            else
+            {
+                // Přidání nebo změna hlasu
+                await CommentService.AddOrUpdateVoteAsync(Comment.Id, isLike, CurrentUserId, IsAuthenticated ? null : UserCookieId);
+                
+                // Pokud uživatel měl předchozí hlas, upravíme počty
+                if (UserVote.HasValue)
+                {
+                    if (UserVote.Value) // Měl like a teď dal dislike
+                    {
+                        Comment.LikesCount = Math.Max(0, Comment.LikesCount - 1);
+                        Comment.DislikesCount++;
+                    }
+                    else // Měl dislike a teď dal like
+                    {
+                        Comment.DislikesCount = Math.Max(0, Comment.DislikesCount - 1);
+                        Comment.LikesCount++;
+                    }
+                }
+                else // Nový hlas
+                {
+                    if (isLike)
+                        Comment.LikesCount++;
+                    else
+                        Comment.DislikesCount++;
+                }
+                
+                UserVote = isLike;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error voting comment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.Comment.ErrorVoting"));
+        }
+    }
+    
+    private async Task UpdateComment()
+    {
+        if (!IsAuthenticated || !IsAuthor)
+            return;
+            
+        IsSaving = true;
+        
+        try
+        {
+            Comment.Content = EditModel.Content;
+            
+            bool success = await CommentService.UpdateCommentAsync(Comment);
+            if (success)
+            {
+                IsEditing = false;
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.Comment.ErrorUpdating"));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating comment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.Comment.ErrorUpdating"));
+        }
+        
+        IsSaving = false;
+    }
+    
+    private void CancelEditing()
+    {
+        IsEditing = false;
+        EditModel.Content = Comment.Content; // Reset na původní obsah
+    }
+    
+    private async Task DeleteComment()
+    {
+        if (!IsAuthenticated || (!IsAuthor && !IsAdmin))
+            return;
+            
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", Localizer.GetString("Blog.Comment.ConfirmDelete"));
+        if (!confirmed)
+            return;
+            
+        try
+        {
+            bool success = await CommentService.DeleteCommentAsync(Comment.Id);
+            if (success)
+            {
+                await OnCommentDeleted.InvokeAsync(Comment.Id);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.Comment.ErrorDeleting"));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting comment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.Comment.ErrorDeleting"));
+        }
+    }
+    
+    private async Task HandleReplyAdded(Comment reply)
+    {
+        IsShowingReplyForm = false;
+        await OnReplyAdded.InvokeAsync(reply);
+    }
+    
+    private async Task HandleReplyDeleted(int replyId)
+    {
+        await OnCommentDeleted.InvokeAsync(replyId);
+    }
+    
+    private class EditCommentViewModel
+    {
+        [Required(ErrorMessage = "Obsah komentáře je povinný")]
+        [StringLength(1000, ErrorMessage = "Komentář nesmí být delší než 1000 znaků")]
+        public string Content { get; set; } = string.Empty;
+    }
+} 

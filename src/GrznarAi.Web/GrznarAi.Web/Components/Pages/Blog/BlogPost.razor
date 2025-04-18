@@ -2,8 +2,10 @@
 @using GrznarAi.Web.Services
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Components.Pages.Blog.Models
+@using GrznarAi.Web.Components.Blog
 @using System.Globalization
 @inject IBlogService BlogService
+@inject ICommentService CommentService
 @inject MarkdownService MarkdownService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
@@ -36,6 +38,15 @@
                             <a href="/blog/tag/@tag" class="badge bg-secondary me-1 text-decoration-none">@tag</a>
                         }
                     </div>
+                    
+                    @if (blogViewModel.BlogId > 0)
+                    {
+                        <BlogVotingWidget @rendermode="InteractiveServer"
+                            BlogId="@blogViewModel.BlogId" 
+                            LikesCount="@likesCount" 
+                            DislikesCount="@dislikesCount" 
+                            OnVotesChanged="@HandleVotesChanged" />
+                    }
 
                     <div class="blog-post-content">
                         @((MarkupString)MarkdownService.ConvertToHtml(blogViewModel.Content))
@@ -58,7 +69,13 @@
                         </div>
                     </div>
 
-                    <!-- Sekce komentářů bude implementována později -->
+                    <!-- Komentáře -->
+                    @if (blogViewModel.BlogId > 0)
+                    {
+                        <div class="mt-5">
+                            <CommentList @rendermode="InteractiveServer" BlogId="@blogViewModel.BlogId" />
+                        </div>
+                    }
                 </article>
             }
             else
@@ -147,6 +164,8 @@
     private List<BlogViewModel> relatedPosts = new List<BlogViewModel>();
     private List<string> popularTags = new List<string>();
     private bool isLoading = true;
+    private int likesCount = 0;
+    private int dislikesCount = 0;
     
     // Jazyk pro blog, získáme aktuální jazyk z CultureInfo
     private string languageCode => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
@@ -188,6 +207,17 @@
                     UpdatedAt = blogContent.UpdatedAt ?? DateTime.UtcNow,
                     IsPublished = blogContent.IsPublished
                 };
+                
+                // Načtení počtu hlasů
+                if (blogViewModel.BlogId > 0)
+                {
+                    var blog = await BlogService.GetBlogByIdAsync(blogViewModel.BlogId);
+                    if (blog != null)
+                    {
+                        likesCount = blog.LikesCount;
+                        dislikesCount = blog.DislikesCount;
+                    }
+                }
                 
                 // Načtení populárních tagů
                 popularTags = await BlogService.GetPopularTagsAsync(languageCode);
@@ -332,5 +362,12 @@
         string subject = blogViewModel?.Title ?? Localizer.GetString("BlogPost.Share.DefaultTitle");
         string body = Localizer.GetString("BlogPost.Share.EmailBody", NavigationManager.Uri);
         await JSRuntime.InvokeVoidAsync("window.open", $"mailto:?subject={Uri.EscapeDataString(subject)}&body={Uri.EscapeDataString(body)}", "_blank");
+    }
+
+    private void HandleVotesChanged((int likes, int dislikes) voteInfo)
+    {
+        likesCount = voteInfo.likes;
+        dislikesCount = voteInfo.dislikes;
+        StateHasChanged();
     }
 }

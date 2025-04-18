@@ -37,6 +37,9 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(opt => opt.UseSqlServ
 // Register ProjectService
 builder.Services.AddScoped<IProjectService, ProjectService>();
 
+// Register BlogService
+builder.Services.AddScoped<IBlogService, BlogService>();
+
 // Register GitHubService (using Octokit)
 // Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>(); // Register directly

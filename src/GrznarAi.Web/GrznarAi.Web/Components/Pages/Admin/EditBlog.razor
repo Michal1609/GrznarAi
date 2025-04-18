@@ -1,0 +1,204 @@
+@page "/admin/blogs/edit/{BlogId:int}"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using PSC.Blazor.Components.MarkdownEditor
+@inject NavigationManager NavigationManager
+@inject IBlogService BlogService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Upravit blog</PageTitle>
+
+<h1>Upravit blog</h1>
+
+@if (isLoading)
+{
+    <p><em>Načítání dat...</em></p>
+}
+else if (blog == null)
+{
+    <div class="alert alert-danger">
+        Blog nebyl nalezen.
+    </div>
+    <button class="btn btn-secondary" @onclick="GoBack">Zpět na seznam</button>
+}
+else
+{
+    <div class="mb-3">
+        <label for="language" class="form-label">Jazyk</label>
+        <select id="language" class="form-select" @onchange="SelectLanguage">
+            @foreach (var lang in availableLanguages)
+            {
+                <option value="@lang.Code" selected="@(selectedLanguage == lang.Code)">@lang.Name</option>
+            }
+        </select>
+    </div>
+
+    @if (blogContent == null)
+    {
+        <div class="alert alert-info">
+            <p>Obsah blogu pro jazyk '@GetLanguageName(selectedLanguage)' ještě neexistuje.</p>
+            <button class="btn btn-primary" @onclick="CreateNewLanguageVersion">Vytvořit jazykovou verzi</button>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="blogContent" OnValidSubmit="HandleValidSubmit" FormName="EditBlogForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="mb-3">
+                <label for="title" class="form-label">Název</label>
+                <InputText id="title" class="form-control" @bind-Value="blogContent.Title" />
+                <ValidationMessage For="() => blogContent.Title" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Krátký popis</label>
+                <InputTextArea id="description" class="form-control" @bind-Value="blogContent.Description" rows="3" />
+                <ValidationMessage For="() => blogContent.Description" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="tags" class="form-label">Tagy (oddělené čárkou)</label>
+                <InputText id="tags" class="form-control" @bind-Value="blogContent.Tags" />
+                <ValidationMessage For="() => blogContent.Tags" class="text-danger" />
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div class="form-check">
+                        <InputCheckbox id="isPublished" class="form-check-input" @bind-Value="blogContent.IsPublished" />
+                        <label class="form-check-label" for="isPublished">
+                            Publikovat tento blog
+                        </label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Obsah</label>
+                        <MarkdownEditor @bind-Value="blogContent.Content" />
+                        <ValidationMessage For="() => blogContent.Content" class="text-danger" />
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">Uložit změny</button>
+            <button type="button" class="btn btn-secondary" @onclick="GoBack">Zpět na seznam</button>
+        </EditForm>
+    }
+}
+
+@code {
+    [Parameter]
+    public int BlogId { get; set; }
+
+    private Blog? blog;
+    private BlogContent? blogContent;
+    private string selectedLanguage = "cs";
+    private bool isLoading = true;
+
+    private record LanguageInfo(string Code, string Name);
+
+    private List<LanguageInfo> availableLanguages = new()
+    {
+        new LanguageInfo("cs", "Čeština"),
+        new LanguageInfo("en", "English"),
+        new LanguageInfo("de", "Deutsch")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBlog();
+    }
+
+    private async Task LoadBlog()
+    {
+        isLoading = true;
+        
+        try
+        {
+            blog = await BlogService.GetBlogByIdAsync(BlogId);
+            
+            if (blog != null)
+            {
+                await LoadBlogContent();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading blog: {ex.Message}");
+            // TODO: Přidat zobrazení chybové zprávy uživateli
+        }
+        
+        isLoading = false;
+    }
+
+    private async Task LoadBlogContent()
+    {
+        if (blog == null) return;
+
+        try
+        {
+            blogContent = await BlogService.GetBlogContentAsync(BlogId, selectedLanguage);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading blog content: {ex.Message}");
+            // TODO: Přidat zobrazení chybové zprávy uživateli
+        }
+    }
+
+    private async Task SelectLanguage(ChangeEventArgs e)
+    {
+        if (e.Value?.ToString() is string language)
+        {
+            selectedLanguage = language;
+            await LoadBlogContent();
+        }
+    }
+
+    private void CreateNewLanguageVersion()
+    {
+        if (blog == null) return;
+
+        blogContent = new BlogContent
+        {
+            BlogId = BlogId,
+            LanguageCode = selectedLanguage,
+            Title = string.Empty,
+            Content = string.Empty
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (blog == null || blogContent == null) return;
+
+        try
+        {
+            await BlogService.CreateOrUpdateBlogContentAsync(blogContent);
+            await JSRuntime.InvokeVoidAsync("alert", "Blog byl úspěšně uložen");
+            
+            // Znovu načteme blog, aby se zobrazily aktuální údaje
+            await LoadBlog();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving blog: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Chyba při ukládání blogu: {ex.Message}");
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/blogs");
+    }
+
+    private string GetLanguageName(string languageCode)
+    {
+        return availableLanguages.FirstOrDefault(l => l.Code == languageCode)?.Name ?? languageCode;
+    }
+} 

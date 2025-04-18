@@ -75,3 +75,7 @@ D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\stati
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json
 D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json
+D:\Michal\Vibe\MyWeb\src\GrznarAi.Web\GrznarAi.Web.Client\obj\Debug\net9.0\staticwebassets.build.json

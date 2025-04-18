@@ -1,0 +1,97 @@
+@page "/admin/blogs/new"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using PSC.Blazor.Components.MarkdownEditor
+@inject NavigationManager NavigationManager
+@inject IBlogService BlogService
+
+<PageTitle>Přidat nový blog</PageTitle>
+
+<h1>Přidat nový blog</h1>
+
+<EditForm Model="blogContent" OnValidSubmit="HandleValidSubmit" FormName="NewBlogForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger" />
+
+    <div class="mb-3">
+        <label for="language" class="form-label">Jazyk</label>
+        <InputSelect id="language" class="form-select" @bind-Value="blogContent.LanguageCode">
+            <option value="cs">Čeština</option>
+            <option value="en">English</option>
+            <option value="de">Deutsch</option>
+        </InputSelect>
+        <ValidationMessage For="() => blogContent.LanguageCode" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="title" class="form-label">Název</label>
+        <InputText id="title" class="form-control" @bind-Value="blogContent.Title" />
+        <ValidationMessage For="() => blogContent.Title" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="description" class="form-label">Krátký popis</label>
+        <InputTextArea id="description" class="form-control" @bind-Value="blogContent.Description" rows="3" />
+        <ValidationMessage For="() => blogContent.Description" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label for="tags" class="form-label">Tagy (oddělené čárkou)</label>
+        <InputText id="tags" class="form-control" @bind-Value="blogContent.Tags" />
+        <ValidationMessage For="() => blogContent.Tags" class="text-danger" />
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="form-check">
+                <InputCheckbox id="isPublished" class="form-check-input" @bind-Value="blogContent.IsPublished" />
+                <label class="form-check-label" for="isPublished">
+                    Publikovat tento blog
+                </label>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="content" class="form-label">Obsah</label>
+                <MarkdownEditor @bind-Value="blogContent.Content" />
+                <ValidationMessage For="() => blogContent.Content" class="text-danger" />
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success">Vytvořit blog</button>
+    <button type="button" class="btn btn-secondary" @onclick="GoBack">Zrušit</button>
+</EditForm>
+
+@code {
+    private BlogContent blogContent = new() { LanguageCode = "cs" };
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            // 1. Nejprve vytvoříme nový blog
+            var newBlog = await BlogService.CreateBlogAsync();
+
+            // 2. Přiřadíme blog ID k obsahu a uložíme ho
+            blogContent.BlogId = newBlog.Id;
+            await BlogService.CreateOrUpdateBlogContentAsync(blogContent);
+
+            NavigationManager.NavigateTo("/admin/blogs");
+        }
+        catch (Exception ex)
+        {
+            // Log error, show message
+            Console.WriteLine($"Error creating blog: {ex.Message}");
+            // TODO: Přidat zobrazení chybové zprávy uživateli
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/blogs");
+    }
+} 

@@ -1,6 +1,7 @@
 @page "/blog"
 @page "/blog/tag/{Tag}"
 @page "/blog/archive/{Year:int}/{Month:int}"
+@rendermode InteractiveServer
 @using GrznarAi.Web.Services
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Components.Pages.Blog.Models
@@ -112,7 +113,7 @@
                         <input type="text" class="form-control" placeholder="Hledejte v blogu..." 
                                @bind="searchTerm" @bind:event="oninput" 
                                @onkeyup="HandleSearchKeyPress">
-                        <button class="btn btn-primary" type="button" @onclick="Search">
+                        <button class="btn btn-primary" @onclick="Search" type="button">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>

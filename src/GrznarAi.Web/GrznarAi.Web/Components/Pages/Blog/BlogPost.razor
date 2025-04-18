@@ -2,6 +2,7 @@
 @using GrznarAi.Web.Services
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Components.Pages.Blog.Models
+@using System.Globalization
 @inject IBlogService BlogService
 @inject MarkdownService MarkdownService
 @inject NavigationManager NavigationManager
@@ -146,8 +147,8 @@
     private List<string> popularTags = new List<string>();
     private bool isLoading = true;
     
-    // Jazyk pro blog, můžeme později rozšířit pro vícejazyčnost
-    private string languageCode = "cs";
+    // Jazyk pro blog, získáme aktuální jazyk z CultureInfo
+    private string languageCode => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
 
     protected override async Task OnInitializedAsync()
     {
@@ -169,7 +170,7 @@
         try
         {
             // Načtení blogového příspěvku podle slugu
-            var blogContent = await BlogService.GetBlogContentBySlugAsync(languageCode, Slug);
+            var blogContent = await LoadBlogContentWithFallbackAsync(Slug);
             
             if (blogContent != null)
             {
@@ -203,6 +204,26 @@
         isLoading = false;
     }
     
+    private async Task<BlogContent?> LoadBlogContentWithFallbackAsync(string slug)
+    {
+        // Nejprve zkusíme načíst obsah v aktuálním jazyce
+        var content = await BlogService.GetBlogContentBySlugAsync(languageCode, slug);
+        
+        // Pokud není obsah v aktuálním jazyce, zkusíme angličtinu
+        if (content == null && languageCode != "en")
+        {
+            content = await BlogService.GetBlogContentBySlugAsync("en", slug);
+            
+            // Pokud ani v angličtině není obsah a není to čeština, zkusíme češtinu
+            if (content == null && languageCode != "cs")
+            {
+                content = await BlogService.GetBlogContentBySlugAsync("cs", slug);
+            }
+        }
+        
+        return content;
+    }
+    
     private async Task LoadRelatedPostsAsync(List<string> tags)
     {
         if (tags.Count == 0 || blogViewModel == null)
@@ -227,7 +248,7 @@
                             Id = post.Id,
                             BlogId = post.BlogId,
                             Title = post.Title,
-                            Slug = GenerateSlug(post.Title), // Tuto metodu budeme muset implementovat
+                            Slug = GenerateSlug(post.Title),
                             Description = post.Description ?? "",
                             CreatedAt = post.CreatedAt,
                             UpdatedAt = post.UpdatedAt ?? DateTime.UtcNow,

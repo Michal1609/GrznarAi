@@ -4,6 +4,7 @@
 @using GrznarAi.Web.Services
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Components.Pages.Blog.Models
+@using System.Globalization
 @inject IBlogService BlogService
 @inject MarkdownService MarkdownService
 @inject NavigationManager NavigationManager
@@ -274,8 +275,8 @@
     private List<string> popularTags = new List<string>();
     private List<ArchiveMonthViewModel> archiveMonths = new List<ArchiveMonthViewModel>();
     
-    // Jazyk pro blog, můžeme později rozšířit pro vícejazyčnost
-    private string languageCode = "cs";
+    // Jazyk pro blog, získáme aktuální jazyk z CultureInfo
+    private string languageCode => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
     
     private bool isSearchActive = false;
     
@@ -297,19 +298,22 @@
         
         try
         {
+            List<BlogContent> posts;
+            int count;
+            
             // Načtení příspěvků podle parametrů URL
             if (!string.IsNullOrEmpty(Tag))
             {
-                var (posts, count) = await LoadPostsByTagAsync(Tag);
-                blogPosts = posts;
+                (posts, count) = await LoadPostsByTagWithFallbackAsync(Tag);
+                blogPosts = posts.Select(p => MapBlogContentToViewModel(p)).ToList();
                 totalPosts = count;
                 // Zrušíme vyhledávání, jelikož jsme v zobrazení podle tagu
                 isSearchActive = false;
             }
             else if (Year > 0 && Month > 0)
             {
-                var (posts, count) = await LoadPostsByMonthAsync(Year, Month);
-                blogPosts = posts;
+                (posts, count) = await LoadPostsByMonthWithFallbackAsync(Year, Month);
+                blogPosts = posts.Select(p => MapBlogContentToViewModel(p)).ToList();
                 totalPosts = count;
                 // Zrušíme vyhledávání, jelikož jsme v zobrazení podle měsíce
                 isSearchActive = false;
@@ -317,16 +321,16 @@
             else if (isSearching && !string.IsNullOrWhiteSpace(searchTerm))
             {
                 // Aktivní vyhledávání
-                var (posts, count) = await LoadPostsBySearchAsync(searchTerm);
-                blogPosts = posts;
+                (posts, count) = await LoadPostsBySearchWithFallbackAsync(searchTerm);
+                blogPosts = posts.Select(p => MapBlogContentToViewModel(p)).ToList();
                 totalPosts = count;
                 isSearchActive = true;
             }
             else
             {
                 // Standardní zobrazení všech příspěvků
-                var (posts, count) = await LoadAllPostsAsync();
-                blogPosts = posts;
+                (posts, count) = await LoadAllPostsWithFallbackAsync();
+                blogPosts = posts.Select(p => MapBlogContentToViewModel(p)).ToList();
                 totalPosts = count;
                 isSearchActive = false;
             }
@@ -349,8 +353,9 @@
         }
     }
     
-    private async Task<(List<BlogViewModel>, int)> LoadAllPostsAsync()
+    private async Task<(List<BlogContent>, int)> LoadAllPostsWithFallbackAsync()
     {
+        // Nejprve zkusíme načíst posty v aktuálním jazyce
         var posts = await BlogService.GetPublishedBlogsAsync(
             languageCode, 
             skip: (currentPage - 1) * postsPerPage, 
@@ -358,11 +363,34 @@
             
         var totalCount = await BlogService.GetPublishedBlogsCountAsync(languageCode);
         
-        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+        // Pokud nejsou žádné posty v aktuálním jazyce, zkusíme angličtinu
+        if (!posts.Any() && languageCode != "en")
+        {
+            posts = await BlogService.GetPublishedBlogsAsync(
+                "en", 
+                skip: (currentPage - 1) * postsPerPage, 
+                take: postsPerPage);
+                
+            totalCount = await BlogService.GetPublishedBlogsCountAsync("en");
+            
+            // Pokud ani v angličtině nejsou posty a není to čeština, zkusíme češtinu
+            if (!posts.Any() && languageCode != "cs")
+            {
+                posts = await BlogService.GetPublishedBlogsAsync(
+                    "cs", 
+                    skip: (currentPage - 1) * postsPerPage, 
+                    take: postsPerPage);
+                    
+                totalCount = await BlogService.GetPublishedBlogsCountAsync("cs");
+            }
+        }
+        
+        return (posts, totalCount);
     }
     
-    private async Task<(List<BlogViewModel>, int)> LoadPostsByTagAsync(string tag)
+    private async Task<(List<BlogContent>, int)> LoadPostsByTagWithFallbackAsync(string tag)
     {
+        // Nejprve zkusíme načíst posty v aktuálním jazyce
         var posts = await BlogService.GetBlogsByTagAsync(
             languageCode,
             tag,
@@ -371,11 +399,36 @@
             
         var totalCount = await BlogService.GetBlogsByTagCountAsync(languageCode, tag);
         
-        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+        // Pokud nejsou žádné posty v aktuálním jazyce, zkusíme angličtinu
+        if (!posts.Any() && languageCode != "en")
+        {
+            posts = await BlogService.GetBlogsByTagAsync(
+                "en",
+                tag,
+                skip: (currentPage - 1) * postsPerPage, 
+                take: postsPerPage);
+                
+            totalCount = await BlogService.GetBlogsByTagCountAsync("en", tag);
+            
+            // Pokud ani v angličtině nejsou posty a není to čeština, zkusíme češtinu
+            if (!posts.Any() && languageCode != "cs")
+            {
+                posts = await BlogService.GetBlogsByTagAsync(
+                    "cs",
+                    tag,
+                    skip: (currentPage - 1) * postsPerPage, 
+                    take: postsPerPage);
+                    
+                totalCount = await BlogService.GetBlogsByTagCountAsync("cs", tag);
+            }
+        }
+        
+        return (posts, totalCount);
     }
     
-    private async Task<(List<BlogViewModel>, int)> LoadPostsByMonthAsync(int year, int month)
+    private async Task<(List<BlogContent>, int)> LoadPostsByMonthWithFallbackAsync(int year, int month)
     {
+        // Nejprve zkusíme načíst posty v aktuálním jazyce
         var posts = await BlogService.GetBlogsByMonthAsync(
             languageCode,
             year,
@@ -385,11 +438,38 @@
             
         var totalCount = await BlogService.GetBlogsByMonthCountAsync(languageCode, year, month);
         
-        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+        // Pokud nejsou žádné posty v aktuálním jazyce, zkusíme angličtinu
+        if (!posts.Any() && languageCode != "en")
+        {
+            posts = await BlogService.GetBlogsByMonthAsync(
+                "en",
+                year,
+                month,
+                skip: (currentPage - 1) * postsPerPage, 
+                take: postsPerPage);
+                
+            totalCount = await BlogService.GetBlogsByMonthCountAsync("en", year, month);
+            
+            // Pokud ani v angličtině nejsou posty a není to čeština, zkusíme češtinu
+            if (!posts.Any() && languageCode != "cs")
+            {
+                posts = await BlogService.GetBlogsByMonthAsync(
+                    "cs",
+                    year,
+                    month,
+                    skip: (currentPage - 1) * postsPerPage, 
+                    take: postsPerPage);
+                    
+                totalCount = await BlogService.GetBlogsByMonthCountAsync("cs", year, month);
+            }
+        }
+        
+        return (posts, totalCount);
     }
     
-    private async Task<(List<BlogViewModel>, int)> LoadPostsBySearchAsync(string term)
+    private async Task<(List<BlogContent>, int)> LoadPostsBySearchWithFallbackAsync(string term)
     {
+        // Nejprve zkusíme načíst posty v aktuálním jazyce
         var posts = await BlogService.SearchBlogsAsync(
             languageCode,
             term,
@@ -398,7 +478,31 @@
             
         var totalCount = await BlogService.SearchBlogsCountAsync(languageCode, term);
         
-        return (posts.Select(p => MapBlogContentToViewModel(p)).ToList(), totalCount);
+        // Pokud nejsou žádné posty v aktuálním jazyce, zkusíme angličtinu
+        if (!posts.Any() && languageCode != "en")
+        {
+            posts = await BlogService.SearchBlogsAsync(
+                "en",
+                term,
+                skip: (currentPage - 1) * postsPerPage, 
+                take: postsPerPage);
+                
+            totalCount = await BlogService.SearchBlogsCountAsync("en", term);
+            
+            // Pokud ani v angličtině nejsou posty a není to čeština, zkusíme češtinu
+            if (!posts.Any() && languageCode != "cs")
+            {
+                posts = await BlogService.SearchBlogsAsync(
+                    "cs",
+                    term,
+                    skip: (currentPage - 1) * postsPerPage, 
+                    take: postsPerPage);
+                    
+                totalCount = await BlogService.SearchBlogsCountAsync("cs", term);
+            }
+        }
+        
+        return (posts, totalCount);
     }
     
     private BlogViewModel MapBlogContentToViewModel(BlogContent blogContent)

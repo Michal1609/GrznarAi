@@ -196,6 +196,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBYm91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/Administration.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBZG1pbmlzdHJhdGlvbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/BlogAdmin.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxCbG9nQWRtaW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -226,6 +230,34 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/ProjectAdmin.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxQcm9qZWN0QWRtaW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/RoleCreate.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxSb2xlQ3JlYXRlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/RoleEdit.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxSb2xlRWRpdC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/RolesAdmin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxSb2xlc0FkbWluLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/RoleUsers.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxSb2xlVXNlcnMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/UserCreate.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxVc2VyQ3JlYXRlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/UserEdit.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxVc2VyRWRpdC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Admin/UsersAdmin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxVc2Vyc0FkbWluLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/Michal/Vibe/MyWeb/src/GrznarAi.Web/GrznarAi.Web/Components/Pages/Blog/Blog.razor]

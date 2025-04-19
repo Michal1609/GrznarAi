@@ -4,11 +4,14 @@
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IJSRuntime JSRuntime
+@inject IReCaptchaService ReCaptchaService
 
 <PageTitle>Log in</PageTitle>
 
@@ -38,9 +41,18 @@
                         Remember me
                     </label>
                 </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="small text-muted">
+                        <i class="bi bi-shield-check me-1"></i> This form is protected by Google reCAPTCHA.
+                    </div>
+                    <button type="submit" class="btn btn-lg btn-primary">Log in</button>
                 </div>
+                @if (recaptchaError)
+                {
+                    <div class="alert alert-danger py-1 mb-3 small">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Verification that you are not a robot failed. Please try again.
+                    </div>
+                }
                 <div>
                     <p>
                         <a href="Account/ForgotPassword">Forgot your password?</a>
@@ -66,6 +78,8 @@
 
 @code {
     private string? errorMessage;
+    private bool recaptchaInitialized = false;
+    private bool recaptchaError = false;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -84,9 +98,54 @@
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
     }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Inicializace Google reCAPTCHA v3
+                await JSRuntime.InvokeVoidAsync("initializeRecaptcha", ReCaptchaService.GetSiteKey());
+                recaptchaInitialized = true;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error initializing reCAPTCHA");
+            }
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
 
     public async Task LoginUser()
     {
+        recaptchaError = false;
+        
+        // Verify reCAPTCHA first
+        bool isHuman = true;
+        if (recaptchaInitialized)
+        {
+            try
+            {
+                var recaptchaToken = await JSRuntime.InvokeAsync<string>("executeRecaptcha", "login_submit");
+                isHuman = await ReCaptchaService.VerifyAsync(recaptchaToken);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error verifying reCAPTCHA");
+                // In case of reCAPTCHA service error, assume it's a human
+                isHuman = true;
+            }
+        }
+
+        if (!isHuman)
+        {
+            recaptchaError = true;
+            return;
+        }
+        
         // This doesn't count login failures towards account lockout
         // To enable password failures to trigger account lockout, set lockoutOnFailure: true
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);

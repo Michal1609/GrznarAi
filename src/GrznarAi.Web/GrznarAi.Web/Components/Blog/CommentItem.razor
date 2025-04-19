@@ -3,9 +3,11 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
 @inject ICommentService CommentService
 @inject ILocalizationService Localizer
 @inject IJSRuntime JSRuntime
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 
 <div class="comment-item @(IsReply ? "ms-5" : "") mb-3">
     <div class="card">
@@ -156,12 +158,43 @@
             var user = authState.User;
             
             IsAuthenticated = user.Identity?.IsAuthenticated == true;
-            IsAdmin = IsAuthenticated && user.IsInRole("Admin");
             
             if (IsAuthenticated)
             {
                 CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 IsAuthor = CurrentUserId == Comment.ApplicationUserId;
+                
+                // Kontrola role admin přímým dotazem do databáze
+                if (!string.IsNullOrEmpty(CurrentUserId))
+                {
+                    try
+                    {
+                        using var context = await DbContextFactory.CreateDbContextAsync();
+                        
+                        // Získat ID role Admin
+                        var adminRoleId = await context.Roles
+                            .Where(r => r.Name == "Admin")
+                            .Select(r => r.Id)
+                            .FirstOrDefaultAsync();
+                        
+                        if (!string.IsNullOrEmpty(adminRoleId))
+                        {
+                            // Zkontrolovat, zda uživatel má tuto roli
+                            IsAdmin = await context.UserRoles
+                                .AnyAsync(ur => ur.UserId == CurrentUserId && ur.RoleId == adminRoleId);
+                            
+                            Console.WriteLine($"User ID: {CurrentUserId}, Role 'Admin' ID: {adminRoleId}, IsAdmin: {IsAdmin}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Role 'Admin' nebyla nalezena v databázi.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Chyba při kontrole role 'Admin': {ex.Message}");
+                    }
+                }
             }
         }
         

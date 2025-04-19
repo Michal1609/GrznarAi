@@ -405,5 +405,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 .vs/
-bin/
-obj/
+**/bin/
+**/obj/

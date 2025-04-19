@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\GrznarAi.Web.Client.props" />
-</Project>

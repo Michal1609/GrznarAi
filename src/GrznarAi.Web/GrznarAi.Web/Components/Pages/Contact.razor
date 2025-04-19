@@ -5,6 +5,8 @@
 @inject IEmailService EmailService
 @inject ILogger<Contact> Logger
 @inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
+@inject IReCaptchaService ReCaptchaService
 @rendermode InteractiveServer
 
 <PageTitle>@Localizer.GetString("ContactPage.Title")</PageTitle>
@@ -68,7 +70,7 @@
                         @if (isError)
                         {
                             <div class="alert alert-danger py-1 mb-2 small">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i> @Localizer.GetString("ContactPage.Form.ErrorMessage")
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> @(recaptchaErrorMessage ?? Localizer.GetString("ContactPage.Form.ErrorMessage"))
                             </div>
                         }
 
@@ -102,7 +104,10 @@
                             </div>
                         </div>
                         
-                        <div class="text-end">
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <div class="small text-muted">
+                                <i class="bi bi-shield-check me-1"></i> @Localizer.GetString("ContactPage.Form.RecaptchaText")
+                            </div>
                             <button type="submit" class="btn btn-primary btn-sm" disabled="@isSending">
                                 @if (isSending)
                                 {
@@ -139,15 +144,66 @@
     private bool isSending = false;
     private bool isSuccess = false;
     private bool isError = false;
+    private bool recaptchaInitialized = false;
+    private string? recaptchaErrorMessage = null;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Inicializace Google reCAPTCHA v3
+                await JSRuntime.InvokeVoidAsync("initializeRecaptcha", ReCaptchaService.GetSiteKey());
+                recaptchaInitialized = true;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Chyba při inicializaci reCAPTCHA");
+            }
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
     
     private async Task SendMessage()
     {
         isSending = true;
         isSuccess = false;
         isError = false;
+        recaptchaErrorMessage = null;
 
         try
         {
+            // Ověření reCAPTCHA
+            bool isHuman = true;
+            
+            if (recaptchaInitialized)
+            {
+                try
+                {
+                    // Získání tokenu z reCAPTCHA
+                    var recaptchaToken = await JSRuntime.InvokeAsync<string>("executeRecaptcha", "contact_submit");
+                    
+                    // Verifikace reCAPTCHA tokenu
+                    isHuman = await ReCaptchaService.VerifyAsync(recaptchaToken);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Chyba při verifikaci reCAPTCHA");
+                    // Při chybě reCAPTCHA předpokládáme, že je to člověk (pro případ, že by služba měla výpadek)
+                    isHuman = true;
+                }
+            }
+            
+            if (!isHuman)
+            {
+                isError = true;
+                recaptchaErrorMessage = Localizer.GetString("ContactPage.Form.RecaptchaFailed");
+                return;
+            }
+            
             // Poslat potvrzovací email odesílateli
             await EmailService.SendContactConfirmationEmailAsync(model.Email, model.Name);
             

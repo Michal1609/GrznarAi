@@ -101,6 +101,81 @@ AddEntry("ContactPage.Form.NameLabel", "Vaše jméno", "Your Name", "Contact for
 AddEntry("ContactPage.Form.SendButton", "Odeslat zprávu", "Send Message", "Contact form send button");
 ```
 
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
 ## Řešení problémů při vývoji
 
 ### Problém: Chyba migrace - Tabulka 'Projects' již existuje

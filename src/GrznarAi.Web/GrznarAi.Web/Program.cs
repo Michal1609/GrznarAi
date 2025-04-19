@@ -58,6 +58,10 @@ builder.Services.AddHostedService(sp => (LocalizationService)sp.GetRequiredServi
 builder.Services.AddScoped<IReCaptchaService, ReCaptchaService>();
 builder.Services.AddHttpClient();
 
+// Register EmailService
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
 // Configure Localization
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {

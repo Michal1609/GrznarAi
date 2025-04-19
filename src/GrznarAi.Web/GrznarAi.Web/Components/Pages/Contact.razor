@@ -1,11 +1,17 @@
 @page "/contact"
+@using GrznarAi.Web.Models
+@using GrznarAi.Web.Services
+@using System.ComponentModel.DataAnnotations
+@inject IEmailService EmailService
+@inject ILogger<Contact> Logger
+@rendermode InteractiveServer
 
-<PageTitle>Contact - GrznarAI</PageTitle>
+<PageTitle>Kontakt - GrznarAI</PageTitle>
 
 <div class="container mt-4">
     <div class="row">
         <div class="col-lg-8 mx-auto">
-            <h1 class="mb-4">Contact Me</h1>
+            <h1 class="mb-4">Kontaktujte nás</h1>
             
             <div class="row mb-5">
                 <div class="col-md-4 mb-4 mb-md-0">
@@ -13,8 +19,8 @@
                         <div class="card-body text-center">
                             <i class="bi bi-envelope-fill text-primary" style="font-size: 3rem;"></i>
                             <h4 class="mt-3">Email</h4>
-                            <p class="text-muted">contact@example.com</p>
-                            <a href="mailto:contact@example.com" class="btn btn-outline-primary">Send Email</a>
+                            <p class="text-muted">michal@grznar.eu</p>
+                            <a href="mailto:michal@grznar.eu" class="btn btn-outline-primary">Odeslat email</a>
                         </div>
                     </div>
                 </div>
@@ -25,7 +31,7 @@
                             <i class="bi bi-github text-primary" style="font-size: 3rem;"></i>
                             <h4 class="mt-3">GitHub</h4>
                             <p class="text-muted">github.com/Michal1609</p>
-                            <a href="https://github.com/Michal1609" target="_blank" class="btn btn-outline-primary">View Profile</a>
+                            <a href="https://github.com/Michal1609" target="_blank" class="btn btn-outline-primary">Zobrazit profil</a>
                         </div>
                     </div>
                 </div>
@@ -36,7 +42,7 @@
                             <i class="bi bi-linkedin text-primary" style="font-size: 3rem;"></i>
                             <h4 class="mt-3">LinkedIn</h4>
                             <p class="text-muted">linkedin.com/in/example</p>
-                            <a href="https://linkedin.com/in/example" target="_blank" class="btn btn-outline-primary">Connect</a>
+                            <a href="https://linkedin.com/in/example" target="_blank" class="btn btn-outline-primary">Spojit se</a>
                         </div>
                     </div>
                 </div>
@@ -44,34 +50,63 @@
             
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-0">Send Me a Message</h3>
+                    <h3 class="mb-0">Pošlete nám zprávu</h3>
                 </div>
                 <div class="card-body">
-                    <form>
+                    <EditForm Model="@model" OnValidSubmit="SendMessage" FormName="contactForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+
+                        @if (isSuccess)
+                        {
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle-fill me-2"></i> Vaše zpráva byla úspěšně odeslána. Děkujeme!
+                            </div>
+                        }
+
+                        @if (isError)
+                        {
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> Při odesílání zprávy došlo k chybě. Zkuste to prosím později.
+                            </div>
+                        }
+
                         <div class="mb-3">
-                            <label for="name" class="form-label">Your Name</label>
-                            <input type="text" class="form-control" id="name" placeholder="Enter your name" @bind="name">
+                            <label for="name" class="form-label">Vaše jméno</label>
+                            <InputText class="form-control" id="name" placeholder="Zadejte své jméno" @bind-Value="model.Name" />
+                            <ValidationMessage For="@(() => model.Name)" class="text-danger" />
                         </div>
                         
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" placeholder="Enter your email" @bind="email">
+                            <label for="email" class="form-label">E-mailová adresa</label>
+                            <InputText type="email" class="form-control" id="email" placeholder="Zadejte svůj e-mail" @bind-Value="model.Email" />
+                            <ValidationMessage For="@(() => model.Email)" class="text-danger" />
                         </div>
                         
                         <div class="mb-3">
-                            <label for="subject" class="form-label">Subject</label>
-                            <input type="text" class="form-control" id="subject" placeholder="Enter subject" @bind="subject">
+                            <label for="subject" class="form-label">Předmět</label>
+                            <InputText class="form-control" id="subject" placeholder="Zadejte předmět" @bind-Value="model.Subject" />
+                            <ValidationMessage For="@(() => model.Subject)" class="text-danger" />
                         </div>
                         
                         <div class="mb-3">
-                            <label for="message" class="form-label">Message</label>
-                            <textarea class="form-control" id="message" rows="5" placeholder="Enter your message" @bind="message"></textarea>
+                            <label for="message" class="form-label">Zpráva</label>
+                            <InputTextArea class="form-control" id="message" rows="5" placeholder="Zadejte vaši zprávu" @bind-Value="model.Message" />
+                            <ValidationMessage For="@(() => model.Message)" class="text-danger" />
                         </div>
                         
-                        <button type="button" class="btn btn-primary" @onclick="SendMessage">
-                            <i class="bi bi-send me-2"></i> Send Message
+                        <button type="submit" class="btn btn-primary" disabled="@isSending">
+                            @if (isSending)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Odesílání...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-send me-2"></i> <span>Odeslat zprávu</span>
+                            }
                         </button>
-                    </form>
+                    </EditForm>
                 </div>
             </div>
         </div>
@@ -79,18 +114,37 @@
 </div>
 
 @code {
-    private string name = "";
-    private string email = "";
-    private string subject = "";
-    private string message = "";
+    private ContactModel model = new ContactModel();
+    private bool isSending = false;
+    private bool isSuccess = false;
+    private bool isError = false;
     
-    private void SendMessage()
+    private async Task SendMessage()
     {
-        // In a real application, this would send the message
-        // For now, we'll just reset the form
-        name = "";
-        email = "";
-        subject = "";
-        message = "";
+        isSending = true;
+        isSuccess = false;
+        isError = false;
+
+        try
+        {
+            // Poslat potvrzovací email odesílateli
+            await EmailService.SendContactConfirmationEmailAsync(model.Email, model.Name);
+            
+            // Poslat notifikační email administrátorovi
+            await EmailService.SendContactNotificationEmailAsync(model.Name, model.Email, model.Subject, model.Message);
+            
+            // Reset formuláře po úspěšném odeslání
+            model = new ContactModel();
+            isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při odesílání kontaktního formuláře");
+            isError = true;
+        }
+        finally
+        {
+            isSending = false;
+        }
     }
 }

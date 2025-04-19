@@ -1,6 +1,10 @@
 ﻿@page "/"
 @inject IJSRuntime JSRuntime
 @inject GrznarAi.Web.Services.ILocalizationService Localizer
+@inject GrznarAi.Web.Services.IBlogService BlogService
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Components.Pages.Blog.Models
+@using System.Globalization
 
 <PageTitle>@Localizer.GetString("HomePage.Title")</PageTitle>
 
@@ -103,36 +107,38 @@
 <div class="container mt-5">
     <h2 class="mb-4">@Localizer.GetString("HomePage.LatestPosts.Title")</h2>
     <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Sample Blog Post 1</h5>
-                    <p class="card-text text-muted">April 15, 2024</p>
-                    <p class="card-text">This is a sample blog post that would be displayed on the homepage.</p>
-                    <a href="#" class="btn btn-sm btn-primary">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
+        @if (isLoading)
+        {
+            <div class="d-flex justify-content-center w-100 py-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">@Localizer.GetString("BlogPost.Loading")</span>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Sample Blog Post 2</h5>
-                    <p class="card-text text-muted">April 10, 2024</p>
-                    <p class="card-text">Another sample blog post that would be displayed on the homepage.</p>
-                    <a href="#" class="btn btn-sm btn-primary">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
+        }
+        else if (latestPosts.Count == 0)
+        {
+            <div class="col-12">
+                <div class="alert alert-info">
+                    @Localizer.GetString("HomePage.LatestPosts.NoPosts")
                 </div>
             </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Sample Blog Post 3</h5>
-                    <p class="card-text text-muted">April 5, 2024</p>
-                    <p class="card-text">A third sample blog post that would be displayed on the homepage.</p>
-                    <a href="#" class="btn btn-sm btn-primary">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
+        }
+        else
+        {
+            @foreach (var post in latestPosts)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@post.Title</h5>
+                            <p class="card-text text-muted">@post.CreatedAt.ToString("d. MMMM yyyy")</p>
+                            <p class="card-text flex-grow-1">@post.Description</p>
+                            <a href="/blog/@post.Slug" class="btn btn-sm btn-primary mt-auto">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
+            }
+        }
     </div>
     <div class="text-center mt-3">
         <a href="/blog" class="btn btn-outline-primary">@Localizer.GetString("HomePage.LatestPosts.ViewAll")</a>
@@ -140,6 +146,83 @@
 </div>
 
 @code {
+    private bool isLoading = true;
+    private List<BlogViewModel> latestPosts = new();
+    private CultureInfo currentCulture => CultureInfo.CurrentUICulture;
+    private string languageCode => currentCulture.TwoLetterISOLanguageName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLatestPosts();
+    }
+
+    private async Task LoadLatestPosts()
+    {
+        isLoading = true;
+        
+        try
+        {
+            // Získáme poslední 3 publikované příspěvky v aktuálním jazyce
+            var posts = await BlogService.GetPublishedBlogsAsync(languageCode, 0, 3);
+            
+            // Pokud nejsou k dispozici žádné příspěvky v aktuálním jazyce, zkusíme je načíst v angličtině
+            if (posts.Count == 0 && languageCode != "en")
+            {
+                posts = await BlogService.GetPublishedBlogsAsync("en", 0, 3);
+                
+                // Pokud ani v angličtině nejsou žádné příspěvky, zkusíme je načíst v češtině
+                if (posts.Count == 0 && languageCode != "cs")
+                {
+                    posts = await BlogService.GetPublishedBlogsAsync("cs", 0, 3);
+                }
+            }
+            
+            // Převedeme příspěvky na viewmodel
+            latestPosts = posts.Select(MapBlogContentToViewModel).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chyba při načítání posledních příspěvků: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    
+    private BlogViewModel MapBlogContentToViewModel(BlogContent blogContent)
+    {
+        string slug = blogContent.Title.ToLower()
+            .Replace(" ", "-")
+            .Replace("č", "c")
+            .Replace("ř", "r")
+            .Replace("ž", "z")
+            .Replace("š", "s")
+            .Replace("ý", "y")
+            .Replace("á", "a")
+            .Replace("í", "i")
+            .Replace("é", "e")
+            .Replace("ú", "u")
+            .Replace("ů", "u")
+            .Replace("ň", "n")
+            .Replace("ť", "t")
+            .Replace("ď", "d");
+        
+        return new BlogViewModel
+        {
+            Id = blogContent.Id,
+            BlogId = blogContent.BlogId,
+            Title = blogContent.Title,
+            Slug = slug,
+            Description = blogContent.Description ?? "",
+            Content = blogContent.Content,
+            Tags = blogContent.Tags?.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList() ?? new List<string>(),
+            CreatedAt = blogContent.CreatedAt,
+            UpdatedAt = blogContent.UpdatedAt ?? blogContent.CreatedAt,
+            IsPublished = blogContent.IsPublished
+        };
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

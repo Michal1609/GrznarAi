@@ -147,6 +147,7 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.Comment.ErrorDeleting", "Chyba při mazání komentáře. Zkuste to prosím znovu.", "Error deleting comment. Please try again.", "Error message when deleting comment fails");
             AddEntry("Blog.Comment.ConfirmDelete", "Opravdu chcete smazat tento komentář?", "Are you sure you want to delete this comment?", "Confirmation message for comment deletion");
             AddEntry("Blog.Comment.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when voting fails");
+            AddEntry("Blog.Comment.ReCaptchaFailed", "Ověření, že nejste robot, se nezdařilo. Zkuste to prosím znovu.", "Verification that you are not a robot failed. Please try again.", "Error message when reCAPTCHA verification fails");
             AddEntry("Blog.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when blog voting fails");
             
             // --- Admin Seed Data --- 

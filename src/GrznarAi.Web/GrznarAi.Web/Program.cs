@@ -54,6 +54,10 @@ builder.Services.AddScoped<IGitHubService, GitHubService>(); // Register directl
 builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
 builder.Services.AddHostedService(sp => (LocalizationService)sp.GetRequiredService<ILocalizationService>());
 
+// Register ReCaptchaService
+builder.Services.AddScoped<IReCaptchaService, ReCaptchaService>();
+builder.Services.AddHttpClient();
+
 // Configure Localization
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {

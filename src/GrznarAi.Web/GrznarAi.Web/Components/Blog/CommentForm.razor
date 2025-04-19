@@ -6,6 +6,7 @@
 @inject ICommentService CommentService
 @inject ILocalizationService Localizer
 @inject IJSRuntime JSRuntime
+@inject IReCaptchaService ReCaptchaService
 
 <div class="comment-form mb-4">
     <div class="card">
@@ -47,6 +48,11 @@
                     <ValidationMessage For="() => CommentModel.Content" class="text-danger" />
                 </div>
                 
+                @if (ErrorMessage != null)
+                {
+                    <div class="alert alert-danger">@ErrorMessage</div>
+                }
+
                 <div class="d-flex justify-content-between">
                     <button type="submit" class="btn btn-primary" disabled="@IsSaving">
                         @if (IsSaving)
@@ -90,7 +96,8 @@
     private bool IsAnonymous { get; set; } = true;
     private string? CurrentUserId { get; set; }
     private string? UserCookieId { get; set; }
-    private bool _firstRender = true;
+    private string? ErrorMessage { get; set; } = null;
+    private bool RecaptchaInitialized { get; set; } = false;
     
     protected override async Task OnInitializedAsync()
     {
@@ -112,11 +119,25 @@
     {
         if (firstRender)
         {
-            _firstRender = false;
-            
-            // Získej nebo vytvoř cookie ID pro nepřihlášené uživatele
-            UserCookieId = await JSRuntime.InvokeAsync<string>("getUserCookieId");
-            StateHasChanged();
+            try
+            {
+                // Získej nebo vytvoř cookie ID pro nepřihlášené uživatele
+                UserCookieId = await JSRuntime.InvokeAsync<string>("getUserCookieId");
+                
+                // Inicializace Google reCAPTCHA v3 pouze pro anonymní uživatele
+                if (IsAnonymous && !RecaptchaInitialized)
+                {
+                    await JSRuntime.InvokeVoidAsync("initializeRecaptcha", ReCaptchaService.GetSiteKey());
+                    RecaptchaInitialized = true;
+                }
+                
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnAfterRenderAsync: {ex.Message}");
+                // Nezobrazujeme chybu uživateli, jen ji logujeme
+            }
         }
         
         await base.OnAfterRenderAsync(firstRender);
@@ -125,9 +146,37 @@
     private async Task HandleValidSubmit()
     {
         IsSaving = true;
+        ErrorMessage = null;
         
         try
         {
+            bool isHuman = true;
+            
+            // Provádíme reCAPTCHA ověření pouze u anonymních uživatelů
+            if (IsAnonymous && RecaptchaInitialized)
+            {
+                try
+                {
+                    // Získání tokenu z reCAPTCHA
+                    var recaptchaToken = await JSRuntime.InvokeAsync<string>("executeRecaptcha", "comment_submit");
+                    
+                    // Verifikace reCAPTCHA tokenu
+                    isHuman = await ReCaptchaService.VerifyAsync(recaptchaToken);
+                }
+                catch
+                {
+                    // Při chybě reCAPTCHA předpokládáme, že je to člověk (pro případ, že by reCAPTCHA služba měla výpadek)
+                    isHuman = true;
+                }
+            }
+            
+            if (!isHuman)
+            {
+                ErrorMessage = Localizer.GetString("Blog.Comment.ReCaptchaFailed");
+                IsSaving = false;
+                return;
+            }
+            
             var comment = new Comment
             {
                 BlogId = BlogId,
@@ -149,7 +198,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error saving comment: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("alert", Localizer.GetString("Blog.Comment.ErrorSaving"));
+            ErrorMessage = Localizer.GetString("Blog.Comment.ErrorSaving");
         }
         
         IsSaving = false;

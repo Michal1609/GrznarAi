@@ -1,0 +1,231 @@
+@page "/admin/administration/roles/users/{RoleId}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>@Localizer.GetString("Administration.Roles.UserAssignment")</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>@Localizer.GetString("Administration.Roles.UserAssignment") - @roleName</h2>
+        </div>
+        <div class="card-body">
+            @if (isLoading)
+            {
+                <div class="d-flex justify-content-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">@Localizer.GetString("Administration.Loading")</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="@Localizer.GetString("Administration.Users.Filter")" 
+                                   @bind="searchText" @bind:event="oninput" />
+                            <button class="btn btn-outline-secondary" type="button" @onclick="FilterUsers">
+                                <i class="bi bi-search me-1"></i>@Localizer.GetString("Administration.Filter")
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" @onclick="ResetFilter">
+                                <i class="bi bi-x-circle me-1"></i>@Localizer.GetString("Administration.Reset")
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@Localizer.GetString("Administration.Users.Username")</th>
+                                <th>@Localizer.GetString("Administration.Users.Email")</th>
+                                <th>@Localizer.GetString("Administration.Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in filteredUsers)
+                            {
+                                <tr>
+                                    <td>@user.UserName</td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" 
+                                                   id="role_@user.Id" 
+                                                   checked="@IsInRole(user.Id)" 
+                                                   @onchange="@(e => ToggleUserRole(user.Id, (bool)e.Value!))" />
+                                            <label class="form-check-label" for="role_@user.Id">@(IsInRole(user.Id) ? "Odebrat" : "Přiřadit")</label>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                    </div>
+                }
+            }
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-secondary" @onclick="GoBack">
+                <i class="bi bi-arrow-left me-2"></i>@Localizer.GetString("Administration.Back")
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string RoleId { get; set; } = default!;
+
+    private List<ApplicationUser> allUsers = new();
+    private List<ApplicationUser> filteredUsers = new();
+    private HashSet<string> usersInRole = new();
+    private string? roleName;
+    private bool isLoading = true;
+    private string searchText = "";
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoleAsync();
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadRoleAsync()
+    {
+        var role = await RoleManager.FindByIdAsync(RoleId);
+        if (role == null)
+        {
+            NavigationManager.NavigateTo("/admin/administration/roles");
+            return;
+        }
+
+        roleName = role.Name;
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            allUsers = await UserManager.Users.ToListAsync();
+            
+            // Get users in this role
+            usersInRole = new HashSet<string>();
+            foreach (var user in allUsers)
+            {
+                if (await UserManager.IsInRoleAsync(user, roleName!))
+                {
+                    usersInRole.Add(user.Id);
+                }
+            }
+
+            filteredUsers = new List<ApplicationUser>(allUsers);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool IsInRole(string userId)
+    {
+        return usersInRole.Contains(userId);
+    }
+
+    private async Task ToggleUserRole(string userId, bool isChecked)
+    {
+        try
+        {
+            var user = await UserManager.FindByIdAsync(userId);
+            if (user != null && roleName != null)
+            {
+                IdentityResult result;
+
+                if (isChecked)
+                {
+                    // Add to role
+                    result = await UserManager.AddToRoleAsync(user, roleName);
+                    if (result.Succeeded)
+                    {
+                        usersInRole.Add(userId);
+                    }
+                }
+                else
+                {
+                    // Remove from role
+                    result = await UserManager.RemoveFromRoleAsync(user, roleName);
+                    if (result.Succeeded)
+                    {
+                        usersInRole.Remove(userId);
+                    }
+                }
+
+                if (!result.Succeeded)
+                {
+                    errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+                }
+                else
+                {
+                    errorMessage = null;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Chyba při úpravě role uživatele: {ex.Message}";
+        }
+    }
+
+    private void FilterUsers()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            filteredUsers = new List<ApplicationUser>(allUsers);
+        }
+        else
+        {
+            var lowerSearch = searchText.ToLowerInvariant();
+            filteredUsers = allUsers.Where(u => 
+                (u.UserName?.ToLowerInvariant().Contains(lowerSearch) ?? false) || 
+                (u.Email?.ToLowerInvariant().Contains(lowerSearch) ?? false)).ToList();
+        }
+    }
+
+    private void ResetFilter()
+    {
+        searchText = "";
+        filteredUsers = new List<ApplicationUser>(allUsers);
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/administration/roles");
+    }
+} 

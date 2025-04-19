@@ -1,0 +1,129 @@
+@page "/admin/administration"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Services
+
+@inject ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+
+<PageTitle>@Localizer.GetString("Administration.Title")</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>@Localizer.GetString("Administration.Title")</h2>
+            <p class="mb-0">@Localizer.GetString("Administration.Description")</p>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- User Management Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="bi bi-people-fill me-2"></i>@Localizer.GetString("Administration.Users.Title")</h4>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p>@Localizer.GetString("Administration.Users.Description")</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-primary" @onclick='() => NavigationManager.NavigateTo("/admin/administration/users")'>
+                                    <i class="bi bi-arrow-right me-2"></i>@Localizer.GetString("Administration.Users.Title")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Management Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="bi bi-shield-lock-fill me-2"></i>@Localizer.GetString("Administration.Roles.Title")</h4>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p>@Localizer.GetString("Administration.Roles.Description")</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-primary" @onclick='() => NavigationManager.NavigateTo("/admin/administration/roles")'>
+                                    <i class="bi bi-arrow-right me-2"></i>@Localizer.GetString("Administration.Roles.Title")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder for future modules -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm opacity-50">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>API Keys</h4>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p>Manage API keys and access tokens for third-party integrations.</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="bi bi-arrow-right me-2"></i>Coming Soon
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder for future modules -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm opacity-50">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="bi bi-sliders me-2"></i>Application Settings</h4>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p>Configure global application settings and preferences.</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="bi bi-arrow-right me-2"></i>Coming Soon
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Localization Card (existing functionality) -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="bi bi-translate me-2"></i>Localization</h4>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p>Manage website text translations and language settings.</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-primary" @onclick='() => NavigationManager.NavigateTo("/admin/localization")'>
+                                    <i class="bi bi-arrow-right me-2"></i>Localization
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Admin Card (existing functionality) -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="bi bi-kanban me-2"></i>Projects</h4>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p>Manage projects, documentation, and showcases.</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-primary" @onclick='() => NavigationManager.NavigateTo("/admin/projects")'>
+                                    <i class="bi bi-arrow-right me-2"></i>Projects
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Code logic will be added as needed
+} 

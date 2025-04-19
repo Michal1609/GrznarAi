@@ -1,0 +1,273 @@
+@page "/admin/administration/users"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using System.Security.Claims
+
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>@Localizer.GetString("Administration.Users.Title")</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h2>@Localizer.GetString("Administration.Users.List")</h2>
+            </div>
+            <div>
+                <button class="btn btn-light" @onclick="CreateUser">
+                    <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Administration.Users.Create")
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Search and Filter Controls -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="@Localizer.GetString("Administration.Users.Filter")" 
+                               @bind="searchText" @bind:event="oninput" />
+                        <button class="btn btn-outline-secondary" type="button" @onclick="FilterUsers">
+                            <i class="bi bi-search me-1"></i>@Localizer.GetString("Administration.Filter")
+                        </button>
+                        <button class="btn btn-outline-secondary" type="button" @onclick="ResetFilter">
+                            <i class="bi bi-x-circle me-1"></i>@Localizer.GetString("Administration.Reset")
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-primary" @onclick='() => NavigationManager.NavigateTo("/admin/administration/roles")'>
+                        <i class="bi bi-shield-lock me-2"></i>@Localizer.GetString("Administration.Users.ManageRoles")
+                    </button>
+                </div>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="d-flex justify-content-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">@Localizer.GetString("Administration.Loading")</span>
+                    </div>
+                </div>
+            }
+            else if (filteredUsers.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>@Localizer.GetString("Administration.Users.NoUsersFound")
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@Localizer.GetString("Administration.Users.Username")</th>
+                                <th>@Localizer.GetString("Administration.Users.Email")</th>
+                                <th>@Localizer.GetString("Administration.Users.EmailConfirmed")</th>
+                                <th>@Localizer.GetString("Administration.Users.Roles")</th>
+                                <th>@Localizer.GetString("Administration.Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in filteredUsers)
+                            {
+                                <tr>
+                                    <td>@user.UserName</td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        @if (user.EmailConfirmed)
+                                        {
+                                            <span class="badge bg-success"><i class="bi bi-check-lg"></i></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-x-lg"></i></span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (userRolesDict.TryGetValue(user.Id, out var roles) && roles.Any())
+                                        {
+                                            @foreach (var role in roles)
+                                            {
+                                                <span class="badge bg-info me-1">@role</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-dark">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => EditUser(user.Id)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteUser(user.Id)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-secondary" @onclick="GoBack">
+                <i class="bi bi-arrow-left me-2"></i>@Localizer.GetString("Administration.Back")
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteConfirmation)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">@Localizer.GetString("Administration.Confirmation")</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@Localizer.GetString("Administration.Users.ConfirmDelete")</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">
+                        @Localizer.GetString("Administration.No")
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">
+                        @Localizer.GetString("Administration.Yes")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ApplicationUser> allUsers = new();
+    private List<ApplicationUser> filteredUsers = new();
+    private Dictionary<string, List<string>> userRolesDict = new();
+    private bool isLoading = true;
+    private string searchText = "";
+    private bool showDeleteConfirmation = false;
+    private string? userIdToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            allUsers = await GetAllUsersAsync();
+            await LoadUserRolesAsync();
+            filteredUsers = new List<ApplicationUser>(allUsers);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<List<ApplicationUser>> GetAllUsersAsync()
+    {
+        await using var context = await DbFactory.CreateDbContextAsync();
+        return await context.Users.ToListAsync();
+    }
+
+    private async Task LoadUserRolesAsync()
+    {
+        userRolesDict = new Dictionary<string, List<string>>();
+        
+        foreach (var user in allUsers)
+        {
+            var roles = await UserManager.GetRolesAsync(user);
+            userRolesDict[user.Id] = roles.ToList();
+        }
+    }
+
+    private void FilterUsers()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            filteredUsers = new List<ApplicationUser>(allUsers);
+        }
+        else
+        {
+            var lowerSearch = searchText.ToLowerInvariant();
+            filteredUsers = allUsers.Where(u => 
+                (u.UserName?.ToLowerInvariant().Contains(lowerSearch) ?? false) || 
+                (u.Email?.ToLowerInvariant().Contains(lowerSearch) ?? false)).ToList();
+        }
+    }
+
+    private void ResetFilter()
+    {
+        searchText = "";
+        filteredUsers = new List<ApplicationUser>(allUsers);
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/administration");
+    }
+
+    private void CreateUser()
+    {
+        NavigationManager.NavigateTo("/admin/administration/users/create");
+    }
+
+    private void EditUser(string userId)
+    {
+        NavigationManager.NavigateTo($"/admin/administration/users/edit/{userId}");
+    }
+
+    private void ConfirmDeleteUser(string userId)
+    {
+        userIdToDelete = userId;
+        showDeleteConfirmation = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirmation = false;
+        userIdToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (userIdToDelete != null)
+        {
+            var user = await UserManager.FindByIdAsync(userIdToDelete);
+            if (user != null)
+            {
+                await UserManager.DeleteAsync(user);
+                await LoadUsersAsync();
+            }
+        }
+        
+        showDeleteConfirmation = false;
+        userIdToDelete = null;
+    }
+} 

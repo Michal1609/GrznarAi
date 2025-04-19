@@ -148,6 +148,67 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.Comment.ConfirmDelete", "Opravdu chcete smazat tento komentář?", "Are you sure you want to delete this comment?", "Confirmation message for comment deletion");
             AddEntry("Blog.Comment.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when voting fails");
             AddEntry("Blog.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when blog voting fails");
+            
+            // --- Admin Seed Data --- 
+            AddEntry("NavMenu.Admin.Administration", "Administrace", "Administration", "NavMenu Admin Link - Administration");
+            AddEntry("Administration.Title", "Administrace", "Administration", "Main administration page title");
+            AddEntry("Administration.Description", "Komplexní administrační rozhraní pro správu webu", "Comprehensive administration interface for website management", "Administration description");
+            
+            // Users & Roles management
+            AddEntry("Administration.Users.Title", "Správa uživatelů", "User Management", "User management section title");
+            AddEntry("Administration.Users.Description", "Správa uživatelských účtů a oprávnění", "Manage user accounts and permissions", "User management description");
+            AddEntry("Administration.Users.List", "Seznam uživatelů", "User List", "User list title");
+            AddEntry("Administration.Users.Create", "Vytvořit uživatele", "Create User", "Create user button");
+            AddEntry("Administration.Users.Edit", "Upravit uživatele", "Edit User", "Edit user button");
+            AddEntry("Administration.Users.Delete", "Smazat uživatele", "Delete User", "Delete user button");
+            AddEntry("Administration.Users.ConfirmDelete", "Opravdu chcete smazat tohoto uživatele?", "Are you sure you want to delete this user?", "Confirm user deletion");
+            AddEntry("Administration.Users.Email", "Email", "Email", "User email field");
+            AddEntry("Administration.Users.Username", "Uživatelské jméno", "Username", "Username field");
+            AddEntry("Administration.Users.Roles", "Role", "Roles", "User roles field");
+            AddEntry("Administration.Users.EmailConfirmed", "Email potvrzen", "Email Confirmed", "Email confirmed field");
+            AddEntry("Administration.Users.LockoutEnabled", "Uzamčení povoleno", "Lockout Enabled", "Lockout enabled field");
+            AddEntry("Administration.Users.LockoutEnd", "Konec uzamčení", "Lockout End", "Lockout end field");
+            AddEntry("Administration.Users.TwoFactorEnabled", "Dvoufaktorové ověření", "Two-Factor Enabled", "Two-factor authentication field");
+            AddEntry("Administration.Users.AccessFailedCount", "Počet neúspěšných přihlášení", "Access Failed Count", "Failed login attempts field");
+            AddEntry("Administration.Users.Filter", "Filtrovat uživatele...", "Filter users...", "User filter placeholder");
+            AddEntry("Administration.Users.NoUsersFound", "Žádní uživatelé nenalezeni", "No users found", "No users found message");
+            AddEntry("Administration.Users.ManageRoles", "Správa rolí", "Manage Roles", "Manage roles button");
+            AddEntry("Administration.Users.Password", "Heslo", "Password", "User password field");
+            AddEntry("Administration.Users.PasswordRequirements", "Heslo musí obsahovat velké písmeno, malé písmeno, číslici a speciální znak.", "Password must contain an uppercase letter, lowercase letter, digit, and special character.", "Password requirements explanation");
+            AddEntry("Administration.Users.ConfirmPassword", "Potvrzení hesla", "Confirm Password", "Confirm password field");
+
+            AddEntry("Administration.Roles.Title", "Správa rolí", "Role Management", "Role management section title");
+            AddEntry("Administration.Roles.Description", "Správa uživatelských rolí a oprávnění", "Manage user roles and permissions", "Role management description");
+            AddEntry("Administration.Roles.List", "Seznam rolí", "Role List", "Role list title");
+            AddEntry("Administration.Roles.Create", "Vytvořit roli", "Create Role", "Create role button");
+            AddEntry("Administration.Roles.Edit", "Upravit roli", "Edit Role", "Edit role button");
+            AddEntry("Administration.Roles.Delete", "Smazat roli", "Delete Role", "Delete role button");
+            AddEntry("Administration.Roles.ConfirmDelete", "Opravdu chcete smazat tuto roli?", "Are you sure you want to delete this role?", "Confirm role deletion");
+            AddEntry("Administration.Roles.Name", "Název", "Name", "Role name field");
+            AddEntry("Administration.Roles.NormalizedName", "Normalizovaný název", "Normalized Name", "Normalized role name field");
+            AddEntry("Administration.Roles.Filter", "Filtrovat role...", "Filter roles...", "Role filter placeholder");
+            AddEntry("Administration.Roles.NoRolesFound", "Žádné role nenalezeny", "No roles found", "No roles found message");
+            AddEntry("Administration.Roles.AssignUsers", "Přiřadit uživatele", "Assign Users", "Assign users button");
+            AddEntry("Administration.Roles.UserAssignment", "Přiřazení uživatelů k roli", "User Assignment", "User assignment title");
+            
+            // Common Admin UI elements
+            AddEntry("Administration.Save", "Uložit", "Save", "Save button text");
+            AddEntry("Administration.Cancel", "Zrušit", "Cancel", "Cancel button text");
+            AddEntry("Administration.Back", "Zpět", "Back", "Back button text");
+            AddEntry("Administration.Actions", "Akce", "Actions", "Actions column header");
+            AddEntry("Administration.Filter", "Filtrovat", "Filter", "Filter button text");
+            AddEntry("Administration.Search", "Vyhledat", "Search", "Search button text");
+            AddEntry("Administration.Reset", "Reset", "Reset", "Reset button text");
+            AddEntry("Administration.Saving", "Ukládání...", "Saving...", "Saving indicator text");
+            AddEntry("Administration.Success", "Úspěch", "Success", "Success message header");
+            AddEntry("Administration.Error", "Chyba", "Error", "Error message header");
+            AddEntry("Administration.Warning", "Varování", "Warning", "Warning message header");
+            AddEntry("Administration.Loading", "Načítání...", "Loading...", "Loading indicator text");
+            AddEntry("Administration.NoData", "Žádná data", "No data", "No data message");
+            AddEntry("Administration.Confirmation", "Potvrzení", "Confirmation", "Confirmation dialog title");
+            AddEntry("Administration.Yes", "Ano", "Yes", "Yes button text");
+            AddEntry("Administration.No", "Ne", "No", "No button text");
+
             // --- End Seed Data --- 
 
             try

@@ -1,0 +1,141 @@
+@page "/admin/administration/roles/edit/{Id}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using System.ComponentModel.DataAnnotations
+
+@inject RoleManager<IdentityRole> RoleManager
+@inject ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+
+<PageTitle>@Localizer.GetString("Administration.Roles.Edit")</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>@Localizer.GetString("Administration.Roles.Edit")</h2>
+        </div>
+        <div class="card-body">
+            @if (role == null)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>@Localizer.GetString("Administration.Loading")
+                </div>
+            }
+            else
+            {
+                <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger mb-4" />
+
+                    <div class="mb-3">
+                        <label class="form-label" for="name">@Localizer.GetString("Administration.Roles.Name")</label>
+                        <InputText id="name" class="form-control" @bind-Value="model.Name" />
+                        <ValidationMessage For="() => model.Name" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                        </div>
+                    }
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                @Localizer.GetString("Administration.Saving")
+                            }
+                            else
+                            {
+                                <i class="bi bi-check-lg me-2"></i>
+                                @Localizer.GetString("Administration.Save")
+                            }
+                        </button>
+                        <button type="button" class="btn btn-secondary" @onclick="GoBack">
+                            <i class="bi bi-arrow-left me-2"></i>@Localizer.GetString("Administration.Back")
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = default!;
+
+    private IdentityRole? role;
+    private RoleEditModel model = new();
+    private bool isSaving;
+    private string? errorMessage;
+
+    private class RoleEditModel
+    {
+        [Required(ErrorMessage = "Název role je povinný")]
+        public string Name { get; set; } = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoleAsync();
+    }
+
+    private async Task LoadRoleAsync()
+    {
+        role = await RoleManager.FindByIdAsync(Id);
+        
+        if (role != null)
+        {
+            model.Name = role.Name ?? "";
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/admin/administration/roles");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (role == null) return;
+        
+        isSaving = true;
+        errorMessage = null;
+
+        try
+        {
+            role.Name = model.Name;
+            var result = await RoleManager.UpdateAsync(role);
+            
+            if (result.Succeeded)
+            {
+                NavigationManager.NavigateTo("/admin/administration/roles");
+            }
+            else
+            {
+                errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Chyba při aktualizaci role: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/administration/roles");
+    }
+} 

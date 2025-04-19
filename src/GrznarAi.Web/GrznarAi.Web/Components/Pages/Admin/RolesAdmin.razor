@@ -1,0 +1,348 @@
+@page "/admin/administration/roles"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using System.ComponentModel.DataAnnotations
+
+@inject RoleManager<IdentityRole> RoleManager
+@inject ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+
+<PageTitle>@Localizer.GetString("Administration.Roles.Title")</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h2>@Localizer.GetString("Administration.Roles.List")</h2>
+            </div>
+            <div>
+                <button class="btn btn-light" @onclick="CreateRole">
+                    <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Administration.Roles.Create")
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Search and Filter Controls -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="@Localizer.GetString("Administration.Roles.Filter")" 
+                            @bind="searchText" @bind:event="oninput" />
+                        <button class="btn btn-outline-secondary" type="button" @onclick="FilterRoles">
+                            <i class="bi bi-search me-1"></i>@Localizer.GetString("Administration.Filter")
+                        </button>
+                        <button class="btn btn-outline-secondary" type="button" @onclick="ResetFilter">
+                            <i class="bi bi-x-circle me-1"></i>@Localizer.GetString("Administration.Reset")
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-primary" @onclick='() => NavigationManager.NavigateTo("/admin/administration/users")'>
+                        <i class="bi bi-people me-2"></i>@Localizer.GetString("Administration.Users.Title")
+                    </button>
+                </div>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="d-flex justify-content-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">@Localizer.GetString("Administration.Loading")</span>
+                    </div>
+                </div>
+            }
+            else if (filteredRoles.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>@Localizer.GetString("Administration.Roles.NoRolesFound")
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>@Localizer.GetString("Administration.Roles.Name")</th>
+                                <th>@Localizer.GetString("Administration.Roles.NormalizedName")</th>
+                                <th>@Localizer.GetString("Administration.Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var role in filteredRoles)
+                            {
+                                <tr>
+                                    <td>@role.Name</td>
+                                    <td>@role.NormalizedName</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => EditRole(role.Id)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info" @onclick="() => ManageRoleUsers(role.Id)">
+                                                <i class="bi bi-people"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteRole(role.Id)"
+                                                    disabled="@IsSystemRole(role.Name)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-secondary" @onclick="GoBack">
+                <i class="bi bi-arrow-left me-2"></i>@Localizer.GetString("Administration.Back")
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Role Dialog -->
+@if (showRoleDialog)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">@(isEditMode ? Localizer.GetString("Administration.Roles.Edit") : Localizer.GetString("Administration.Roles.Create"))</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseRoleDialog"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="roleModel" OnValidSubmit="SaveRole">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-4" />
+
+                        <div class="mb-3">
+                            <label class="form-label" for="roleName">@Localizer.GetString("Administration.Roles.Name")</label>
+                            <InputText id="roleName" class="form-control" @bind-Value="roleModel.Name" />
+                            <ValidationMessage For="() => roleModel.Name" />
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    @Localizer.GetString("Administration.Saving")
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-lg me-2"></i>
+                                    @Localizer.GetString("Administration.Save")
+                                }
+                            </button>
+                            <button type="button" class="btn btn-secondary" @onclick="CloseRoleDialog">
+                                <i class="bi bi-x-lg me-2"></i>@Localizer.GetString("Administration.Cancel")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteConfirmation)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">@Localizer.GetString("Administration.Confirmation")</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@Localizer.GetString("Administration.Roles.ConfirmDelete")</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">
+                        @Localizer.GetString("Administration.No")
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">
+                        @Localizer.GetString("Administration.Yes")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<IdentityRole> allRoles = new();
+    private List<IdentityRole> filteredRoles = new();
+    private bool isLoading = true;
+    private string searchText = "";
+    private bool showDeleteConfirmation = false;
+    private string? roleIdToDelete;
+    private bool showRoleDialog = false;
+    private bool isEditMode = false;
+    private RoleEditModel roleModel = new();
+    private bool isSaving;
+    private readonly string[] systemRoles = { "Admin", "User" };
+
+    private class RoleEditModel
+    {
+        [Required(ErrorMessage = "Název role je povinný")]
+        [StringLength(50, ErrorMessage = "Název role nesmí být delší než 50 znaků")]
+        public string Name { get; set; } = "";
+        public string? Id { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRolesAsync();
+    }
+
+    private async Task LoadRolesAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            allRoles = await RoleManager.Roles.ToListAsync();
+            filteredRoles = new List<IdentityRole>(allRoles);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void FilterRoles()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            filteredRoles = new List<IdentityRole>(allRoles);
+        }
+        else
+        {
+            var lowerSearch = searchText.ToLowerInvariant();
+            filteredRoles = allRoles.Where(r => 
+                (r.Name?.ToLowerInvariant().Contains(lowerSearch) ?? false) || 
+                (r.NormalizedName?.ToLowerInvariant().Contains(lowerSearch) ?? false)).ToList();
+        }
+    }
+
+    private void ResetFilter()
+    {
+        searchText = "";
+        filteredRoles = new List<IdentityRole>(allRoles);
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/administration");
+    }
+
+    private void CreateRole()
+    {
+        roleModel = new RoleEditModel();
+        isEditMode = false;
+        showRoleDialog = true;
+    }
+
+    private async Task EditRole(string roleId)
+    {
+        var role = await RoleManager.FindByIdAsync(roleId);
+        if (role != null)
+        {
+            roleModel = new RoleEditModel
+            {
+                Id = role.Id,
+                Name = role.Name ?? ""
+            };
+            isEditMode = true;
+            showRoleDialog = true;
+        }
+    }
+
+    private void ManageRoleUsers(string roleId)
+    {
+        NavigationManager.NavigateTo($"/admin/administration/roles/users/{roleId}");
+    }
+
+    private void CloseRoleDialog()
+    {
+        showRoleDialog = false;
+    }
+
+    private async Task SaveRole()
+    {
+        isSaving = true;
+
+        try
+        {
+            if (isEditMode)
+            {
+                // Update existing role
+                var role = await RoleManager.FindByIdAsync(roleModel.Id!);
+                if (role != null)
+                {
+                    role.Name = roleModel.Name;
+                    await RoleManager.UpdateAsync(role);
+                }
+            }
+            else
+            {
+                // Create new role
+                var role = new IdentityRole(roleModel.Name);
+                await RoleManager.CreateAsync(role);
+            }
+
+            showRoleDialog = false;
+            await LoadRolesAsync();
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private bool IsSystemRole(string? roleName)
+    {
+        return roleName != null && systemRoles.Contains(roleName);
+    }
+
+    private void ConfirmDeleteRole(string roleId)
+    {
+        roleIdToDelete = roleId;
+        showDeleteConfirmation = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirmation = false;
+        roleIdToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (roleIdToDelete != null)
+        {
+            var role = await RoleManager.FindByIdAsync(roleIdToDelete);
+            if (role != null && !IsSystemRole(role.Name))
+            {
+                await RoleManager.DeleteAsync(role);
+                await LoadRolesAsync();
+            }
+        }
+        
+        showDeleteConfirmation = false;
+        roleIdToDelete = null;
+    }
+} 

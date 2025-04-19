@@ -52,6 +52,33 @@ namespace GrznarAi.Web.Data
             AddEntry("HomePage.LatestPosts.ReadMore", "Číst Více", "Read More", "Latest Posts Button - Read More");
             AddEntry("HomePage.LatestPosts.ViewAll", "Zobrazit Všechny Příspěvky", "View All Posts", "Latest Posts Button - View All");
             
+            // --- Contact Page Seed Data ---
+            AddEntry("ContactPage.Title", "Kontakt - GrznarAI", "Contact - GrznarAI", "Contact page title");
+            AddEntry("ContactPage.Heading", "Kontaktujte nás", "Contact Us", "Contact page heading");
+            
+            // Contact cards
+            AddEntry("ContactPage.Email.Title", "Email", "Email", "Contact card title - Email");
+            AddEntry("ContactPage.Email.SendButton", "Odeslat email", "Send Email", "Contact card button - Email");
+            AddEntry("ContactPage.GitHub.Title", "GitHub", "GitHub", "Contact card title - GitHub");
+            AddEntry("ContactPage.GitHub.ViewButton", "Zobrazit profil", "View Profile", "Contact card button - GitHub");
+            AddEntry("ContactPage.LinkedIn.Title", "LinkedIn", "LinkedIn", "Contact card title - LinkedIn");
+            AddEntry("ContactPage.LinkedIn.ConnectButton", "Spojit se", "Connect", "Contact card button - LinkedIn");
+            
+            // Contact form
+            AddEntry("ContactPage.Form.Title", "Pošlete nám zprávu", "Send Us a Message", "Contact form title");
+            AddEntry("ContactPage.Form.SuccessMessage", "Vaše zpráva byla úspěšně odeslána. Děkujeme!", "Your message has been successfully sent. Thank you!", "Contact form success message");
+            AddEntry("ContactPage.Form.ErrorMessage", "Při odesílání zprávy došlo k chybě.", "An error occurred while sending the message.", "Contact form error message");
+            AddEntry("ContactPage.Form.NameLabel", "Vaše jméno", "Your Name", "Contact form name label");
+            AddEntry("ContactPage.Form.NamePlaceholder", "Zadejte své jméno", "Enter your name", "Contact form name placeholder");
+            AddEntry("ContactPage.Form.EmailLabel", "E-mailová adresa", "Email Address", "Contact form email label");
+            AddEntry("ContactPage.Form.EmailPlaceholder", "Zadejte svůj e-mail", "Enter your email", "Contact form email placeholder");
+            AddEntry("ContactPage.Form.SubjectLabel", "Předmět", "Subject", "Contact form subject label");
+            AddEntry("ContactPage.Form.SubjectPlaceholder", "Zadejte předmět", "Enter subject", "Contact form subject placeholder");
+            AddEntry("ContactPage.Form.MessageLabel", "Zpráva", "Message", "Contact form message label");
+            AddEntry("ContactPage.Form.MessagePlaceholder", "Zadejte vaši zprávu", "Enter your message", "Contact form message placeholder");
+            AddEntry("ContactPage.Form.SendButton", "Odeslat zprávu", "Send Message", "Contact form send button");
+            AddEntry("ContactPage.Form.SendingText", "Odesílání...", "Sending...", "Contact form sending text");
+            
             // --- NavMenu Seed Data ---
             AddEntry("NavMenu.Home", "Domů", "Home", "NavMenu Link - Home");
             AddEntry("NavMenu.Blog", "Blog", "Blog", "NavMenu Link - Blog");

@@ -29,6 +29,78 @@ Implementovaný systém lokalizace využívá kombinaci standardních ASP.NET Co
     *   Dropdown menu s odkazy na endpoint `/Culture/SetCulture?culture=cs&redirectUri=...` a `/Culture/SetCulture?culture=en&redirectUri=...`.
     *   Používá `CultureInfo.CurrentUICulture` pro zvýraznění aktuálně zvoleného jazyka.
 
+## Návod k implementaci lokalizace nové stránky
+
+### Krok 1: Úprava Razor souboru stránky
+
+1. **Přidat injektování ILocalizationService:**
+   ```csharp
+   @inject GrznarAi.Web.Services.ILocalizationService Localizer
+   ```
+
+2. **Nahradit všechny pevné texty voláním Localizer.GetString():**
+   - Základní struktura: `@Localizer.GetString("PageName.SectionName.TextName")`
+   - Konvence pojmenování klíčů:
+     - Začít názvem stránky (např. `ContactPage`)
+     - Pak sekce (např. `Form`, `Email`)
+     - Nakonec typ textu (např. `Title`, `Label`, `Button`)
+   - Příklady:
+     ```html
+     <PageTitle>@Localizer.GetString("ContactPage.Title")</PageTitle>
+     <h4 class="mb-2">@Localizer.GetString("ContactPage.Heading")</h4>
+     <label>@Localizer.GetString("ContactPage.Form.NameLabel")</label>
+     <button>@Localizer.GetString("ContactPage.Form.SendButton")</button>
+     ```
+
+### Krok 2: Přidání překladů do LocalizationDataSeeder
+
+1. **Otevřít soubor:**
+   `src/GrznarAi.Web/GrznarAi.Web/Data/LocalizationDataSeeder.cs`
+
+2. **Přidat sekci pro novou stránku:**
+   - Najít sekci "--- End Seed Data ---" a vložit před ni novou sekci
+   - Seskupit související překlady pomocí komentářů
+   - Formát přidání překladu:
+   ```csharp
+   // --- Název Stránky Seed Data ---
+   AddEntry("KlíčTextu", "ČeskýText", "AnglickýText", "Popis pro vývojáře");
+   ```
+
+3. **Konvence organizace překladů:**
+   - Překlady pro stránku sdružit do jedné sekce s komentářem
+   - Logicky seskupit překlady podle častí UI (formuláře, karty, tlačítka)
+   - Pro každý text přidat překlad v obou jazycích (CS/EN)
+   - Vždy přidat stručný popis pro lepší orientaci
+
+### Příklad implementace lokalizace - Stránka Contact
+
+**1. Přidání injektování do stránky Contact.razor:**
+```csharp
+@inject ILocalizationService Localizer
+```
+
+**2. Lokalizace textů v šabloně:**
+```html
+<PageTitle>@Localizer.GetString("ContactPage.Title")</PageTitle>
+<h4 class="mb-2">@Localizer.GetString("ContactPage.Heading")</h4>
+```
+
+**3. Přidání překladů do LocalizationDataSeeder.cs:**
+```csharp
+// --- Contact Page Seed Data ---
+AddEntry("ContactPage.Title", "Kontakt - GrznarAI", "Contact - GrznarAI", "Contact page title");
+AddEntry("ContactPage.Heading", "Kontaktujte nás", "Contact Us", "Contact page heading");
+
+// Contact cards
+AddEntry("ContactPage.Email.Title", "Email", "Email", "Contact card title - Email");
+AddEntry("ContactPage.Email.SendButton", "Odeslat email", "Send Email", "Contact card button - Email");
+
+// Contact form
+AddEntry("ContactPage.Form.Title", "Pošlete nám zprávu", "Send Us a Message", "Contact form title");
+AddEntry("ContactPage.Form.NameLabel", "Vaše jméno", "Your Name", "Contact form name label");
+AddEntry("ContactPage.Form.SendButton", "Odeslat zprávu", "Send Message", "Contact form send button");
+```
+
 ## Řešení problémů při vývoji
 
 ### Problém: Chyba migrace - Tabulka 'Projects' již existuje
@@ -46,4 +118,11 @@ Implementovaný systém lokalizace využívá kombinaci standardních ASP.NET Co
 *   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
 *   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
 
-*(Poznámka: Specifický problém s tlačítkem "Create New" pro projekty nebyl v nedávné historii zaznamenán. Výše uvedené řešení migrace je příkladem řešení problému, který nastal během vývoje funkcionality související s projekty a databází.)* 
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 

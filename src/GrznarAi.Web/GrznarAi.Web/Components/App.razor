@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="utf-8" />
@@ -21,7 +21,7 @@
     <HeadOutlet />
 </head>
 
-<body>
+<body class="light-theme">
     <Routes />
     <script src="_framework/blazor.web.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
@@ -32,75 +32,6 @@
     
     <!-- Blog comments and voting JS -->
     <script src="@Assets["js/blog-comments.js"]"></script>
-
-    <script>
-        // Theme toggle functionality
-        window.toggleTheme = (isDark) => {
-            try {
-                // Set the theme attribute
-                document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
-
-                // Store the preference
-                localStorage.setItem('theme', isDark ? 'dark' : 'light');
-
-                // Apply additional class for our own styles
-                if (isDark) {
-                    document.body.classList.add('dark-theme');
-                    document.body.classList.remove('light-theme');
-                } else {
-                    document.body.classList.add('light-theme');
-                    document.body.classList.remove('dark-theme');
-                }
-
-                console.log('Theme toggled to:', isDark ? 'dark' : 'light');
-                return true;
-            } catch (error) {
-                console.error('Error toggling theme:', error);
-                return false;
-            }
-        };
-
-        // Check if user prefers dark mode
-        window.isDarkModePreferred = () => {
-            try {
-                // Check localStorage first
-                const savedTheme = localStorage.getItem('theme');
-                if (savedTheme) {
-                    console.log('Using saved theme preference:', savedTheme);
-                    return savedTheme === 'dark';
-                }
-
-                // Then check system preference
-                const systemPreference = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                console.log('Using system theme preference:', systemPreference ? 'dark' : 'light');
-                return systemPreference;
-            } catch (error) {
-                console.error('Error checking theme preference:', error);
-                return false; // Default to light theme on error
-            }
-        };
-
-        // Initialize theme based on user preference
-        const initTheme = () => {
-            try {
-                const isDark = window.isDarkModePreferred();
-                window.toggleTheme(isDark);
-                console.log('Theme initialized to:', isDark ? 'dark' : 'light');
-            } catch (error) {
-                console.error('Error initializing theme:', error);
-            }
-        };
-
-        // Run on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM content loaded, initializing theme...');
-            initTheme();
-        });
-
-        // Run immediately as well
-        console.log('Running immediate theme initialization...');
-        initTheme();
-    </script>
 </body>
 
 </html>

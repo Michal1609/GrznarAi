@@ -32,33 +32,10 @@
     <!-- Administration Section -->
     <AuthorizeView>
         <Authorized>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="nav-icon-wrapper"><i class="bi bi-shield-lock-fill"></i></span> @Localizer.GetString("NavMenu.Admin.Title")
-                </a>
-                <ul class="dropdown-menu">
-                    <li>
-                        <NavLink class="dropdown-item" href="admin/projects">
-                             <span class="nav-icon-wrapper"><i class="bi bi-kanban"></i></span> @Localizer.GetString("NavMenu.Admin.Projects")
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink class="dropdown-item" href="admin/blogs">
-                             <span class="nav-icon-wrapper"><i class="bi bi-file-earmark-richtext"></i></span> Správa blogů
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink class="dropdown-item" href="admin/localization">
-                             <span class="nav-icon-wrapper"><i class="bi bi-translate"></i></span> @Localizer.GetString("NavMenu.Admin.Localization")
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink class="dropdown-item" href="admin/administration">
-                             <span class="nav-icon-wrapper"><i class="bi bi-gear-wide-connected"></i></span> @Localizer.GetString("NavMenu.Admin.Administration")
-                        </NavLink>
-                    </li>
-                    <!-- Add other admin links here -->
-                </ul>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="admin/administration">
+                    <span class="nav-icon-wrapper"><i class="bi bi-gear-wide-connected"></i></span> @Localizer.GetString("NavMenu.Admin.Title")
+                </NavLink>
             </li>
         </Authorized>
     </AuthorizeView>

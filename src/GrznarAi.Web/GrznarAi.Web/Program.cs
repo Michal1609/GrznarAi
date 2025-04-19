@@ -71,6 +71,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
@@ -135,6 +136,42 @@ using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
     await LocalizationDataSeeder.SeedAsync(factory);
+}
+
+// Create admin accout if not exists
+using (var scope = app.Services.CreateScope())
+{
+    var adminEmail = "admin@admin.com";
+    var pass = "Admin123!";
+    var roleName = "Admin";
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    var admin = await userManager.FindByEmailAsync(adminEmail);
+    if (admin is null)
+    {
+        await userManager.CreateAsync(new ApplicationUser
+        {
+            EmailConfirmed = true,
+            Email = adminEmail,
+            UserName = adminEmail
+        }, pass);
+
+        admin = await userManager.FindByEmailAsync(adminEmail);
+    }
+
+    var role = await roleManager.FindByNameAsync("Admin");
+    
+        if (role is null)
+        {
+            await roleManager.CreateAsync(new IdentityRole
+            {
+                Name = roleName,
+                NormalizedName = roleName.ToUpperInvariant()
+            });
+        };    
+
+    await userManager.AddToRoleAsync(admin, roleName);
 }
 
 app.Run();

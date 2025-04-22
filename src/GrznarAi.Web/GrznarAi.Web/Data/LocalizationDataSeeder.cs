@@ -51,7 +51,8 @@ namespace GrznarAi.Web.Data
             AddEntry("HomePage.LatestPosts.Title", "Nejnovější Příspěvky na Blogu", "Latest Blog Posts", "Latest Posts Section Title");
             AddEntry("HomePage.LatestPosts.ReadMore", "Číst Více", "Read More", "Latest Posts Button - Read More");
             AddEntry("HomePage.LatestPosts.ViewAll", "Zobrazit Všechny Příspěvky", "View All Posts", "Latest Posts Button - View All");
-            
+            AddEntry("HomePage.LatestPosts.NoPosts", "Zatím zde není žádný příspěvek", "No posts righ now", "No posts righ now");
+
             // --- Contact Page Seed Data ---
             AddEntry("ContactPage.Title", "Kontakt - GrznarAI", "Contact - GrznarAI", "Contact page title");
             AddEntry("ContactPage.Heading", "Kontaktujte nás", "Contact Us", "Contact page heading");
@@ -116,6 +117,8 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.CreatedOn", "Vytvořeno: {0}", "Created on: {0}", "Blog post creation date with date placeholder");
             AddEntry("Blog.Tags", "Štítky:", "Tags:", "Tags label");
             AddEntry("Blog.NoTags", "Žádné štítky", "No tags", "Message when blog post has no tags");
+            AddEntry("Blog.NoResults", "Žádné příspěvky", "No posts", "No posts");
+            AddEntry("Blog.NoResults.Description", "Zatím zde není žádný příspvěk", "No posts now", "No post now");
             AddEntry("Blog.Pagination.Next", "Další", "Next", "Next page button text");
             AddEntry("Blog.Pagination.Previous", "Předchozí", "Previous", "Previous page button text");
             AddEntry("Blog.Pagination.Page", "Strana {0}", "Page {0}", "Page number indicator");
@@ -132,7 +135,7 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.Date.October", "Říjen", "October", "Month name - October");
             AddEntry("Blog.Date.November", "Listopad", "November", "Month name - November");
             AddEntry("Blog.Date.December", "Prosinec", "December", "Month name - December");
-            
+
             // Nové překlady pro blog
             AddEntry("Blog.Sidebar.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title in sidebar");
             AddEntry("Blog.Sidebar.Archive", "Archiv", "Archive", "Archive section title in sidebar");
@@ -221,6 +224,9 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.Roles.AssignUsers", "Přiřadit uživatele", "Assign Users", "Assign users button");
             AddEntry("Administration.Roles.UserAssignment", "Přiřazení uživatelů k roli", "User Assignment", "User assignment title");
             
+            AddEntry("Administration.Blogs.Title", "Správa blogu", "Blog administration", "Blog administrationtitle");
+            AddEntry("Administration.Blogs.Description", "Správa blogu", "Blog administration", "Blog administrationtitle");
+
             // Common Admin UI elements
             AddEntry("Administration.Save", "Uložit", "Save", "Save button text");
             AddEntry("Administration.Cancel", "Zrušit", "Cancel", "Cancel button text");

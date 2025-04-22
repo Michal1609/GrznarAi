@@ -139,6 +139,15 @@ app.MapGet("/Culture/SetCulture", (string culture, string redirectUri, HttpConte
     return Results.LocalRedirect(localRedirectUri);
 });
 
+// Migrate database
+using (var scope = app.Services.CreateScope())
+{
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+    using var context = await factory.CreateDbContextAsync();
+    context.Database.EnsureCreated();
+    context.Database.Migrate();
+}
+
 // Seed localization data
 using (var scope = app.Services.CreateScope())
 {

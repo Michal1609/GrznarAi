@@ -79,4 +79,54 @@
         return null;
     }
 
+    // Bootstrap Navbar toggler initialization
+    window.toggleMobileMenu = function(show) {
+        console.log("Toggle menu called, show:", show);
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+        if (navbarCollapse) {
+            if (show === undefined) {
+                // Toggle current state if no parameter is provided
+                navbarCollapse.classList.toggle('show');
+                console.log("Toggled navbar state:", navbarCollapse.classList.contains('show'));
+            } else {
+                // Otherwise, set the state based on the parameter
+                if (show) {
+                    navbarCollapse.classList.add('show');
+                    console.log("Added 'show' class to navbar");
+                } else {
+                    navbarCollapse.classList.remove('show');
+                    console.log("Removed 'show' class from navbar");
+                }
+            }
+        } else {
+            console.error("Navbar collapse element not found");
+        }
+        
+        // Return a value for debugging
+        return show;
+    };
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const navbarCollapse = document.querySelector('.navbar-collapse.show');
+        if (navbarCollapse) {
+            // If user clicks outside the expanded navbar
+            if (!navbarCollapse.contains(event.target) && 
+                !event.target.classList.contains('navbar-toggler') &&
+                !event.target.closest('.navbar-toggler')) {
+                window.toggleMobileMenu(false);
+            }
+        }
+    });
+
+    // Close mobile menu when window resizes to desktop size
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 992) { // lg breakpoint in Bootstrap
+            const navbarCollapse = document.querySelector('.navbar-collapse.show');
+            if (navbarCollapse) {
+                window.toggleMobileMenu(false);
+            }
+        }
+    });
+
 })() 

@@ -10,11 +10,11 @@
                 <span>GrznarAI</span>
             </a>
 
-            <button type="button" class="navbar-toggler" @onclick="ToggleNavbar">
+            <button type="button" class="navbar-toggler" @onclick="ToggleNavbar" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse @NavbarCssClass" id="navbarNav">
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <NavMenu />
             </div>
         </div>
@@ -74,12 +74,8 @@
 <script src="js/carousel.js"></script>
 
 @code {
-    private bool navbarVisible = false;
-
-    private string NavbarCssClass => navbarVisible ? "show" : "";
-
-    private void ToggleNavbar()
+    private async Task ToggleNavbar()
     {
-        navbarVisible = !navbarVisible;
+        await JSRuntime.InvokeVoidAsync("toggleMobileMenu");
     }
 }

@@ -96,3 +96,35 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+/* Mobilní menu úpravy */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--bs-dark, #212529);
+        z-index: 1000;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease-in-out;
+        overflow-y: hidden;
+    }
+
+    .navbar-collapse:not(.show) {
+        height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .navbar-collapse.show {
+        height: auto;
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+    
+    .navbar-nav {
+        flex-direction: column;
+    }
+}

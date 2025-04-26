@@ -252,6 +252,7 @@ namespace GrznarAi.Web.Data
             AddEntry("AiNews.Loading", "Načítání novinek...", "Loading news...", "AI News loading message");
             AddEntry("AiNews.NoNews", "Žádné novinky nenalezeny", "No news found", "AI News no news message");
             AddEntry("AiNews.SearchPlaceholder", "Vyhledávání v novinkách...", "Search news...", "AI News search placeholder");
+            AddEntry("AiNews.Search", "Hledat", "Search", "AI News search button");
             AddEntry("AiNews.ReadOriginal", "Otevřít originál", "Open original", "AI News read original button");
             AddEntry("AiNews.CzechTranslation", "Český překlad", "Czech translation", "AI News Czech translation button");
             AddEntry("Common.Close", "Zavřít", "Close", "Common close button");

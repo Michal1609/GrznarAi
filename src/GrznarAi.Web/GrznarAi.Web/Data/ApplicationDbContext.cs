@@ -14,6 +14,7 @@ namespace GrznarAi.Web.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<CommentVote> CommentVotes { get; set; }
         public DbSet<BlogVote> BlogVotes { get; set; }
+        public DbSet<AiNewsItem> AiNewsItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -45,6 +46,13 @@ namespace GrznarAi.Web.Data
                 .WithMany(b => b.Votes)
                 .HasForeignKey(bv => bv.BlogId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            // Konfigurace pro AiNewsItem - vytvoří index pro rychlejší vyhledávání
+            builder.Entity<AiNewsItem>()
+                .HasIndex(n => n.PublishedDate);
+            
+            builder.Entity<AiNewsItem>()
+                .HasIndex(n => n.ImportedDate);
         }
     }
 }

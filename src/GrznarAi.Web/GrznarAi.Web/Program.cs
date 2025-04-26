@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
+using GrznarAi.Web.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +47,9 @@ builder.Services.AddScoped<MarkdownService>();
 
 // Register CommentService
 builder.Services.AddScoped<ICommentService, CommentService>();
+
+// Register AiNewsService
+builder.Services.AddScoped<IAiNewsService, AiNewsService>();
 
 // Register GitHubService (using Octokit)
 // Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();
@@ -153,6 +158,78 @@ using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
     await LocalizationDataSeeder.SeedAsync(factory);
+}
+
+// Import AI News z JSON souboru
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+        using var context = await factory.CreateDbContextAsync();
+        
+        // Pokud nejsou v databázi žádné AI News, importujeme je z JSON
+        if (!await context.AiNewsItems.AnyAsync())
+        {
+            Console.WriteLine("Importuji AI News z JSON souboru...");
+            
+            try
+            {
+                // Cesta k JSON souboru
+                string jsonPath = Path.Combine(app.Environment.ContentRootPath, "result.json");
+                
+                if (File.Exists(jsonPath))
+                {
+                    string jsonText = await File.ReadAllTextAsync(jsonPath);
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    
+                    var newsItems = JsonSerializer.Deserialize<List<NewsItem>>(jsonText, options);
+                    
+                    if (newsItems != null && newsItems.Any())
+                    {
+                        foreach (var item in newsItems)
+                        {
+                            var aiNewsItem = new AiNewsItem
+                            {
+                                TitleEn = item.Title ?? string.Empty,  // Původní titulek jde do obou
+                                TitleCz = item.Title ?? string.Empty,  // Původní titulek jde do obou
+                                ContentEn = string.Empty,              // Prázdný obsah v angličtině
+                                ContentCz = item.ContentCz ?? string.Empty,
+                                SummaryEn = item.SummaryEn ?? string.Empty,
+                                SummaryCz = item.SummaryCz ?? string.Empty,
+                                Url = item.Url ?? string.Empty,
+                                ImageUrl = item.ImageUrl ?? string.Empty,
+                                SourceName = item.SourceName ?? string.Empty,
+                                PublishedDate = item.Date,
+                                ImportedDate = item.ImportedDate,
+                                IsActive = true
+                            };
+                            
+                            context.AiNewsItems.Add(aiNewsItem);
+                        }
+                        
+                        await context.SaveChangesAsync();
+                        Console.WriteLine($"Úspěšně importováno {newsItems.Count} AI News do databáze.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"JSON soubor nenalezen na cestě: {jsonPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Chyba při importu AI News z JSON: {ex.Message}");
+            }
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Chyba při kontrole a importu AI News: {ex.Message}");
 }
 
 // Create admin accout if not exists

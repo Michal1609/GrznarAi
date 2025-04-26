@@ -1,0 +1,88 @@
+@using System.Globalization
+@inject GrznarAi.Web.Services.ILocalizationService Localizer
+
+<div class="archive-calendar">
+    <div class="calendar-header">
+        <span class="calendar-title">@Localizer.GetString("Blog.Archive")</span>
+    </div>
+    
+    <div class="calendar-body">
+        @if (ArchiveMonths == null || !ArchiveMonths.Any())
+        {
+            <div class="alert alert-light">@Localizer.GetString("Blog.NoArchives")</div>
+        }
+        else
+        {
+            <div class="list-group">
+                @foreach (var year in ArchiveMonths.Select(a => a.Year).Distinct().OrderByDescending(y => y))
+                {
+                    <div class="archive-year">
+                        <strong>@year</strong>
+                        <ul class="list-unstyled ms-2">
+                            @foreach (var month in ArchiveMonths.Where(a => a.Year == year).OrderByDescending(a => a.Month))
+                            {
+                                <li>
+                                    <a href="@GetArchiveUrl(year, month.Month)" class="archive-link">
+                                        @(DateTimeFormatInfo.CurrentInfo.GetMonthName(month.Month)) (@month.Count)
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public List<(int Year, int Month, int Count)> ArchiveMonths { get; set; }
+    
+    [Parameter]
+    public string BaseUrl { get; set; } = "/blog/archive";
+    
+    private string GetArchiveUrl(int year, int month)
+    {
+        return $"{BaseUrl}/{year}/{month}";
+    }
+}
+
+<style>
+    .archive-calendar {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        border: 1px solid #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .calendar-header {
+        padding: 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f1f3f5;
+    }
+    
+    .calendar-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .calendar-body {
+        padding: 0.75rem;
+    }
+    
+    .archive-year {
+        margin-bottom: 0.75rem;
+    }
+    
+    .archive-link {
+        color: #495057;
+        text-decoration: none;
+        padding: 0.25rem 0;
+        display: block;
+    }
+    
+    .archive-link:hover {
+        color: #0d6efd;
+    }
+</style> 

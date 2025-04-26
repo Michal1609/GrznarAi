@@ -1,94 +1,172 @@
 @page "/ai-news"
+@page "/ai-news/{SearchTerm}"
+@page "/ai-news/page/{PageNumber:int}"
+@page "/ai-news/{SearchTerm}/page/{PageNumber:int}"
+@page "/ai-news/archive/{Year:int}/{Month:int}"
+@page "/ai-news/archive/{Year:int}/{Month:int}/page/{PageNumber:int}"
+@rendermode InteractiveServer
+@using GrznarAi.Web.Data
 @using GrznarAi.Web.Models
-@using System.Text.Json
+@using GrznarAi.Web.Services
+@using GrznarAi.Web.Components.Blog
 @using PSC.Blazor.Components.MarkdownEditor
-@using System.Text.Json.Serialization
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Globalization
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject GrznarAi.Web.Services.ILocalizationService Localizer
+@inject IAiNewsService AiNewsService
 
 <PageTitle>AI News - GrznarAI</PageTitle>
 
-<div class="ai-news-container">
-    <div class="page-header">
-        <h1 class="display-4">@Localizer.GetString("AiNews.Title")</h1>
-        <p class="lead">@Localizer.GetString("AiNews.Description")</p>
-    </div>
-
-    @if (newsItems == null)
-    {
-        <div class="loading-container">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Načítání...</span>
-            </div>
-            <p>@Localizer.GetString("AiNews.Loading")</p>
-        </div>
-    }
-    else if (!newsItems.Any())
-    {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            @Localizer.GetString("AiNews.NoNews")
-        </div>
-    }
-    else
-    {
-        <div class="news-filter mb-4">
-            <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control" placeholder="@Localizer.GetString("AiNews.SearchPlaceholder")" @bind-value="searchTerm" @bind-value:event="oninput" />
-            </div>
-        </div>
-
-        <div class="news-items">
-            @foreach (var item in FilteredNewsItems)
-            {
-                <div class="news-card">
-                    <div class="news-card-content">
-                        <div class="row g-0">
-                            <div class="col-md-4 news-image">
-                                @if (!string.IsNullOrEmpty(item.ImageUrl))
-                                {
-                                    <img src="@item.ImageUrl" alt="@item.Title" class="img-fluid rounded" />
-                                }
-                                else
-                                {
-                                    <img src="/images/UniverzalAiNews.jpg" alt="AI News" class="img-fluid rounded" />
-                                }
+<div class="container">
+    <div class="row">
+        <!-- Hlavní obsah -->
+        <div class="col-md-9">
+            <div class="ai-news-container">
+                <div class="page-header">
+                    <h1 class="display-4">@Localizer.GetString("AiNews.Title")</h1>
+                    <p class="lead">@Localizer.GetString("AiNews.Description")</p>
+                    
+                    @if (ViewModel.IsArchiveFiltering)
+                    {
+                        <div class="archive-filter-info">
+                            <div class="alert alert-info">
+                                <i class="bi bi-calendar-event me-2"></i>
+                                @Localizer.GetString("AiNews.FilteringByDate"): 
+                                <strong>@(DateTimeFormatInfo.CurrentInfo.GetMonthName(ViewModel.Month.Value)) @ViewModel.Year</strong>
+                                <a href="/ai-news" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="bi bi-x-circle"></i> @Localizer.GetString("Common.Clear")
+                                </a>
                             </div>
-                            <div class="col-md-8">
-                                <div class="news-content p-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="news-source">
-                                            <i class="bi bi-globe"></i> @(string.IsNullOrEmpty(item.SourceName) ? "Unknown Source" : item.SourceName)
-                                        </span>
-                                        <span class="news-date">
-                                            <i class="bi bi-calendar3"></i> @(item.Date.HasValue ? item.Date.Value.ToString("d. MMMM yyyy") : "Nedatováno")
-                                        </span>
-                                    </div>
+                        </div>
+                    }
+                </div>
 
-                                    <h2 class="news-title">@item.Title</h2>
-                                    
-                                    <div class="news-summary">
-                                        @item.SummaryCz
-                                    </div>
+                <div class="news-filter mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="@Localizer.GetString("AiNews.SearchPlaceholder")" @bind-value="searchTerm" @bind-value:event="oninput" @onkeyup="HandleSearch" />
+                        <button class="btn btn-primary" @onclick="Search">
+                            <i class="bi bi-search"></i> @Localizer.GetString("AiNews.Search")
+                        </button>
+                    </div>
+                </div>
 
-                                    <div class="news-actions mt-3">
-                                        <a href="@item.Url" target="_blank" class="btn btn-outline-primary">
-                                            <i class="bi bi-box-arrow-up-right"></i> @Localizer.GetString("AiNews.ReadOriginal")
-                                        </a>
-                                        <button class="btn btn-outline-success ms-2" @onclick="() => ShowTranslation(item)">
-                                            <i class="bi bi-translate"></i> @Localizer.GetString("AiNews.CzechTranslation")
-                                        </button>
+                @if (isLoading)
+                {
+                    <div class="loading-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Načítání...</span>
+                        </div>
+                        <p>@Localizer.GetString("AiNews.Loading")</p>
+                    </div>
+                }
+                else if (ViewModel.Items.Count == 0)
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        @Localizer.GetString("AiNews.NoNews")
+                    </div>
+                }
+                else
+                {
+                    <div class="news-items">
+                        @foreach (var item in ViewModel.Items)
+                        {
+                            <div class="news-card">
+                                <div class="news-card-content">
+                                    <div class="row g-0">
+                                        <div class="col-md-4 news-image">
+                                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                            {
+                                                <img src="@item.ImageUrl" alt="@item.TitleCz" class="img-fluid rounded" />
+                                            }
+                                            else
+                                            {
+                                                <img src="/images/UniverzalAiNews.jpg" alt="AI News" class="img-fluid rounded" />
+                                            }
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="news-content p-3">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="news-source">
+                                                        <i class="bi bi-globe"></i> @(string.IsNullOrEmpty(item.SourceName) ? "Unknown Source" : item.SourceName)
+                                                    </span>
+                                                    <span class="news-date">
+                                                        <i class="bi bi-calendar3"></i> @(item.PublishedDate.HasValue ? item.PublishedDate.Value.ToString("d. MMMM yyyy") : "Nedatováno")
+                                                    </span>
+                                                </div>
+
+                                                <h2 class="news-title">
+                                                    <a href="@item.Url" target="_blank" class="news-title-link">
+                                                        @item.TitleCz
+                                                    </a>
+                                                </h2>
+                                                
+                                                <div class="news-summary">
+                                                    @if (IsCzechCulture())
+                                                    {
+                                                        @item.SummaryCz
+                                                    }
+                                                    else
+                                                    {
+                                                        @(string.IsNullOrEmpty(item.SummaryEn) ? item.SummaryCz : item.SummaryEn)
+                                                    }
+                                                </div>
+
+                                                <div class="news-actions mt-3">
+                                                    <a href="@item.Url" target="_blank" class="btn btn-outline-primary">
+                                                        <i class="bi bi-box-arrow-up-right"></i> @Localizer.GetString("AiNews.ReadOriginal")
+                                                    </a>
+                                                    <button class="btn btn-outline-success ms-2" @onclick="() => ShowTranslation(item)">
+                                                        <i class="bi bi-translate"></i> @Localizer.GetString("AiNews.CzechTranslation")
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        }
                     </div>
-                </div>
-            }
+
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination">
+                                <li class="page-item @(ViewModel.HasPreviousPage ? "" : "disabled")">
+                                    <a class="page-link" href="@GetPageUrl(ViewModel.CurrentPage - 1)" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                
+                                @for (int i = Math.Max(1, ViewModel.CurrentPage - 2); i <= Math.Min(ViewModel.TotalPages, ViewModel.CurrentPage + 2); i++)
+                                {
+                                    var pageNumber = i;
+                                    <li class="page-item @(pageNumber == ViewModel.CurrentPage ? "active" : "")">
+                                        <a class="page-link" href="@GetPageUrl(pageNumber)">@pageNumber</a>
+                                    </li>
+                                }
+                                
+                                <li class="page-item @(ViewModel.HasNextPage ? "" : "disabled")">
+                                    <a class="page-link" href="@GetPageUrl(ViewModel.CurrentPage + 1)" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            </div>
         </div>
-    }
+        
+        <!-- Postranní panel -->
+        <div class="col-md-3">
+            <ArchiveCalendar 
+                ArchiveMonths="@ViewModel.ArchiveMonths" 
+                BaseUrl="/ai-news/archive" />
+        </div>
+    </div>
 </div>
 
 <!-- Modal pro zobrazení překladu článku -->
@@ -96,7 +174,7 @@
     <div class="modal-dialog modal-dialog-scrollable modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="translationModalLabel">@selectedNews?.Title</h5>
+                <h5 class="modal-title" id="translationModalLabel">@selectedNews?.TitleCz</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="CloseModal"></button>
             </div>
             <div class="modal-body">
@@ -126,82 +204,141 @@
 }
 
 @code {
-    private List<NewsItem> newsItems;
+    [Parameter]
+    public string SearchTerm { get; set; }
+
+    [Parameter]
+    public int PageNumber { get; set; } = 1;
+    
+    [Parameter]
+    public int? Year { get; set; }
+    
+    [Parameter]
+    public int? Month { get; set; }
+
     private string searchTerm = "";
     private bool isModalOpen = false;
-    private NewsItem selectedNews;
-
-    private List<NewsItem> FilteredNewsItems => 
-        string.IsNullOrWhiteSpace(searchTerm) 
-            ? newsItems 
-            : newsItems.Where(n => 
-                n.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
-                n.SummaryCz.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+    private bool isLoading = true;
+    private AiNewsItem selectedNews;
+    private AiNewsViewModel ViewModel { get; set; } = new AiNewsViewModel();
 
     protected override async Task OnInitializedAsync()
     {
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            searchTerm = SearchTerm;
+        }
+
+        if (PageNumber < 1)
+        {
+            PageNumber = 1;
+        }
+
+        ViewModel.CurrentPage = PageNumber;
+        ViewModel.SearchTerm = searchTerm;
+        ViewModel.Year = Year;
+        ViewModel.Month = Month;
+
+        await LoadNewsAsync();
+        await LoadArchiveMonthsAsync();
+    }
+    
+    // Metoda pro zjištění, zda je aktuální kultura česká
+    private bool IsCzechCulture()
+    {
+        return CultureInfo.CurrentUICulture.Name.StartsWith("cs", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task LoadNewsAsync()
+    {
+        isLoading = true;
+
         try
         {
-            // Načtení dat ze souboru JSON
-            var jsonText = await System.IO.File.ReadAllTextAsync("result.json");
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            newsItems = JsonSerializer.Deserialize<List<NewsItem>>(jsonText, options);
-            
-            // Seřazení novinek podle data (nejnovější nahoře)
-            newsItems = newsItems.OrderByDescending(n => n.Date ?? DateTime.MinValue).ToList();
+            var result = await AiNewsService.GetAiNewsAsync(
+                ViewModel.CurrentPage,
+                ViewModel.PageSize,
+                string.IsNullOrWhiteSpace(ViewModel.SearchTerm) ? null : ViewModel.SearchTerm,
+                ViewModel.Year,
+                ViewModel.Month
+            );
+
+            ViewModel.Items = result.Items;
+            ViewModel.TotalCount = result.TotalCount;
         }
         catch (Exception ex)
         {
-            // V designové fázi použijeme ukázková data
-            newsItems = GetSampleData();
             Console.WriteLine($"Chyba při načítání dat: {ex.Message}");
+            ViewModel.Items = new List<AiNewsItem>();
+            ViewModel.TotalCount = 0;
+        }
+
+        isLoading = false;
+    }
+
+    private async Task LoadArchiveMonthsAsync()
+    {
+        try
+        {
+            ViewModel.ArchiveMonths = await AiNewsService.GetArchiveMonthsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chyba při načítání archivních měsíců: {ex.Message}");
+            ViewModel.ArchiveMonths = new List<(int Year, int Month, int Count)>();
         }
     }
 
-    private List<NewsItem> GetSampleData()
+    private void HandleSearch(KeyboardEventArgs e)
     {
-        return new List<NewsItem>
+        if (e.Key == "Enter")
         {
-            new NewsItem
-            {
-                Id = Guid.NewGuid(),
-                Title = "OpenAI představuje GPT-5: Revoluce v umělé inteligenci",
-                SummaryCz = "OpenAI oficiálně představila novou generaci svého velkého jazykového modelu GPT-5, který přináší bezprecedentní schopnosti porozumění a generování textu, spolu s novými funkcemi pro multimodální analýzu.",
-                ContentCz = "# OpenAI představuje GPT-5\n\nSpolečnost OpenAI dnes oficiálně oznámila vydání GPT-5, nejnovější verze svého velkého jazykového modelu, který posouvá hranice umělé inteligence na zcela novou úroveň.\n\nNový model vykazuje výrazné zlepšení v několika klíčových oblastech:\n\n- **Rozšířený kontextový rozsah** - GPT-5 dokáže pracovat s kontextem o délce až 1 milionu tokenů\n- **Pokročilé multimodální schopnosti** - model nyní lépe rozumí obrázkům, videím a zvukovým vstupům\n- **Vylepšené uvažování** - GPT-5 prokazuje schopnost komplexního uvažování na úrovni blížící se lidským expertům\n- **Přesnější následování instrukcí** - model je lépe vyladěn na přesné následování složitých pokynů\n\nSpolečnost OpenAI zároveň oznámila novou sadu nástrojů pro vývojáře, která umožní lepší integraci GPT-5 do různých aplikací a služeb.",
-                Url = "https://openai.com/blog/gpt-5",
-                ImageUrl = "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800",
-                SourceName = "OpenAI Blog",
-                Date = DateTime.Now.AddDays(-1)
-            },
-            new NewsItem
-            {
-                Id = Guid.NewGuid(),
-                Title = "Google představil Gemini 2.0 s revolučními schopnostmi",
-                SummaryCz = "Google AI dnes oznámil vydání modelu Gemini 2.0, který výrazně překonává předchozí verze ve všech klíčových testech a přináší nové možnosti pro vývojáře i koncové uživatele.",
-                ContentCz = "# Google představil Gemini 2.0\n\nGoogle AI dnes oficiálně odhalil novou generaci svého vlajkového AI modelu - Gemini 2.0. Nová verze přináší významná vylepšení oproti předchozí generaci a v mnoha ohledech překonává konkurenční modely.\n\n## Klíčové vlastnosti\n\n- **Bezkonkurenční výkon** - Gemini 2.0 dosahuje nejlepších výsledků ve více než 50 standardizovaných benchmarcích\n- **Vylepšené multimodální schopnosti** - model nyní lépe rozumí a generuje obsah napříč různými formáty včetně textu, obrázků, videa a zvuku\n- **Nízká latence** - optimalizace pro rychlejší odezvu i na běžném hardwaru\n- **Rozšířená podpora jazyků** - přidána podpora pro 40 nových jazyků\n\nGoogle zároveň oznámil, že Gemini 2.0 bude dostupný prostřednictvím Google Cloud AI Platform s novými nástroji pro vývojáře.",
-                Url = "https://blog.google/technology/ai/gemini-2-announcement/",
-                ImageUrl = "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=800",
-                SourceName = "Google AI Blog",
-                Date = DateTime.Now.AddDays(-3)
-            },
-            new NewsItem
-            {
-                Id = Guid.NewGuid(),
-                Title = "Microsoft představuje novou generaci AI asistentů pro Windows 12",
-                SummaryCz = "Microsoft dnes představil zcela novou generaci integrovaných AI asistentů, kteří budou součástí nadcházejícího operačního systému Windows 12.",
-                ContentCz = "# Microsoft představuje novou generaci AI asistentů pro Windows 12\n\nSpolečnost Microsoft dnes na své výroční konferenci Build odhalila novou generaci umělé inteligence, která bude hluboce integrována do nadcházejícího operačního systému Windows 12.\n\n## Hlavní novinky\n\n- **Windows AI Copilot Pro** - vylepšená verze asistenta Copilot s pokročilými schopnostmi asistence při práci s dokumenty, e-maily a dalšími úkoly\n- **Systémová UI integrace** - AI asistent bude přímo začleněn do uživatelského rozhraní Windows, což umožní přirozenější interakci\n- **Personalizované přizpůsobení** - systém se bude učit z uživatelských preferencí a postupně optimalizovat své funkce a doporučení\n- **Vylepšená bezpečnost** - nové AI funkce pro detekci hrozeb a ochranu soukromí\n\nMicrosoft potvrdil, že tyto funkce budou dostupné s vydáním Windows 12, které je plánováno na druhé čtvrtletí příštího roku.",
-                Url = "https://blogs.microsoft.com/blog/2023/05/21/announcing-windows-ai-innovations",
-                ImageUrl = "https://images.unsplash.com/photo-1620868425822-6b6d699720f0?w=800",
-                SourceName = "Microsoft Blog",
-                Date = DateTime.Now.AddDays(-5)
-            }
-        };
+            Search();
+        }
     }
 
-    private void ShowTranslation(NewsItem newsItem)
+    private void Search()
+    {
+        ViewModel.SearchTerm = searchTerm;
+        ViewModel.CurrentPage = 1;
+        NavigateToPage(1);
+    }
+
+    private void NavigateToPage(int pageNumber)
+    {
+        string url;
+        
+        if (ViewModel.IsArchiveFiltering)
+        {
+            url = $"/ai-news/archive/{ViewModel.Year}/{ViewModel.Month}";
+            if (pageNumber > 1)
+            {
+                url += $"/page/{pageNumber}";
+            }
+        }
+        else
+        {
+            url = string.IsNullOrWhiteSpace(searchTerm)
+                ? (pageNumber > 1 ? $"/ai-news/page/{pageNumber}" : "/ai-news")
+                : $"/ai-news/{Uri.EscapeDataString(searchTerm)}" + (pageNumber > 1 ? $"/page/{pageNumber}" : "");
+        }
+
+        NavigationManager.NavigateTo(url);
+    }
+
+    private string GetPageUrl(int pageNumber)
+    {
+        if (ViewModel.IsArchiveFiltering)
+        {
+            return $"/ai-news/archive/{ViewModel.Year}/{ViewModel.Month}" + (pageNumber > 1 ? $"/page/{pageNumber}" : "");
+        }
+        
+        return string.IsNullOrWhiteSpace(searchTerm)
+            ? (pageNumber > 1 ? $"/ai-news/page/{pageNumber}" : "/ai-news")
+            : $"/ai-news/{Uri.EscapeDataString(searchTerm)}" + (pageNumber > 1 ? $"/page/{pageNumber}" : "");
+    }
+
+    private void ShowTranslation(AiNewsItem newsItem)
     {
         selectedNews = newsItem;
         isModalOpen = true;

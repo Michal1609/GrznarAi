@@ -1,0 +1,217 @@
+@page "/ai-news"
+@using GrznarAi.Web.Models
+@using System.Text.Json
+@using PSC.Blazor.Components.MarkdownEditor
+@using System.Text.Json.Serialization
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject GrznarAi.Web.Services.ILocalizationService Localizer
+
+<PageTitle>AI News - GrznarAI</PageTitle>
+
+<div class="ai-news-container">
+    <div class="page-header">
+        <h1 class="display-4">@Localizer.GetString("AiNews.Title")</h1>
+        <p class="lead">@Localizer.GetString("AiNews.Description")</p>
+    </div>
+
+    @if (newsItems == null)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Načítání...</span>
+            </div>
+            <p>@Localizer.GetString("AiNews.Loading")</p>
+        </div>
+    }
+    else if (!newsItems.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            @Localizer.GetString("AiNews.NoNews")
+        </div>
+    }
+    else
+    {
+        <div class="news-filter mb-4">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" placeholder="@Localizer.GetString("AiNews.SearchPlaceholder")" @bind-value="searchTerm" @bind-value:event="oninput" />
+            </div>
+        </div>
+
+        <div class="news-items">
+            @foreach (var item in FilteredNewsItems)
+            {
+                <div class="news-card">
+                    <div class="news-card-content">
+                        <div class="row g-0">
+                            <div class="col-md-4 news-image">
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.Title" class="img-fluid rounded" />
+                                }
+                                else
+                                {
+                                    <div class="placeholder-image d-flex align-items-center justify-content-center rounded">
+                                        <i class="bi bi-newspaper fs-1"></i>
+                                    </div>
+                                }
+                            </div>
+                            <div class="col-md-8">
+                                <div class="news-content p-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="news-source">
+                                            <i class="bi bi-globe"></i> @(string.IsNullOrEmpty(item.SourceName) ? "Unknown Source" : item.SourceName)
+                                        </span>
+                                        <span class="news-date">
+                                            <i class="bi bi-calendar3"></i> @(item.Date.HasValue ? item.Date.Value.ToString("d. MMMM yyyy") : "Nedatováno")
+                                        </span>
+                                    </div>
+
+                                    <h2 class="news-title">@item.Title</h2>
+                                    
+                                    <div class="news-summary">
+                                        @item.SummaryCz
+                                    </div>
+
+                                    <div class="news-actions mt-3">
+                                        <a href="@item.Url" target="_blank" class="btn btn-outline-primary">
+                                            <i class="bi bi-box-arrow-up-right"></i> @Localizer.GetString("AiNews.ReadOriginal")
+                                        </a>
+                                        <button class="btn btn-outline-success ms-2" @onclick="() => ShowTranslation(item)">
+                                            <i class="bi bi-translate"></i> @Localizer.GetString("AiNews.CzechTranslation")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modal pro zobrazení překladu článku -->
+<div class="modal fade @(isModalOpen ? "show" : "")" id="translationModal" tabindex="-1" role="dialog" aria-labelledby="translationModalLabel" style="@(isModalOpen ? "display:block;" : "display:none;")" aria-hidden="@(!isModalOpen)">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="translationModalLabel">@selectedNews?.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="CloseModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (selectedNews != null)
+                {
+                    <div class="translation-content">
+                        <MarkdownView Value="@selectedNews.ContentCz" />
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="CloseModal">@Localizer.GetString("Common.Close")</button>
+                @if (selectedNews != null)
+                {
+                    <a href="@selectedNews.Url" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right"></i> @Localizer.GetString("AiNews.ReadOriginal")
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (isModalOpen)
+{
+    <div class="modal-backdrop fade show" @onclick="CloseModal"></div>
+}
+
+@code {
+    private List<NewsItem> newsItems;
+    private string searchTerm = "";
+    private bool isModalOpen = false;
+    private NewsItem selectedNews;
+
+    private List<NewsItem> FilteredNewsItems => 
+        string.IsNullOrWhiteSpace(searchTerm) 
+            ? newsItems 
+            : newsItems.Where(n => 
+                n.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
+                n.SummaryCz.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Načtení dat ze souboru JSON
+            var jsonText = await System.IO.File.ReadAllTextAsync("result.json");
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            newsItems = JsonSerializer.Deserialize<List<NewsItem>>(jsonText, options);
+            
+            // Seřazení novinek podle data (nejnovější nahoře)
+            newsItems = newsItems.OrderByDescending(n => n.Date ?? DateTime.MinValue).ToList();
+        }
+        catch (Exception ex)
+        {
+            // V designové fázi použijeme ukázková data
+            newsItems = GetSampleData();
+            Console.WriteLine($"Chyba při načítání dat: {ex.Message}");
+        }
+    }
+
+    private List<NewsItem> GetSampleData()
+    {
+        return new List<NewsItem>
+        {
+            new NewsItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "OpenAI představuje GPT-5: Revoluce v umělé inteligenci",
+                SummaryCz = "OpenAI oficiálně představila novou generaci svého velkého jazykového modelu GPT-5, který přináší bezprecedentní schopnosti porozumění a generování textu, spolu s novými funkcemi pro multimodální analýzu.",
+                ContentCz = "# OpenAI představuje GPT-5\n\nSpolečnost OpenAI dnes oficiálně oznámila vydání GPT-5, nejnovější verze svého velkého jazykového modelu, který posouvá hranice umělé inteligence na zcela novou úroveň.\n\nNový model vykazuje výrazné zlepšení v několika klíčových oblastech:\n\n- **Rozšířený kontextový rozsah** - GPT-5 dokáže pracovat s kontextem o délce až 1 milionu tokenů\n- **Pokročilé multimodální schopnosti** - model nyní lépe rozumí obrázkům, videím a zvukovým vstupům\n- **Vylepšené uvažování** - GPT-5 prokazuje schopnost komplexního uvažování na úrovni blížící se lidským expertům\n- **Přesnější následování instrukcí** - model je lépe vyladěn na přesné následování složitých pokynů\n\nSpolečnost OpenAI zároveň oznámila novou sadu nástrojů pro vývojáře, která umožní lepší integraci GPT-5 do různých aplikací a služeb.",
+                Url = "https://openai.com/blog/gpt-5",
+                ImageUrl = "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800",
+                SourceName = "OpenAI Blog",
+                Date = DateTime.Now.AddDays(-1)
+            },
+            new NewsItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "Google představil Gemini 2.0 s revolučními schopnostmi",
+                SummaryCz = "Google AI dnes oznámil vydání modelu Gemini 2.0, který výrazně překonává předchozí verze ve všech klíčových testech a přináší nové možnosti pro vývojáře i koncové uživatele.",
+                ContentCz = "# Google představil Gemini 2.0\n\nGoogle AI dnes oficiálně odhalil novou generaci svého vlajkového AI modelu - Gemini 2.0. Nová verze přináší významná vylepšení oproti předchozí generaci a v mnoha ohledech překonává konkurenční modely.\n\n## Klíčové vlastnosti\n\n- **Bezkonkurenční výkon** - Gemini 2.0 dosahuje nejlepších výsledků ve více než 50 standardizovaných benchmarcích\n- **Vylepšené multimodální schopnosti** - model nyní lépe rozumí a generuje obsah napříč různými formáty včetně textu, obrázků, videa a zvuku\n- **Nízká latence** - optimalizace pro rychlejší odezvu i na běžném hardwaru\n- **Rozšířená podpora jazyků** - přidána podpora pro 40 nových jazyků\n\nGoogle zároveň oznámil, že Gemini 2.0 bude dostupný prostřednictvím Google Cloud AI Platform s novými nástroji pro vývojáře.",
+                Url = "https://blog.google/technology/ai/gemini-2-announcement/",
+                ImageUrl = "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=800",
+                SourceName = "Google AI Blog",
+                Date = DateTime.Now.AddDays(-3)
+            },
+            new NewsItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "Microsoft představuje novou generaci AI asistentů pro Windows 12",
+                SummaryCz = "Microsoft dnes představil zcela novou generaci integrovaných AI asistentů, kteří budou součástí nadcházejícího operačního systému Windows 12.",
+                ContentCz = "# Microsoft představuje novou generaci AI asistentů pro Windows 12\n\nSpolečnost Microsoft dnes na své výroční konferenci Build odhalila novou generaci umělé inteligence, která bude hluboce integrována do nadcházejícího operačního systému Windows 12.\n\n## Hlavní novinky\n\n- **Windows AI Copilot Pro** - vylepšená verze asistenta Copilot s pokročilými schopnostmi asistence při práci s dokumenty, e-maily a dalšími úkoly\n- **Systémová UI integrace** - AI asistent bude přímo začleněn do uživatelského rozhraní Windows, což umožní přirozenější interakci\n- **Personalizované přizpůsobení** - systém se bude učit z uživatelských preferencí a postupně optimalizovat své funkce a doporučení\n- **Vylepšená bezpečnost** - nové AI funkce pro detekci hrozeb a ochranu soukromí\n\nMicrosoft potvrdil, že tyto funkce budou dostupné s vydáním Windows 12, které je plánováno na druhé čtvrtletí příštího roku.",
+                Url = "https://blogs.microsoft.com/blog/2023/05/21/announcing-windows-ai-innovations",
+                ImageUrl = "https://images.unsplash.com/photo-1620868425822-6b6d699720f0?w=800",
+                SourceName = "Microsoft Blog",
+                Date = DateTime.Now.AddDays(-5)
+            }
+        };
+    }
+
+    private void ShowTranslation(NewsItem newsItem)
+    {
+        selectedNews = newsItem;
+        isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        isModalOpen = false;
+        StateHasChanged();
+    }
+} 

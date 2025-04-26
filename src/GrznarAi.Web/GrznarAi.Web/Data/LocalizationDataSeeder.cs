@@ -245,6 +245,17 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.Yes", "Ano", "Yes", "Yes button text");
             AddEntry("Administration.No", "Ne", "No", "No button text");
 
+            // --- AI News Page Seed Data ---
+            AddEntry("NavMenu.AiNews", "AI Novinky", "AI News", "NavMenu Link - AI News");
+            AddEntry("AiNews.Title", "AI Novinky", "AI News", "AI News page title");
+            AddEntry("AiNews.Description", "Nejnovější zprávy ze světa umělé inteligence", "Latest news from the world of artificial intelligence", "AI News page description");
+            AddEntry("AiNews.Loading", "Načítání novinek...", "Loading news...", "AI News loading message");
+            AddEntry("AiNews.NoNews", "Žádné novinky nenalezeny", "No news found", "AI News no news message");
+            AddEntry("AiNews.SearchPlaceholder", "Vyhledávání v novinkách...", "Search news...", "AI News search placeholder");
+            AddEntry("AiNews.ReadOriginal", "Otevřít originál", "Open original", "AI News read original button");
+            AddEntry("AiNews.CzechTranslation", "Český překlad", "Czech translation", "AI News Czech translation button");
+            AddEntry("Common.Close", "Zavřít", "Close", "Common close button");
+
             // --- End Seed Data --- 
 
             try

@@ -148,5 +148,33 @@ namespace GrznarAi.Web.Services
                 
             return archives;
         }
+
+        /// <summary>
+        /// Přidá seznam nových AI novinek
+        /// </summary>
+        /// <param name="newsItems">Seznam nových AI novinek</param>
+        /// <returns>Počet přidaných novinek</returns>
+        public async Task<int> AddAiNewsItemsAsync(List<AiNewsItem> newsItems)
+        {
+            if (newsItems == null || !newsItems.Any())
+            {
+                return 0;
+            }
+
+            using var context = await _contextFactory.CreateDbContextAsync();
+            
+            // Nastavit datum importu pro všechny položky
+            var now = DateTime.UtcNow;
+            foreach (var item in newsItems)
+            {
+                item.ImportedDate = now;
+            }
+            
+            // Přidat všechny položky
+            context.AiNewsItems.AddRange(newsItems);
+            
+            // Uložit změny
+            return await context.SaveChangesAsync();
+        }
     }
 } 

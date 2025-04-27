@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using GrznarAi.Web.Api.Models;
 
 namespace GrznarAi.Web.Data
 {
@@ -17,6 +18,7 @@ namespace GrznarAi.Web.Data
         public DbSet<AiNewsItem> AiNewsItems { get; set; }
         public DbSet<AiNewsSource> AiNewsSources { get; set; }
         public DbSet<AiNewsError> AiNewsErrors { get; set; }
+        public DbSet<ApiKey> ApiKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

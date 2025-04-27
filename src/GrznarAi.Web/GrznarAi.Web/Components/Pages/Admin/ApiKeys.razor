@@ -1,0 +1,282 @@
+@page "/admin/apikeys"
+@using GrznarAi.Web.Api.Models
+@using GrznarAi.Web.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Cryptography
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject ILogger<ApiKeys> Logger
+
+<PageTitle>Správa API klíčů</PageTitle>
+
+<div class="container py-5">
+    <h1>Správa API klíčů</h1>
+    <p class="lead">Zde můžete spravovat API klíče pro přístup k API.</p>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Přidat nový API klíč</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@newApiKey" OnValidSubmit="@AddApiKey" FormName="apiKeyForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Název</label>
+                            <InputText id="name" @bind-Value="newApiKey.Name" class="form-control" />
+                            <ValidationMessage For="@(() => newApiKey.Name)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Popis</label>
+                            <InputTextArea id="description" @bind-Value="newApiKey.Description" class="form-control" rows="2" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="expiresInDays" class="form-label">Platnost (dny)</label>
+                            <InputNumber id="expiresInDays" @bind-Value="expiresInDays" class="form-control" min="1" />
+                            <small class="form-text text-muted">Nechte prázdné pro neomezenou platnost.</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Vytvořit API klíč</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (showNewApiKey)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <h5>Nový API klíč byl úspěšně vytvořen!</h5>
+                    <p><strong>DŮLEŽITÉ:</strong> Uložte si klíč, již ho nebude možné zobrazit v této podobě:</p>
+                    <div class="d-flex align-items-center">
+                        <pre class="bg-light p-2 flex-grow-1"><code>@newlyCreatedApiKey.Value</code></pre>
+                        <button class="btn btn-sm btn-outline-primary ms-2" @onclick="@CopyApiKeyToClipboard">
+                            <i class="bi bi-clipboard"></i> Kopírovat
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (apiKeys.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Název</th>
+                        <th>Popis</th>
+                        <th>Vytvořeno</th>
+                        <th>Platnost do</th>
+                        <th>Stav</th>
+                        <th>Akce</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var apiKey in apiKeys)
+                    {
+                        <tr>
+                            <td>@apiKey.Name</td>
+                            <td>@apiKey.Description</td>
+                            <td>@apiKey.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>
+                                @if (apiKey.ExpiresAt.HasValue)
+                                {
+                                    @apiKey.ExpiresAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span>Neomezená</span>
+                                }
+                            </td>
+                            <td>
+                                @if (apiKey.IsActive)
+                                {
+                                    <span class="badge bg-success">Aktivní</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Neaktivní</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    @if (apiKey.IsActive)
+                                    {
+                                        <button class="btn btn-sm btn-danger" @onclick="@(() => DeactivateApiKey(apiKey.Id))">
+                                            Deaktivovat
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-success" @onclick="@(() => ActivateApiKey(apiKey.Id))">
+                                            Aktivovat
+                                        </button>
+                                    }
+                                    <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteApiKey(apiKey.Id))">
+                                        Smazat
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <p class="mb-0">Zatím nebyly vytvořeny žádné API klíče.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ApiKey> apiKeys = new();
+    private ApiKey newApiKey = new ApiKey { IsActive = true, CreatedAt = DateTime.UtcNow };
+    private ApiKey newlyCreatedApiKey = new();
+    private int? expiresInDays = 365;
+    private bool showNewApiKey = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApiKeys();
+    }
+
+    private async Task LoadApiKeys()
+    {
+        try
+        {
+            using var context = await DbContextFactory.CreateDbContextAsync();
+            apiKeys = await context.ApiKeys.OrderByDescending(k => k.CreatedAt).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při načítání API klíčů");
+        }
+    }
+
+    private async Task AddApiKey()
+    {
+        try
+        {
+            using var context = await DbContextFactory.CreateDbContextAsync();
+
+            // Vygenerování náhodného API klíče
+            var keyBytes = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(keyBytes);
+            var keyValue = Convert.ToBase64String(keyBytes);
+
+            // Vytvoření nové instance klíče
+            var apiKeyToAdd = new ApiKey
+            {
+                Name = newApiKey.Name,
+                Description = newApiKey.Description,
+                Value = keyValue,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+            
+            // Nastavení platnosti
+            if (expiresInDays.HasValue)
+            {
+                apiKeyToAdd.ExpiresAt = DateTime.UtcNow.AddDays(expiresInDays.Value);
+            }
+
+            context.ApiKeys.Add(apiKeyToAdd);
+            await context.SaveChangesAsync();
+
+            // Uložit nově vytvořený klíč pro zobrazení
+            newlyCreatedApiKey = apiKeyToAdd;
+            showNewApiKey = true;
+
+            // Resetovat formulář
+            newApiKey = new ApiKey { IsActive = true, CreatedAt = DateTime.UtcNow };
+
+            await LoadApiKeys();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při vytváření API klíče");
+        }
+    }
+
+    private async Task ActivateApiKey(int id)
+    {
+        try
+        {
+            using var context = await DbContextFactory.CreateDbContextAsync();
+            var apiKey = await context.ApiKeys.FindAsync(id);
+            if (apiKey != null)
+            {
+                apiKey.IsActive = true;
+                apiKey.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+                await LoadApiKeys();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při aktivaci API klíče");
+        }
+    }
+
+    private async Task DeactivateApiKey(int id)
+    {
+        try
+        {
+            using var context = await DbContextFactory.CreateDbContextAsync();
+            var apiKey = await context.ApiKeys.FindAsync(id);
+            if (apiKey != null)
+            {
+                apiKey.IsActive = false;
+                apiKey.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+                await LoadApiKeys();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při deaktivaci API klíče");
+        }
+    }
+
+    private async Task DeleteApiKey(int id)
+    {
+        try
+        {
+            using var context = await DbContextFactory.CreateDbContextAsync();
+            var apiKey = await context.ApiKeys.FindAsync(id);
+            if (apiKey != null)
+            {
+                context.ApiKeys.Remove(apiKey);
+                await context.SaveChangesAsync();
+                await LoadApiKeys();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při mazání API klíče");
+        }
+    }
+
+    private void CopyApiKeyToClipboard()
+    {
+        // Implementace kopírování do schránky by vyžadovala JavaScript Interop
+        // Pro jednoduchost tuto funkcionalitu vynecháme, uživatel může použít
+        // standardní kopírování (Ctrl+C)
+    }
+} 

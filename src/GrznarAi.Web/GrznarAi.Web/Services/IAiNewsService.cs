@@ -51,5 +51,12 @@ namespace GrznarAi.Web.Services
         /// </summary>
         /// <returns>Seznam roků a měsíců s počtem článků</returns>
         Task<List<(int Year, int Month, int Count)>> GetArchiveMonthsAsync();
+
+        /// <summary>
+        /// Přidá seznam nových AI novinek
+        /// </summary>
+        /// <param name="newsItems">Seznam nových AI novinek</param>
+        /// <returns>Počet přidaných novinek</returns>
+        Task<int> AddAiNewsItemsAsync(List<AiNewsItem> newsItems);
     }
 } 

@@ -3,6 +3,8 @@ using GrznarAi.Web.Components;
 using GrznarAi.Web.Components.Account;
 using GrznarAi.Web.Data;
 using GrznarAi.Web.Services;
+using GrznarAi.Web.Api.Middleware;
+using GrznarAi.Web.Tools;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +21,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddAuthenticationStateSerialization();
+
+// Přidat kontrolery pro API
+builder.Services.AddControllers();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -114,7 +119,17 @@ else
 
 app.UseHttpsRedirection();
 
+// Aktivovat middleware pro směrování
+app.UseRouting();
+
+// Přidat middleware pro ověření API klíčů
+app.UseApiKeyMiddleware();
+
+app.UseStaticFiles();
 app.UseAntiforgery();
+
+// Namapovat API kontrolery
+app.MapControllers();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
@@ -272,6 +287,25 @@ using (var scope = app.Services.CreateScope())
         };    
 
     await userManager.AddToRoleAsync(admin, roleName);
+}
+
+// Vytvoření výchozího API klíče, pokud není žádný v databázi
+try
+{
+    using var scope = app.Services.CreateScope();
+    var contextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+    using var context = await contextFactory.CreateDbContextAsync();
+    
+    // Kontrola, zda již existuje nějaký API klíč
+    if (!await context.ApiKeys.AnyAsync())
+    {
+        Console.WriteLine("Vytvářím výchozí API klíč...");
+        await ApiKeyGenerator.GenerateApiKey(app, "Default API Key", "Výchozí API klíč pro přístup k API", 365);
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Chyba při vytváření výchozího API klíče: {ex.Message}");
 }
 
 app.Run();

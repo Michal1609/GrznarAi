@@ -252,10 +252,20 @@ namespace GrznarAi.Web.Data
             AddEntry("AiNews.Loading", "Načítání novinek...", "Loading news...", "AI News loading message");
             AddEntry("AiNews.NoNews", "Žádné novinky nenalezeny", "No news found", "AI News no news message");
             AddEntry("AiNews.SearchPlaceholder", "Vyhledávání v novinkách...", "Search news...", "AI News search placeholder");
-            AddEntry("AiNews.Search", "Hledat", "Search", "AI News search button");
+            AddEntry("AiNews.Search", "Hledat", "Search", "AI News search button text");
             AddEntry("AiNews.ReadOriginal", "Otevřít originál", "Open original", "AI News read original button");
             AddEntry("AiNews.CzechTranslation", "Český překlad", "Czech translation", "AI News Czech translation button");
+            AddEntry("AiNews.TranslatedByAI", "Veškeré texty jsou přeloženy pomocí umělé inteligence. Překlad nemusí být vždy přesný.", "All texts are translated using artificial intelligence. The translation may not always be accurate.", "AI News translation disclaimer");
             AddEntry("Common.Close", "Zavřít", "Close", "Common close button");
+
+            // --- Administration AI News --- 
+            AddEntry("Administration.AiNews.Title", "Správa AI novinek", "AI News Management", "AI News administration title");
+            AddEntry("Administration.AiNews.Description", "Správa a údržba AI novinek na webu", "Manage and maintain AI news on the website", "AI News administration description");
+            AddEntry("Administration.AiNews.List", "Seznam AI novinek", "AI News List", "AI News administration list title");
+            AddEntry("Administration.AiNews.Filter", "Filtrovat podle titulku nebo obsahu", "Filter by title or content", "AI News administration filter placeholder");
+            AddEntry("Administration.AiNews.Delete", "Smazat", "Delete", "AI News administration delete button");
+            AddEntry("Administration.AiNews.DeleteConfirmation", "Opravdu chcete smazat tuto novinku?", "Are you sure you want to delete this news item?", "AI News administration delete confirmation");
+            AddEntry("Administration.AiNews.NoItems", "Žádné AI novinky nenalezeny", "No AI news found", "AI News administration no items message");
 
             // --- End Seed Data --- 
 

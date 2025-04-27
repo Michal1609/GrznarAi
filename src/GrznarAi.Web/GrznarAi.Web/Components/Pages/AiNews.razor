@@ -119,9 +119,9 @@
                                                     <a href="@item.Url" target="_blank" class="btn btn-outline-primary">
                                                         <i class="bi bi-box-arrow-up-right"></i> @Localizer.GetString("AiNews.ReadOriginal")
                                                     </a>
-                                                    <button class="btn btn-outline-success ms-2" @onclick="() => ShowTranslation(item)">
+                                                    <a href="/ai-news/detail/@item.Id" class="btn btn-outline-success ms-2">
                                                         <i class="bi bi-translate"></i> @Localizer.GetString("AiNews.CzechTranslation")
-                                                    </button>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -169,40 +169,6 @@
     </div>
 </div>
 
-<!-- Modal pro zobrazení překladu článku -->
-<div class="modal fade @(isModalOpen ? "show" : "")" id="translationModal" tabindex="-1" role="dialog" aria-labelledby="translationModalLabel" style="@(isModalOpen ? "display:block;" : "display:none;")" aria-hidden="@(!isModalOpen)">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="translationModalLabel">@selectedNews?.TitleCz</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="CloseModal"></button>
-            </div>
-            <div class="modal-body">
-                @if (selectedNews != null)
-                {
-                    <div class="translation-content">
-                        <MarkdownView Value="@selectedNews.ContentCz" />
-                    </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="CloseModal">@Localizer.GetString("Common.Close")</button>
-                @if (selectedNews != null)
-                {
-                    <a href="@selectedNews.Url" target="_blank" class="btn btn-primary">
-                        <i class="bi bi-box-arrow-up-right"></i> @Localizer.GetString("AiNews.ReadOriginal")
-                    </a>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-@if (isModalOpen)
-{
-    <div class="modal-backdrop fade show" @onclick="CloseModal"></div>
-}
-
 @code {
     [Parameter]
     public string SearchTerm { get; set; }
@@ -217,9 +183,7 @@
     public int? Month { get; set; }
 
     private string searchTerm = "";
-    private bool isModalOpen = false;
     private bool isLoading = true;
-    private AiNewsItem selectedNews;
     private AiNewsViewModel ViewModel { get; set; } = new AiNewsViewModel();
 
     protected override async Task OnInitializedAsync()
@@ -336,17 +300,5 @@
         return string.IsNullOrWhiteSpace(searchTerm)
             ? (pageNumber > 1 ? $"/ai-news/page/{pageNumber}" : "/ai-news")
             : $"/ai-news/{Uri.EscapeDataString(searchTerm)}" + (pageNumber > 1 ? $"/page/{pageNumber}" : "");
-    }
-
-    private void ShowTranslation(AiNewsItem newsItem)
-    {
-        selectedNews = newsItem;
-        isModalOpen = true;
-    }
-
-    private void CloseModal()
-    {
-        isModalOpen = false;
-        StateHasChanged();
     }
 } 

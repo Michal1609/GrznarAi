@@ -249,23 +249,50 @@ namespace GrznarAi.Web.Data
             AddEntry("NavMenu.AiNews", "AI Novinky", "AI News", "NavMenu Link - AI News");
             AddEntry("AiNews.Title", "AI Novinky", "AI News", "AI News page title");
             AddEntry("AiNews.Description", "Nejnovější zprávy ze světa umělé inteligence", "Latest news from the world of artificial intelligence", "AI News page description");
-            AddEntry("AiNews.Loading", "Načítání novinek...", "Loading news...", "AI News loading message");
-            AddEntry("AiNews.NoNews", "Žádné novinky nenalezeny", "No news found", "AI News no news message");
+            AddEntry("AiNews.Loading", "Načítání novinek...", "Loading news...", "AI News loading indicator");
+            AddEntry("AiNews.NoNews", "Žádné novinky k zobrazení", "No news to display", "AI News empty state");
+            AddEntry("AiNews.ReadMore", "Číst více", "Read more", "AI News read more button");
+            AddEntry("AiNews.FilteringByDate", "Filtrování podle data", "Filtering by date", "AI News date filter info");
             AddEntry("AiNews.SearchPlaceholder", "Vyhledávání v novinkách...", "Search news...", "AI News search placeholder");
             AddEntry("AiNews.Search", "Hledat", "Search", "AI News search button text");
-            AddEntry("AiNews.ReadOriginal", "Otevřít originál", "Open original", "AI News read original button");
-            AddEntry("AiNews.CzechTranslation", "Český překlad", "Czech translation", "AI News Czech translation button");
-            AddEntry("AiNews.TranslatedByAI", "Veškeré texty jsou přeloženy pomocí umělé inteligence. Překlad nemusí být vždy přesný.", "All texts are translated using artificial intelligence. The translation may not always be accurate.", "AI News translation disclaimer");
-            AddEntry("Common.Close", "Zavřít", "Close", "Common close button");
-
+            AddEntry("AiNews.ArchiveTitle", "Archiv", "Archive", "AI News archive title");
+            AddEntry("AiNews.ReadOriginal", "Číst originál", "Read original", "AI News read original button");
+            
             // --- Administration AI News --- 
-            AddEntry("Administration.AiNews.Title", "Správa AI novinek", "AI News Management", "AI News administration title");
-            AddEntry("Administration.AiNews.Description", "Správa a údržba AI novinek na webu", "Manage and maintain AI news on the website", "AI News administration description");
+            AddEntry("Administration.AiNews.Title", "Správa AI novinek", "AI News Management", "Admin AI News page title");
+            AddEntry("Administration.AiNews.Description", "Přidávání, úprava a mazání novinek ze světa umělé inteligence", "Add, edit and delete news from the world of artificial intelligence", "Admin AI News page description");
             AddEntry("Administration.AiNews.List", "Seznam AI novinek", "AI News List", "AI News administration list title");
             AddEntry("Administration.AiNews.Filter", "Filtrovat podle titulku nebo obsahu", "Filter by title or content", "AI News administration filter placeholder");
             AddEntry("Administration.AiNews.Delete", "Smazat", "Delete", "AI News administration delete button");
             AddEntry("Administration.AiNews.DeleteConfirmation", "Opravdu chcete smazat tuto novinku?", "Are you sure you want to delete this news item?", "AI News administration delete confirmation");
             AddEntry("Administration.AiNews.NoItems", "Žádné AI novinky nenalezeny", "No AI news found", "AI News administration no items message");
+            
+            // Nové lokalizační řetězce pro správu zdrojů AI novinek
+            AddEntry("Administration.AiNews.Sources", "Zdroje AI novinek", "AI News Sources", "AI News sources tab title");
+            AddEntry("Administration.AiNews.Sources.Add", "Přidat nový zdroj", "Add New Source", "Add new source button text");
+            AddEntry("Administration.AiNews.Sources.Edit", "Upravit zdroj", "Edit Source", "Edit source button text");
+            AddEntry("Administration.AiNews.Sources.Delete", "Smazat zdroj", "Delete Source", "Delete source button text");
+            AddEntry("Administration.AiNews.Sources.DeleteConfirmation", "Opravdu chcete smazat tento zdroj novinek?", "Are you sure you want to delete this news source?", "Delete source confirmation message");
+            AddEntry("Administration.AiNews.Sources.DeleteWarning", "Pozor: Smazáním zdroje budou ovlivněny všechny novinky z tohoto zdroje.", "Warning: Deleting this source will affect all news from this source.", "Delete source warning message");
+            AddEntry("Administration.AiNews.Sources.NoItems", "Žádné zdroje novinek nebyly nalezeny.", "No news sources found.", "No sources message");
+            
+            // Lokalizační řetězce pro formulář zdroje
+            AddEntry("Administration.AiNews.Sources.Name", "Název zdroje", "Source Name", "Source name field label");
+            AddEntry("Administration.AiNews.Sources.Url", "URL zdroje", "Source URL", "Source URL field label");
+            AddEntry("Administration.AiNews.Sources.Type", "Typ zdroje", "Source Type", "Source type field label");
+            AddEntry("Administration.AiNews.Sources.Active", "Aktivní", "Active", "Source active field label");
+            AddEntry("Administration.AiNews.Sources.Description", "Popis", "Description", "Source description field label");
+            AddEntry("Administration.AiNews.Sources.Parameters", "Parametry (JSON)", "Parameters (JSON)", "Source parameters field label");
+            AddEntry("Administration.AiNews.Sources.ParametersHelp", "Volitelná konfigurace specifická pro tento zdroj v JSON formátu.", "Optional source-specific configuration in JSON format.", "Source parameters help text");
+            
+            // Lokalizační řetězce pro chyby při stahování
+            AddEntry("Administration.AiNews.Errors", "Chyby při stahování", "Download Errors", "AI News errors tab title");
+            AddEntry("Administration.AiNews.Errors.Delete", "Smazat záznam", "Delete Record", "Delete error record button text");
+            AddEntry("Administration.AiNews.Errors.DeleteConfirmation", "Opravdu chcete smazat tento záznam o chybě?", "Are you sure you want to delete this error record?", "Delete error confirmation message");
+            AddEntry("Administration.AiNews.Errors.NoItems", "Žádné chyby při stahování novinek nebyly zaznamenány.", "No download errors were recorded.", "No errors message");
+            AddEntry("Administration.AiNews.Errors.ShowDetails", "Zobrazit detail", "Show Details", "Show error details button");
+            AddEntry("Administration.AiNews.Errors.StackTrace", "Stack Trace:", "Stack Trace:", "Stack trace label");
+            AddEntry("Administration.AiNews.Errors.NoStackTrace", "Stack trace není k dispozici", "Stack trace not available", "No stack trace message");
 
             // --- End Seed Data --- 
 

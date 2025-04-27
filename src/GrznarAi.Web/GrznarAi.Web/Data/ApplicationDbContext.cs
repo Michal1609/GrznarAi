@@ -15,6 +15,8 @@ namespace GrznarAi.Web.Data
         public DbSet<CommentVote> CommentVotes { get; set; }
         public DbSet<BlogVote> BlogVotes { get; set; }
         public DbSet<AiNewsItem> AiNewsItems { get; set; }
+        public DbSet<AiNewsSource> AiNewsSources { get; set; }
+        public DbSet<AiNewsError> AiNewsErrors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -53,6 +55,27 @@ namespace GrznarAi.Web.Data
             
             builder.Entity<AiNewsItem>()
                 .HasIndex(n => n.ImportedDate);
+
+            // Konfigurace pro AiNewsSource
+            builder.Entity<AiNewsSource>()
+                .HasIndex(s => s.Name)
+                .IsUnique();
+
+            builder.Entity<AiNewsSource>()
+                .HasIndex(s => s.Url);
+
+            builder.Entity<AiNewsSource>()
+                .HasIndex(s => s.Type);
+
+            // Konfigurace pro AiNewsError
+            builder.Entity<AiNewsError>()
+                .HasIndex(e => e.OccurredAt);
+
+            builder.Entity<AiNewsError>()
+                .HasOne(e => e.Source)
+                .WithMany()
+                .HasForeignKey(e => e.SourceId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

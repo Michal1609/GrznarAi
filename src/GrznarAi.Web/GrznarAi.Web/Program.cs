@@ -51,6 +51,12 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 // Register AiNewsService
 builder.Services.AddScoped<IAiNewsService, AiNewsService>();
 
+// Register AiNewsErrorService
+builder.Services.AddScoped<IAiNewsErrorService, AiNewsErrorService>();
+
+// Register AiNewsSourceService
+builder.Services.AddScoped<IAiNewsSourceService, AiNewsSourceService>();
+
 // Register GitHubService (using Octokit)
 // Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>(); // Register directly

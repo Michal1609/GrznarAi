@@ -250,6 +250,44 @@ main {
   color: white;
 }
 
+/* Přidané styly pro záložky */
+.nav-tabs {
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+
+.nav-tabs .nav-link {
+  color: var(--text-color);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  margin-right: 0.25rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: var(--border-color) var(--border-color) transparent;
+  background-color: var(--hover-bg);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--primary-color);
+  background-color: var(--card-background);
+  border-color: var(--border-color) var(--border-color) var(--card-background);
+}
+
+/* Původní styly pokračují */
 .btn-primary:hover {
   background-color: var(--accent-color);
   border-color: var(--accent-color);

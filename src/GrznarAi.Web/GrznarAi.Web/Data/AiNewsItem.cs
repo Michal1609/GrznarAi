@@ -50,7 +50,7 @@ namespace GrznarAi.Web.Data
         /// <summary>
         /// URL obrázku k článku
         /// </summary>
-        public string ImageUrl { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
 
         /// <summary>
         /// Název zdrojového webu

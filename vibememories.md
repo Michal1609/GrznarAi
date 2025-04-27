@@ -101,6 +101,139 @@ AddEntry("ContactPage.Form.NameLabel", "Vaše jméno", "Your Name", "Contact for
 AddEntry("ContactPage.Form.SendButton", "Odeslat zprávu", "Send Message", "Contact form send button");
 ```
 
+## AI News - systém pro správu novinek z oblasti AI
+
+### Struktura a implementace AI News
+
+1. **Datový model:**
+   * `AiNewsItem` - Hlavní entita pro AI novinky (`Data/AiNewsItem.cs`)
+     * Obsahuje pole pro vícejazyčný obsah (`TitleEn`, `TitleCz`, `ContentEn`, `ContentCz`, `SummaryEn`, `SummaryCz`)
+     * `ImageUrl` - URL obrázku (nepovinné pole)
+     * `Url` - Odkaz na originální zdroj
+     * `SourceName` - Název zdroje
+     * `PublishedDate` - Datum publikace
+     * `ImportedDate` - Datum importu
+     * `IsActive` - Zda je novinka aktivní
+   * `AiNewsSource` - Reprezentuje zdroj novinek (`Data/AiNewsSource.cs`)
+   * `AiNewsError` - Záznam chyb při zpracování novinek (`Data/AiNewsError.cs`)
+
+2. **Servisní vrstva:**
+   * `IAiNewsService` a `AiNewsService` - Hlavní služba pro operace s novinkami
+     * `GetAiNewsAsync` - Získání seznamu novinek s podporou stránkování, vyhledávání a filtrování
+     * `GetAiNewsItemByIdAsync` - Získání detailu konkrétní novinky
+     * `AddAiNewsItemAsync` a `AddAiNewsItemsAsync` - Přidání nových novinek
+     * `UpdateAiNewsItemAsync` - Aktualizace novinky
+     * `DeleteAiNewsItemAsync` - Smazání novinky
+     * `GetArchiveMonthsAsync` - Získání měsíců pro archiv
+   * `IAiNewsSourceService` a `AiNewsSourceService` - Služba pro práci se zdroji novinek
+   * `IAiNewsErrorService` a `AiNewsErrorService` - Služba pro práci s chybami
+
+3. **UI komponenty:**
+   * `Components/Pages/AiNews.razor` - Hlavní stránka se seznamem novinek
+     * Stránkování, vyhledávání, filtrování podle data
+     * Zobrazení novinek v responzivních kartách
+   * `Components/Pages/AiNewsDetail.razor` - Detail novinky
+     * Zobrazení kompletního obsahu, obrázku a odkazu na zdroj
+   * `Components/Pages/Admin/AiNews.razor` - Administrační rozhraní pro správu novinek
+
+4. **API rozhraní:**
+   * `Api/Controllers/AiNews/AiNewsItemsController.cs` - Kontroler pro správu novinek
+   * `Api/Controllers/AiNews/AiNewsSourcesController.cs` - Kontroler pro správu zdrojů
+   * `Api/Controllers/AiNews/AiNewsErrorsController.cs` - Kontroler pro správu chyb
+   * `Api/Models/AiNews/*.cs` - DTO modely pro API požadavky a odpovědi
+
+### Import AI novinek z externích zdrojů
+
+Aplikace podporuje automatizovaný import novinek z externích zdrojů pomocí API. Implementace zahrnuje:
+
+1. **API Endpoint `/api/ainews/items`:**
+   * HTTP POST metoda pro přidání nových novinek
+   * Očekává seznam `AiNewsItemRequest` objektů
+   * Autentizace pomocí API klíče v hlavičce `X-Api-Key`
+
+2. **Zpracování importovaných dat:**
+   * Novinky jsou validovány (povinná pole, formáty)
+   * Podpora pro multijazyčný obsah
+   * Zachycení a logování chyb pomocí `/api/ainews/errors` endpointu
+
+3. **Inicializační import z JSON:**
+   * V `Program.cs` je implementován blok kódu, který při prvním spuštění aplikace importuje testovací data z JSON souboru
+   * Slouží jako seed data pro zobrazení funkcí AI News
+
+## Systém API klíčů
+
+### Architektura a implementace API klíčů
+
+1. **Model API klíče:**
+   * `ApiKey` - Entita reprezentující API klíč (`Api/Models/ApiKey.cs`)
+     * `Id` - Identifikátor
+     * `Name` - Název klíče (pro administraci)
+     * `Value` - Hodnota klíče (Base64 řetězec)
+     * `Description` - Volitelný popis
+     * `CreatedAt`, `UpdatedAt` - Časové značky
+     * `ExpiresAt` - Volitelné datum expirace
+     * `IsActive` - Příznak aktivního stavu
+
+2. **Middleware pro ověření API klíčů:**
+   * `ApiKeyMiddleware` - Middleware komponenta (`Api/Middleware/ApiKeyMiddleware.cs`)
+     * Kontroluje hlavičku `X-Api-Key` pro požadavky směřující na `/api/*`
+     * Ověřuje existenci, platnost a aktivní stav klíče v databázi
+     * Vrací 401 Unauthorized při neplatném nebo chybějícím klíči
+   * `MiddlewareExtensions` - Extension metoda pro registraci middleware
+   * Registrace middleware v `Program.cs` pomocí volání `app.UseApiKeyMiddleware()`
+
+3. **Administrace API klíčů:**
+   * `Components/Pages/Admin/ApiKeys.razor` - UI pro správu API klíčů
+     * Formulář pro vytvoření nového klíče s možností nastavení doby platnosti
+     * Tabulka existujících klíčů s možnostmi deaktivace/aktivace/smazání
+     * Zabezpečeno atributem `[Authorize(Roles = "Admin")]`
+     * Použití `@rendermode InteractiveServer` pro server-side interaktivitu
+
+4. **Generování API klíčů:**
+   * Využití kryptograficky bezpečného generátoru náhodných čísel (`RandomNumberGenerator`)
+   * Generování 32 bytů (256 bitů) následně převedených do Base64 řetězce
+   * `ApiKeyGenerator` pomocná třída pro generování klíčů (`Tools/ApiKeyGenerator.cs`)
+
+5. **API kontrolery:**
+   * Registrace kontrolerů v `Program.cs`:
+     * `builder.Services.AddControllers()` - Přidání služby pro API kontrolery
+     * `app.UseRouting()` - Aktivace middleware pro routování
+     * `app.MapControllers()` - Namapování kontrolerů na endpointy
+
+### Použití API klíčů v kódu
+
+1. **Vytvoření API klíče:**
+   ```csharp
+   var keyBytes = new byte[32];
+   using var rng = RandomNumberGenerator.Create();
+   rng.GetBytes(keyBytes);
+   var keyValue = Convert.ToBase64String(keyBytes);
+   
+   var apiKey = new ApiKey
+   {
+       Name = "Název klíče",
+       Value = keyValue,
+       Description = "Popis klíče",
+       ExpiresAt = DateTime.UtcNow.AddDays(365), // Platnost 1 rok
+       IsActive = true
+   };
+   ```
+
+2. **Validace API klíče v middleware:**
+   ```csharp
+   var isValidApiKey = await dbContext.ApiKeys
+       .AnyAsync(k => k.Value == apiKeyValue && 
+                      k.IsActive && 
+                      (k.ExpiresAt == null || k.ExpiresAt > DateTime.UtcNow));
+   ```
+
+3. **Volání API s API klíčem v Postman:**
+   * Přidat hlavičku:
+     * Klíč: `X-Api-Key`
+     * Hodnota: `váš-api-klíč`
+   * URL example: `https://localhost:5001/api/ainews/sources`
+   * Metoda: `GET`
+
 ## Postup pro práci s Gitem
 
 **Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
@@ -192,6 +325,15 @@ git push
 *   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
 *   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
 *   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
 
 ## Rychlý checklist pro lokalizaci nové stránky
 

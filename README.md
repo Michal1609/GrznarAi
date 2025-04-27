@@ -7,9 +7,11 @@ Osobní webová aplikace postavená na ASP.NET Core Blazor s podporou blogu, pro
 - Osobní blog s podporou Markdown
 - Přehled GitHub projektů
 - Zobrazení meteo dat
+- Agregace a zobrazení novinek z oblasti AI
 - Vícejazyčná podpora (čeština, angličtina)
 - Správa uživatelů a rolí
 - Ochrana proti spamu pomocí Google reCAPTCHA v3
+- API pro správu AI novinek s autentizací pomocí API klíčů
 
 ## Požadavky
 
@@ -41,6 +43,52 @@ Osobní webová aplikace postavená na ASP.NET Core Blazor s podporou blogu, pro
    ```bash
    dotnet run
    ```
+
+## AI News - Novinky ze světa umělé inteligence
+
+Aplikace umožňuje agregovat a zobrazovat novinky z oblasti umělé inteligence. 
+
+### Funkce AI News
+
+- Zobrazení seznamu AI novinek s podporou stránkování
+- Filtrování podle data a vyhledávání podle klíčového slova
+- Detailní zobrazení novinky s plným textem
+- Podpora vícejazyčného obsahu (čeština, angličtina)
+- Administrační rozhraní pro správu novinek
+- API pro automatizované přidávání novinek
+
+### API pro správu AI novinek
+
+Aplikace poskytuje REST API pro automatizované přidávání novinek z externích zdrojů:
+
+- **GET /api/ainews/sources** - Seznam aktivních zdrojů novinek
+- **POST /api/ainews/items** - Přidání nových AI novinek
+- **POST /api/ainews/errors** - Zaznamenání chyb při stahování novinek
+
+Pro přístup k API je vyžadována autentizace pomocí API klíče.
+
+## Správa API klíčů
+
+Aplikace obsahuje systém pro správu API klíčů, který umožňuje bezpečný přístup k API.
+
+### Funkce správy API klíčů
+
+- Generování nových API klíčů s možností nastavení platnosti
+- Aktivace/deaktivace existujících klíčů
+- Zobrazení historie klíčů
+- Ověřování API klíčů pro přístup k API endpoints
+
+### Přístup k API s API klíčem
+
+Pro volání API je nutné přidat API klíč do hlavičky požadavku:
+
+```
+X-Api-Key: váš-api-klíč
+```
+
+### Administrace API klíčů
+
+Administrace API klíčů je dostupná na stránce `/admin/apikeys`. Tato stránka je přístupná pouze pro uživatele s rolí Admin.
 
 ## Konfigurace Google reCAPTCHA v3
 

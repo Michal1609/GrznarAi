@@ -122,6 +122,10 @@ app.UseHttpsRedirection();
 // Aktivovat middleware pro směrování
 app.UseRouting();
 
+// Přidat middleware pro autorizaci
+app.UseAuthentication();
+app.UseAuthorization();
+
 // Přidat middleware pro ověření API klíčů
 app.UseApiKeyMiddleware();
 

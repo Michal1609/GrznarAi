@@ -6,6 +6,7 @@ using GrznarAi.Web.Data;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace GrznarAi.Web.Api.Controllers.AiNews
 {
@@ -63,9 +64,23 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
                 newsItems.Add(newsItem);
             }
             
+            // Původní počet položek k uložení
+            int requestedCount = newsItems.Count;
+            
+            // Uložení unikátních položek
             int addedCount = await _newsService.AddAiNewsItemsAsync(newsItems);
             
-            return Ok(new { itemsAdded = addedCount });
+            // Počet přeskočených duplicitních položek
+            int skippedCount = requestedCount - addedCount;
+            
+            _logger.LogInformation("Přidáno {AddedCount} AI novinek, přeskočeno {SkippedCount} duplicitních položek", 
+                addedCount, skippedCount);
+            
+            return Ok(new { 
+                itemsRequested = requestedCount,
+                itemsAdded = addedCount, 
+                itemsSkipped = skippedCount 
+            });
         }
     }
 } 

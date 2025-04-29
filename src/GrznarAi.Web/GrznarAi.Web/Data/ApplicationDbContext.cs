@@ -57,6 +57,10 @@ namespace GrznarAi.Web.Data
             
             builder.Entity<AiNewsItem>()
                 .HasIndex(n => n.ImportedDate);
+                
+            // Přidaný index pro rychlejší vyhledávání podle titulku
+            builder.Entity<AiNewsItem>()
+                .HasIndex(n => new { n.TitleEn, n.ImportedDate });
 
             // Konfigurace pro AiNewsSource
             builder.Entity<AiNewsSource>()

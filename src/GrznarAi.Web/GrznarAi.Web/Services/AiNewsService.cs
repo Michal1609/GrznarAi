@@ -165,13 +165,34 @@ namespace GrznarAi.Web.Services
             
             // Nastavit datum importu pro všechny položky
             var now = DateTime.UtcNow;
-            foreach (var item in newsItems)
+            
+            // Kontrola posledních 10 dní pro duplicity
+            var recentDate = now.AddDays(-10);
+            
+            // Získáme titulky existujících článků za posledních 10 dní
+            var existingTitles = await context.AiNewsItems
+                .Where(n => n.ImportedDate >= recentDate)
+                .Select(n => n.TitleEn.ToLower())
+                .ToListAsync();
+            
+            // Filtrujeme jen ty položky, které nejsou duplicitní
+            var uniqueItems = newsItems
+                .Where(item => !existingTitles.Contains(item.TitleEn.ToLower()))
+                .ToList();
+            
+            if (!uniqueItems.Any())
+            {
+                return 0; // Všechny položky jsou duplicitní
+            }
+            
+            // Nastavíme datum importu pro unikátní položky
+            foreach (var item in uniqueItems)
             {
                 item.ImportedDate = now;
             }
             
-            // Přidat všechny položky
-            context.AiNewsItems.AddRange(newsItems);
+            // Přidat pouze unikátní položky
+            context.AiNewsItems.AddRange(uniqueItems);
             
             // Uložit změny
             return await context.SaveChangesAsync();

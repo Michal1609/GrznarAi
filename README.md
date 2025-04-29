@@ -116,6 +116,38 @@ int pageSize = _globalSettings.GetInt("Admin.PageSize", 10);
 bool enableFeature = _globalSettings.GetBool("Feature.Enabled", false);
 ```
 
+## Aplikace Poznámky (nová funkce!)
+
+Aplikace nyní obsahuje plně funkční systém pro správu osobních poznámek. Hlavní funkce:
+
+- 📝 Vytváření, úprava a mazání poznámek
+- 🗂️ Organizace poznámek do kategorií
+- 🔍 Vyhledávání v poznámkách podle textu
+- 📱 Responzivní design pro desktop i mobilní zařízení
+- 🌐 Plně lokalizovaný obsah (čeština, angličtina)
+- 🔐 Přístup omezen pouze pro přihlášené uživatele
+
+### Funkce aplikace Poznámky
+
+- Intuitivní uživatelské rozhraní s dvousloupcovým rozložením
+- Zobrazení poznámek v responzivních kartách
+- Modální dialogy pro editaci poznámek a kategorií
+- Přiřazování poznámek do více kategorií současně
+- Filtrování poznámek podle kategorií
+- Automatické formátování textu (nové řádky, odkazy)
+- Optimalizované UI pro efektivní práci s poznámkami
+
+### Vylepšení UI
+
+Aplikace obsahuje tyto UI optimalizace:
+
+- Kompaktnější záhlaví pro lepší využití prostoru obrazovky
+- Optimalizované rozložení pomocí Flexbox pro responzivní design
+- Tlačítko pro novou poznámku s konzistentní šířkou pro zabránění přetékání textu
+- Interaktivní prvky s okamžitou zpětnou vazbou
+- Zobrazování upozornění (toasts) pro informování o výsledku operací
+- Přizpůsobený design prvků pro konzistentní vzhled napříč aplikací
+
 ## Konfigurace Google reCAPTCHA v3
 
 Pro ochranu komentářů na blogu před spamem je implementována Google reCAPTCHA v3. Tato ochrana je automaticky aktivována pro nepřihlášené uživatele.

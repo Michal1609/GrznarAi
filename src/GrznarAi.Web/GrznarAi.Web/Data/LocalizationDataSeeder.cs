@@ -168,178 +168,45 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.Date.November", "Listopad", "November", "Month name - November");
             AddEntry("Blog.Date.December", "Prosinec", "December", "Month name - December");
 
-            // Nové překlady pro blog
-            AddEntry("Blog.Sidebar.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title in sidebar");
-            AddEntry("Blog.Sidebar.Archive", "Archiv", "Archive", "Archive section title in sidebar");
-            
-            // --- BlogPost Seed Data ---
-            AddEntry("BlogPost.Title", "Blog Příspěvek", "Blog Post", "Blog post page title");
-            AddEntry("BlogPost.Loading", "Načítání příspěvku...", "Loading post...", "Blog post loading message");
-            AddEntry("BlogPost.NotFound", "Příspěvek nebyl nalezen.", "Post not found.", "Blog post not found message");
-            AddEntry("BlogPost.Error", "Při načítání příspěvku došlo k chybě.", "An error occurred while loading the post.", "Blog post error message");
-            AddEntry("BlogPost.CreatedOn", "Vytvořeno: {0}", "Created on: {0}", "Blog post creation date with date placeholder");
-            AddEntry("BlogPost.Tags", "Štítky:", "Tags:", "Tags label in blog post detail");
-            AddEntry("BlogPost.BackToBlog", "Zpět na blog", "Back to blog", "Back to blog button text");
-            
-            // Nové překlady pro blogpost
-            AddEntry("BlogPost.Share", "Sdílet", "Share", "Share button text for blog post");
-            AddEntry("BlogPost.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title in blog post");
-            AddEntry("BlogPost.RelatedPosts", "Související příspěvky", "Related Posts", "Related posts section title in blog post");
-            AddEntry("BlogPost.ShareTitle", "Podívejte se na tento blog", "Check out this blog post", "Title for blog sharing");
-            AddEntry("BlogPost.ShareText", "Myslím, že by vás mohl zajímat tento blog", "I thought you might be interested in this blog post", "Text for blog sharing");
-            
-            // Komentáře a hlasování
-            AddEntry("Blog.Comments", "Komentáře", "Comments", "Comments section title");
-            AddEntry("Blog.AddComment", "Přidat komentář", "Add a comment", "Add comment button text");
-            AddEntry("Blog.NoComments", "Zatím žádné komentáře. Buďte první!", "No comments yet. Be the first to comment!", "Message shown when no comments exist");
-            AddEntry("Blog.LoadMoreComments", "Načíst další komentáře", "Load more comments", "Button to load more comments");
-            AddEntry("Blog.LeaveComment", "Napsat komentář", "Leave a comment", "Title for comment form");
-            AddEntry("Blog.LeaveReply", "Odpovědět", "Leave a reply", "Title for reply form");
-            AddEntry("Blog.Comment.Name", "Jméno", "Name", "Name label in comment form");
-            AddEntry("Blog.Comment.Email", "E-mail", "Email", "Email label in comment form");
-            AddEntry("Blog.Comment.EmailOptional", "E-mail (nepovinné)", "Email (optional)", "Optional email placeholder");
-            AddEntry("Blog.Comment.Content", "Váš komentář", "Your comment", "Comment content label");
-            AddEntry("Blog.Comment.Submit", "Odeslat", "Submit", "Submit button text for comment form");
-            AddEntry("Blog.Comment.Cancel", "Zrušit", "Cancel", "Cancel button for comment form");
-            AddEntry("Blog.Comment.Saving", "Ukládání...", "Saving...", "Saving message for comment form");
-            AddEntry("Blog.Comment.Edit", "Upravit", "Edit", "Edit comment button text");
-            AddEntry("Blog.Comment.Delete", "Smazat", "Delete", "Delete comment button text");
-            AddEntry("Blog.Comment.Reply", "Odpovědět", "Reply", "Reply to comment button text");
-            AddEntry("Blog.Comment.Save", "Uložit", "Save", "Save edited comment button text");
-            AddEntry("Blog.Comment.ErrorSaving", "Chyba při ukládání komentáře. Zkuste to prosím znovu.", "Error saving comment. Please try again.", "Error message when saving comment fails");
-            AddEntry("Blog.Comment.ErrorUpdating", "Chyba při aktualizaci komentáře. Zkuste to prosím znovu.", "Error updating comment. Please try again.", "Error message when updating comment fails");
-            AddEntry("Blog.Comment.ErrorDeleting", "Chyba při mazání komentáře. Zkuste to prosím znovu.", "Error deleting comment. Please try again.", "Error message when deleting comment fails");
-            AddEntry("Blog.Comment.ConfirmDelete", "Opravdu chcete smazat tento komentář?", "Are you sure you want to delete this comment?", "Confirmation message for comment deletion");
-            AddEntry("Blog.Comment.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when voting fails");
-            AddEntry("Blog.Comment.ReCaptchaFailed", "Ověření, že nejste robot, se nezdařilo. Zkuste to prosím znovu.", "Verification that you are not a robot failed. Please try again.", "Error message when reCAPTCHA verification fails");
-            AddEntry("Blog.ErrorVoting", "Chyba při hlasování. Zkuste to prosím znovu.", "Error voting. Please try again.", "Error message when blog voting fails");
-            
-            // --- Admin Seed Data --- 
-            AddEntry("NavMenu.Admin.Administration", "Administrace", "Administration", "NavMenu Admin Link - Administration");
-            AddEntry("Administration.Title", "Administrace", "Administration", "Main administration page title");
-            AddEntry("Administration.Description", "Komplexní administrační rozhraní pro správu webu", "Comprehensive administration interface for website management", "Administration description");
-            
-            // Users & Roles management
-            AddEntry("Administration.Users.Title", "Správa uživatelů", "User Management", "User management section title");
-            AddEntry("Administration.Users.Description", "Správa uživatelských účtů a oprávnění", "Manage user accounts and permissions", "User management description");
-            AddEntry("Administration.Users.List", "Seznam uživatelů", "User List", "User list title");
-            AddEntry("Administration.Users.Create", "Vytvořit uživatele", "Create User", "Create user button");
-            AddEntry("Administration.Users.Edit", "Upravit uživatele", "Edit User", "Edit user button");
-            AddEntry("Administration.Users.Delete", "Smazat uživatele", "Delete User", "Delete user button");
-            AddEntry("Administration.Users.ConfirmDelete", "Opravdu chcete smazat tohoto uživatele?", "Are you sure you want to delete this user?", "Confirm user deletion");
-            AddEntry("Administration.Users.Email", "Email", "Email", "User email field");
-            AddEntry("Administration.Users.Username", "Uživatelské jméno", "Username", "Username field");
-            AddEntry("Administration.Users.Roles", "Role", "Roles", "User roles field");
-            AddEntry("Administration.Users.EmailConfirmed", "Email potvrzen", "Email Confirmed", "Email confirmed field");
-            AddEntry("Administration.Users.LockoutEnabled", "Uzamčení povoleno", "Lockout Enabled", "Lockout enabled field");
-            AddEntry("Administration.Users.LockoutEnd", "Konec uzamčení", "Lockout End", "Lockout end field");
-            AddEntry("Administration.Users.TwoFactorEnabled", "Dvoufaktorové ověření", "Two-Factor Enabled", "Two-factor authentication field");
-            AddEntry("Administration.Users.AccessFailedCount", "Počet neúspěšných přihlášení", "Access Failed Count", "Failed login attempts field");
-            AddEntry("Administration.Users.Filter", "Filtrovat uživatele...", "Filter users...", "User filter placeholder");
-            AddEntry("Administration.Users.NoUsersFound", "Žádní uživatelé nenalezeni", "No users found", "No users found message");
-            AddEntry("Administration.Users.ManageRoles", "Správa rolí", "Manage Roles", "Manage roles button");
-            AddEntry("Administration.Users.Password", "Heslo", "Password", "User password field");
-            AddEntry("Administration.Users.PasswordRequirements", "Heslo musí obsahovat velké písmeno, malé písmeno, číslici a speciální znak.", "Password must contain an uppercase letter, lowercase letter, digit, and special character.", "Password requirements explanation");
-            AddEntry("Administration.Users.ConfirmPassword", "Potvrzení hesla", "Confirm Password", "Confirm password field");
+            // --- Notes Page Seed Data ---
+            AddEntry("Notes.Title", "Poznámky", "Notes", "Notes page title");
+            AddEntry("Notes.Categories", "Kategorie", "Categories", "Notes categories section title");
+            AddEntry("Notes.AllNotes", "Všechny poznámky", "All Notes", "All notes category label");
+            AddEntry("Notes.Loading", "Načítání...", "Loading...", "Notes loading message");
+            AddEntry("Notes.NoNotes", "Nemáte zatím žádné poznámky", "You don't have any notes yet", "Message when no notes found");
+            AddEntry("Notes.NoCategories", "Nemáte zatím žádné kategorie", "You don't have any categories yet", "Message when no categories found");
+            AddEntry("Notes.Search", "Hledat v poznámkách...", "Search notes...", "Search input placeholder");
+            AddEntry("Notes.New", "Nová poznámka", "New Note", "New note button");
+            AddEntry("Notes.CreateFirst", "Vytvořit první poznámku", "Create first note", "Create first note button");
+            AddEntry("Notes.Edit", "Upravit", "Edit", "Edit note button");
+            AddEntry("Notes.Delete", "Smazat", "Delete", "Delete note button");
+            AddEntry("Notes.DeleteConfirmation", "Opravdu chcete smazat tuto poznámku?", "Are you sure you want to delete this note?", "Delete note confirmation message");
+            AddEntry("Notes.Deleted", "Poznámka byla smazána", "Note has been deleted", "Note deleted confirmation");
+            AddEntry("Notes.ManageCategories", "Správa kategorií", "Manage Categories", "Manage note categories button");
+            AddEntry("Notes.AddNew", "Přidat novou poznámku", "Add New Note", "Add new note modal title");
+            AddEntry("Notes.Content", "Obsah", "Content", "Note content label");
+            AddEntry("Notes.Save", "Uložit", "Save", "Save button text");
+            AddEntry("Notes.Cancel", "Zrušit", "Cancel", "Cancel button text");
+            AddEntry("Notes.Created", "Poznámka byla vytvořena", "Note has been created", "Note created confirmation");
+            AddEntry("Notes.Updated", "Poznámka byla aktualizována", "Note has been updated", "Note updated confirmation");
+            AddEntry("Notes.Error", "Nastala chyba při zpracování požadavku", "An error occurred while processing your request", "Error message");
+            AddEntry("Notes.TitleRequired", "Název poznámky je povinný", "Note title is required", "Title required validation message");
+            AddEntry("Notes.Notification", "Oznámení", "Notification", "Alert notification title");
+            AddEntry("Notes.Done", "Hotovo", "Done", "Done button text");
 
-            AddEntry("Administration.Roles.Title", "Správa rolí", "Role Management", "Role management section title");
-            AddEntry("Administration.Roles.Description", "Správa uživatelských rolí a oprávnění", "Manage user roles and permissions", "Role management description");
-            AddEntry("Administration.Roles.List", "Seznam rolí", "Role List", "Role list title");
-            AddEntry("Administration.Roles.Create", "Vytvořit roli", "Create Role", "Create role button");
-            AddEntry("Administration.Roles.Edit", "Upravit roli", "Edit Role", "Edit role button");
-            AddEntry("Administration.Roles.Delete", "Smazat roli", "Delete Role", "Delete role button");
-            AddEntry("Administration.Roles.ConfirmDelete", "Opravdu chcete smazat tuto roli?", "Are you sure you want to delete this role?", "Confirm role deletion");
-            AddEntry("Administration.Roles.Name", "Název", "Name", "Role name field");
-            AddEntry("Administration.Roles.NormalizedName", "Normalizovaný název", "Normalized Name", "Normalized role name field");
-            AddEntry("Administration.Roles.Filter", "Filtrovat role...", "Filter roles...", "Role filter placeholder");
-            AddEntry("Administration.Roles.NoRolesFound", "Žádné role nenalezeny", "No roles found", "No roles found message");
-            AddEntry("Administration.Roles.AssignUsers", "Přiřadit uživatele", "Assign Users", "Assign users button");
-            AddEntry("Administration.Roles.UserAssignment", "Přiřazení uživatelů k roli", "User Assignment", "User assignment title");
+            // Notes categories related
+            AddEntry("Notes.Categories.AddNew", "Přidat novou kategorii", "Add New Category", "Add new category modal title");
+            AddEntry("Notes.Categories.Edit", "Upravit kategorii", "Edit Category", "Edit category modal title");
+            AddEntry("Notes.Categories.Name", "Název", "Name", "Category name label");
+            AddEntry("Notes.Categories.Description", "Popis", "Description", "Category description label");
+            AddEntry("Notes.Categories.NameRequired", "Název kategorie je povinný", "Category name is required", "Category name required validation message");
+            AddEntry("Notes.Categories.Created", "Kategorie byla vytvořena", "Category has been created", "Category created confirmation");
+            AddEntry("Notes.Categories.Updated", "Kategorie byla aktualizována", "Category has been updated", "Category updated confirmation");
+            AddEntry("Notes.Categories.Deleted", "Kategorie byla smazána", "Category has been deleted", "Category deleted confirmation");
+            AddEntry("Notes.Categories.DeleteConfirmation", "Opravdu chcete smazat tuto kategorii? Poznámky v této kategorii nebudou smazány.", "Are you sure you want to delete this category? Notes in this category will not be deleted.", "Delete category confirmation message");
             
-            AddEntry("Administration.Blogs.Title", "Správa blogu", "Blog administration", "Blog administrationtitle");
-            AddEntry("Administration.Blogs.Description", "Správa blogu", "Blog administration", "Blog administrationtitle");
-
-            // Common Admin UI elements
-            AddEntry("Administration.Save", "Uložit", "Save", "Save button text");
-            AddEntry("Administration.Cancel", "Zrušit", "Cancel", "Cancel button text");
-            AddEntry("Administration.Back", "Zpět", "Back", "Back button text");
-            AddEntry("Administration.Actions", "Akce", "Actions", "Actions column header");
-            AddEntry("Administration.Filter", "Filtrovat", "Filter", "Filter button text");
-            AddEntry("Administration.Search", "Vyhledat", "Search", "Search button text");
-            AddEntry("Administration.Reset", "Reset", "Reset", "Reset button text");
-            AddEntry("Administration.Saving", "Ukládání...", "Saving...", "Saving indicator text");
-            AddEntry("Administration.Success", "Úspěch", "Success", "Success message header");
-            AddEntry("Administration.Error", "Chyba", "Error", "Error message header");
-            AddEntry("Administration.Warning", "Varování", "Warning", "Warning message header");
-            AddEntry("Administration.Loading", "Načítání...", "Loading...", "Loading indicator text");
-            AddEntry("Administration.NoData", "Žádná data", "No data", "No data message");
-            AddEntry("Administration.Confirmation", "Potvrzení", "Confirmation", "Confirmation dialog title");
-            AddEntry("Administration.Yes", "Ano", "Yes", "Yes button text");
-            AddEntry("Administration.No", "Ne", "No", "No button text");
-
-            // --- AI News Page Seed Data ---
-            AddEntry("NavMenu.AiNews", "AI Novinky", "AI News", "NavMenu Link - AI News");
-            AddEntry("AiNews.Title", "AI Novinky", "AI News", "AI News page title");
-            AddEntry("AiNews.Description", "Nejnovější zprávy ze světa umělé inteligence", "Latest news from the world of artificial intelligence", "AI News page description");
-            AddEntry("AiNews.Loading", "Načítání novinek...", "Loading news...", "AI News loading indicator");
-            AddEntry("AiNews.NoNews", "Žádné novinky k zobrazení", "No news to display", "AI News empty state");
-            AddEntry("AiNews.ReadMore", "Číst více", "Read more", "AI News read more button");
-            AddEntry("AiNews.FilteringByDate", "Filtrování podle data", "Filtering by date", "AI News date filter info");
-            AddEntry("AiNews.SearchPlaceholder", "Vyhledávání v novinkách...", "Search news...", "AI News search placeholder");
-            AddEntry("AiNews.Search", "Hledat", "Search", "AI News search button text");
-            AddEntry("AiNews.ArchiveTitle", "Archiv", "Archive", "AI News archive title");
-            AddEntry("AiNews.ReadOriginal", "Číst originál", "Read original", "AI News read original button");
-            
-            // --- Administration AI News --- 
-            AddEntry("Administration.AiNews.Title", "Správa AI novinek", "AI News Management", "Admin AI News page title");
-            AddEntry("Administration.AiNews.Description", "Přidávání, úprava a mazání novinek ze světa umělé inteligence", "Add, edit and delete news from the world of artificial intelligence", "Admin AI News page description");
-            AddEntry("Administration.AiNews.List", "Seznam AI novinek", "AI News List", "AI News administration list title");
-            AddEntry("Administration.AiNews.Filter", "Filtrovat podle titulku nebo obsahu", "Filter by title or content", "AI News administration filter placeholder");
-            AddEntry("Administration.AiNews.Delete", "Smazat", "Delete", "AI News administration delete button");
-            AddEntry("Administration.AiNews.DeleteConfirmation", "Opravdu chcete smazat tuto novinku?", "Are you sure you want to delete this news item?", "AI News administration delete confirmation");
-            AddEntry("Administration.AiNews.NoItems", "Žádné AI novinky nenalezeny", "No AI news found", "AI News administration no items message");
-            
-            // Nové lokalizační řetězce pro správu zdrojů AI novinek
-            AddEntry("Administration.AiNews.Sources", "Zdroje AI novinek", "AI News Sources", "AI News sources tab title");
-            AddEntry("Administration.AiNews.Sources.Add", "Přidat nový zdroj", "Add New Source", "Add new source button text");
-            AddEntry("Administration.AiNews.Sources.Edit", "Upravit zdroj", "Edit Source", "Edit source button text");
-            AddEntry("Administration.AiNews.Sources.Delete", "Smazat zdroj", "Delete Source", "Delete source button text");
-            AddEntry("Administration.AiNews.Sources.DeleteConfirmation", "Opravdu chcete smazat tento zdroj novinek?", "Are you sure you want to delete this news source?", "Delete source confirmation message");
-            AddEntry("Administration.AiNews.Sources.DeleteWarning", "Pozor: Smazáním zdroje budou ovlivněny všechny novinky z tohoto zdroje.", "Warning: Deleting this source will affect all news from this source.", "Delete source warning message");
-            AddEntry("Administration.AiNews.Sources.NoItems", "Žádné zdroje novinek nebyly nalezeny.", "No news sources found.", "No sources message");
-            
-            // Lokalizační řetězce pro formulář zdroje
-            AddEntry("Administration.AiNews.Sources.Name", "Název zdroje", "Source Name", "Source name field label");
-            AddEntry("Administration.AiNews.Sources.Url", "URL zdroje", "Source URL", "Source URL field label");
-            AddEntry("Administration.AiNews.Sources.Type", "Typ zdroje", "Source Type", "Source type field label");
-            AddEntry("Administration.AiNews.Sources.Active", "Aktivní", "Active", "Source active field label");
-            AddEntry("Administration.AiNews.Sources.Description", "Popis", "Description", "Source description field label");
-            AddEntry("Administration.AiNews.Sources.Parameters", "Parametry (JSON)", "Parameters (JSON)", "Source parameters field label");
-            AddEntry("Administration.AiNews.Sources.ParametersHelp", "Volitelná konfigurace specifická pro tento zdroj v JSON formátu.", "Optional source-specific configuration in JSON format.", "Source parameters help text");
-            
-            // Lokalizační řetězce pro chyby při stahování
-            AddEntry("Administration.AiNews.Errors", "Chyby při stahování", "Download Errors", "AI News errors tab title");
-            AddEntry("Administration.AiNews.Errors.Delete", "Smazat záznam", "Delete Record", "Delete error record button text");
-            AddEntry("Administration.AiNews.Errors.DeleteConfirmation", "Opravdu chcete smazat tento záznam o chybě?", "Are you sure you want to delete this error record?", "Delete error confirmation message");
-            AddEntry("Administration.AiNews.Errors.NoItems", "Žádné chyby při stahování novinek nebyly zaznamenány.", "No download errors were recorded.", "No errors message");
-            AddEntry("Administration.AiNews.Errors.ShowDetails", "Zobrazit detail", "Show Details", "Show error details button");
-            AddEntry("Administration.AiNews.Errors.StackTrace", "Stack Trace:", "Stack Trace:", "Stack trace label");
-            AddEntry("Administration.AiNews.Errors.NoStackTrace", "Stack trace není k dispozici", "Stack trace not available", "No stack trace message");
-
-            // --- Permissions Management Section ---
-            AddEntry("Administration.Permissions.Title", "Správa oprávnění", "Permission Management", "Permission management section title");
-            AddEntry("Administration.Permissions.Description", "Správa uživatelských oprávnění pro aplikace", "Manage user application permissions", "Permission management description");
-            AddEntry("Administration.Permissions.List", "Seznam oprávnění", "Permission List", "Permission list title");
-            AddEntry("Administration.Permissions.AssignPermission", "Přiřadit oprávnění", "Assign Permission", "Assign permission button");
-            AddEntry("Administration.Permissions.RemovePermission", "Odebrat oprávnění", "Remove Permission", "Remove permission button");
-            AddEntry("Administration.Permissions.SelectUser", "Vyberte uživatele", "Select User", "User selection label");
-            AddEntry("Administration.Permissions.SelectPermission", "Vyberte oprávnění", "Select Permission", "Permission selection label");
-            AddEntry("Administration.Permissions.UserPermissions", "Oprávnění uživatele", "User Permissions", "User permissions section title");
-            AddEntry("Administration.Permissions.NoPermissions", "Uživatel nemá žádná oprávnění", "User has no permissions", "No permissions message");
-            
-            // --- Blog Management Section ---
-            AddEntry("Administration.Blogs.Title", "Správa blogu", "Blog administration", "Blog administrationtitle");
-            AddEntry("Administration.Blogs.Description", "Správa blogu", "Blog administration", "Blog administrationtitle");
+            // NavMenu entry for Notes
+            AddEntry("NavMenu.Notes", "Poznámky", "Notes", "NavMenu Link - Notes");
 
             // --- End Seed Data --- 
 

@@ -625,3 +625,109 @@ git push
 4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
 5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
 6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Poznámky
+
+### Implementace a struktura aplikace Poznámek
+
+1. **Datový model:**
+   * `Note` - Hlavní entita pro poznámky (`Data/Note.cs`)
+     * `Id` - Identifikátor poznámky
+     * `Title` - Název poznámky
+     * `Content` - Obsah poznámky (text)
+     * `CreatedAt` - Datum vytvoření
+     * `UpdatedAt` - Datum poslední aktualizace
+     * `ApplicationUserId` - ID uživatele, kterému poznámka patří
+     * `Categories` - Kolekce kategorií, do kterých poznámka patří
+   * `NoteCategory` - Entita reprezentující kategorii poznámek (`Data/NoteCategory.cs`)
+     * `Id` - Identifikátor kategorie
+     * `Name` - Název kategorie
+     * `Description` - Popis kategorie (nepovinný)
+     * `ApplicationUserId` - ID uživatele, kterému kategorie patří
+     * `Notes` - Kolekce poznámek v této kategorii
+
+2. **Servisní vrstva:**
+   * `INoteService` a `NoteService` - Hlavní služba pro práci s poznámkami
+     * `GetUserNotesAsync` - Získání všech poznámek uživatele s možností vyhledávání
+     * `GetNoteAsync` - Získání detailu konkrétní poznámky
+     * `CreateNoteAsync` a `UpdateNoteAsync` - Vytvoření a aktualizace poznámky
+     * `DeleteNoteAsync` - Smazání poznámky
+     * `GetUserCategoriesAsync` - Získání všech kategorií uživatele
+     * `GetCategoryAsync` - Získání detailu konkrétní kategorie
+     * `CreateCategoryAsync` a `UpdateCategoryAsync` - Vytvoření a aktualizace kategorie
+     * `DeleteCategoryAsync` - Smazání kategorie
+     * `AddNoteToCategoryAsync` a `RemoveNoteFromCategoryAsync` - Správa přiřazení poznámek do kategorií
+
+3. **UI komponenty:**
+   * `Components/Pages/Notes/Notes.razor` - Hlavní stránka pro správu poznámek
+     * Dvousloupcové rozložení s kategoriemi vlevo a poznámkami vpravo
+     * Responzivní design s využitím Bootstrap komponent
+     * Zobrazení poznámek v kartách s podporou formátování obsahu
+     * Modální dialogy pro vytváření a úpravu poznámek a kategorií
+     * Vyhledávání v poznámkách podle textu
+     * Filtrování poznámek podle kategorií
+
+### Úpravy UI v aplikaci Poznámky
+
+Pro zlepšení uživatelského rozhraní byly provedeny následující úpravy:
+
+1. **Kompaktnější záhlaví:**
+   * Přidána třída `flex-wrap` k hlavičce karty pro lepší chování na malých obrazovkách
+   * Odstraněny zbytečné obalující divy pro redukci HTML kódu
+   * Optimalizovaná struktura flexboxu pro lepší využití prostoru
+
+2. **Tlačítko pro novou poznámku:**
+   * Přidána vlastnost `min-width: 160px` pro zajištění dostatečné šířky
+   * Přidána třída `text-nowrap` pro zabránění zalamování textu
+   * Vylepšené odsazení ikony a textu pomocí třídy `me-2`
+
+3. **Optimalizace rozložení:**
+   * Vylepšené použití flex kontejnerů pro automatické vyplnění dostupného prostoru
+   * Přidána třída `flex-grow-1` pro kontejner s vyhledáváním a tlačítkem
+   * Lepší odsazení nadpisů a prvků pomocí tříd `mb-0` a `me-2`
+
+**Ukázka změny kódu záhlaví:**
+
+```html
+<!-- Původní implementace -->
+<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-0">@Localizer.GetString("Notes.Title")</h4>
+    </div>
+    <div class="d-flex gap-2">
+        <div class="input-group">
+            <!-- ... obsah input-group ... -->
+        </div>
+        <button class="btn btn-light" @onclick="() => ShowNoteModal()">
+            <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.New")
+        </button>
+    </div>
+</div>
+
+<!-- Nová implementace -->
+<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+    <h4 class="mb-0 me-2">@Localizer.GetString("Notes.Title")</h4>
+    <div class="d-flex flex-grow-1 gap-2">
+        <div class="input-group">
+            <!-- ... obsah input-group ... -->
+        </div>
+        <button class="btn btn-light text-nowrap" style="min-width: 160px;" @onclick="() => ShowNoteModal()">
+            <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.New")
+        </button>
+    </div>
+</div>
+```
+
+### Lokalizace aplikace Poznámky
+
+Všechny texty v aplikaci Poznámky jsou plně lokalizovány s využitím služby `ILocalizationService`. Lokalizační klíče jsou strukturovány podle následujícího vzoru:
+
+* `Notes.Title` - Název aplikace (záhlaví stránky)
+* `Notes.Categories` - Záhlaví sekce kategorií
+* `Notes.AllNotes` - Položka "Všechny poznámky" v seznamu kategorií
+* `Notes.New` - Tlačítko pro vytvoření nové poznámky
+* `Notes.Search` - Placeholder pro vyhledávací pole
+* `Notes.NoNotes` - Text při neexistenci poznámek
+* `Notes.NoCategories` - Text při neexistenci kategorií
+
+Překlady jsou definovány v souboru `LocalizationDataSeeder.cs` a jsou dostupné v češtině a angličtině. 

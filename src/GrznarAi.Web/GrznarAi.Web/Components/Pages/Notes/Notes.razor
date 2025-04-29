@@ -1,0 +1,712 @@
+@page "/notes"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject INoteService NoteService
+@inject ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@Localizer.GetString("Notes.Title")</PageTitle>
+
+<div class="container-fluid mt-3">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">@Localizer.GetString("Notes.Categories")</h4>
+                    <button class="btn btn-sm btn-light" @onclick="() => ShowCategoryModal()">
+                        <i class="bi bi-plus-circle"></i>
+                    </button>
+                </div>
+                <div class="list-group list-group-flush">
+                    <button type="button" 
+                        class="list-group-item list-group-item-action @(selectedCategoryId == null ? "active" : "")"
+                        @onclick="() => SelectCategory(null)">
+                        <i class="bi bi-journals me-2"></i> @Localizer.GetString("Notes.AllNotes")
+                    </button>
+                    
+                    @if (isLoading)
+                    {
+                        <div class="list-group-item text-center">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">@Localizer.GetString("Notes.Loading")</span>
+                            </div>
+                        </div>
+                    }
+                    else if (!categories.Any())
+                    {
+                        <div class="list-group-item text-center text-muted">
+                            @Localizer.GetString("Notes.NoCategories")
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var category in categories)
+                        {
+                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(selectedCategoryId == category.Id ? "active" : "")">
+                                <div class="d-flex align-items-center" style="flex: 1; min-width: 0;" @onclick="() => SelectCategory(category.Id)">
+                                    <i class="bi bi-tag me-2"></i>
+                                    <span class="text-truncate">@category.Name</span>
+                                </div>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditCategory(category)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategory(category.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+                    <h4 class="mb-0 me-2">@Localizer.GetString("Notes.Title")</h4>
+                    <div class="d-flex flex-grow-1 gap-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="@Localizer.GetString("Notes.Search")" 
+                                   @bind="searchText" @bind:event="oninput" @onkeyup="HandleSearch" />
+                            <button class="btn btn-light" @onclick="SearchNotes">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-light text-nowrap" style="min-width: 160px;" @onclick="() => ShowNoteModal()">
+                            <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.New")
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center my-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">@Localizer.GetString("Notes.Loading")</span>
+                            </div>
+                            <p class="mt-2">@Localizer.GetString("Notes.Loading")</p>
+                        </div>
+                    }
+                    else if (!notes.Any())
+                    {
+                        <div class="text-center my-5">
+                            <i class="bi bi-journal-text display-1 text-muted"></i>
+                            <p class="lead mt-3">@Localizer.GetString("Notes.NoNotes")</p>
+                            <button class="btn btn-primary mt-3" @onclick="() => ShowNoteModal()">
+                                <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.CreateFirst")
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                            @foreach (var note in notes)
+                            {
+                                <div class="col">
+                                    <div class="card h-100 note-card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="card-title mb-0 text-truncate">@note.Title</h5>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-link text-dark" type="button" data-bs-toggle="dropdown">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><button class="dropdown-item" @onclick="() => EditNote(note)"><i class="bi bi-pencil me-2"></i>@Localizer.GetString("Notes.Edit")</button></li>
+                                                    <li><button class="dropdown-item" @onclick="() => ManageNoteCategories(note)"><i class="bi bi-tags me-2"></i>@Localizer.GetString("Notes.ManageCategories")</button></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><button class="dropdown-item text-danger" @onclick="() => DeleteNote(note.Id)"><i class="bi bi-trash me-2"></i>@Localizer.GetString("Notes.Delete")</button></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text note-content">@((MarkupString)FormatContent(note.Content))</p>
+                                        </div>
+                                        <div class="card-footer d-flex justify-content-between align-items-center text-muted">
+                                            <small>@FormatDate(note.UpdatedAt)</small>
+                                            @if (note.Categories.Any())
+                                            {
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    @foreach (var category in note.Categories.Take(3))
+                                                    {
+                                                        <span class="badge bg-secondary">@category.Name</span>
+                                                    }
+                                                    @if (note.Categories.Count > 3)
+                                                    {
+                                                        <span class="badge bg-secondary">+@(note.Categories.Count - 3)</span>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Note Modal -->
+<div class="modal fade @(isNoteModalVisible ? "show" : "")" tabindex="-1" style="@(isNoteModalVisible ? "display: block;" : "display: none;")" 
+     role="dialog" aria-hidden="@(!isNoteModalVisible)">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(currentNote.Id == 0 ? Localizer.GetString("Notes.AddNew") : Localizer.GetString("Notes.Edit"))</h5>
+                <button type="button" class="btn-close" @onclick="CloseNoteModal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="noteTitle" class="form-label">@Localizer.GetString("Notes.Title")</label>
+                    <input type="text" class="form-control" id="noteTitle" @bind="currentNote.Title" />
+                </div>
+                <div class="mb-3">
+                    <label for="noteContent" class="form-label">@Localizer.GetString("Notes.Content")</label>
+                    <textarea class="form-control" id="noteContent" rows="10" @bind="currentNote.Content"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseNoteModal">@Localizer.GetString("Notes.Cancel")</button>
+                <button type="button" class="btn btn-primary" @onclick="SaveNote" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    }
+                    @Localizer.GetString("Notes.Save")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade @(isNoteModalVisible ? "show" : "")" style="@(isNoteModalVisible ? "display: block;" : "display: none;")"></div>
+
+<!-- Category Modal -->
+<div class="modal fade @(isCategoryModalVisible ? "show" : "")" tabindex="-1" style="@(isCategoryModalVisible ? "display: block;" : "display: none;")" 
+     role="dialog" aria-hidden="@(!isCategoryModalVisible)">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(currentCategory.Id == 0 ? Localizer.GetString("Notes.Categories.AddNew") : Localizer.GetString("Notes.Categories.Edit"))</h5>
+                <button type="button" class="btn-close" @onclick="CloseCategoryModal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="categoryName" class="form-label">@Localizer.GetString("Notes.Categories.Name")</label>
+                    <input type="text" class="form-control" id="categoryName" @bind="currentCategory.Name" />
+                </div>
+                <div class="mb-3">
+                    <label for="categoryDescription" class="form-label">@Localizer.GetString("Notes.Categories.Description")</label>
+                    <textarea class="form-control" id="categoryDescription" rows="3" @bind="currentCategory.Description"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">@Localizer.GetString("Notes.Cancel")</button>
+                <button type="button" class="btn btn-primary" @onclick="SaveCategory" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    }
+                    @Localizer.GetString("Notes.Save")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade @(isCategoryModalVisible ? "show" : "")" style="@(isCategoryModalVisible ? "display: block;" : "display: none;")"></div>
+
+<!-- Note Categories Modal -->
+<div class="modal fade @(isNoteCategoriesModalVisible ? "show" : "")" tabindex="-1" style="@(isNoteCategoriesModalVisible ? "display: block;" : "display: none;")" 
+     role="dialog" aria-hidden="@(!isNoteCategoriesModalVisible)">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Localizer.GetString("Notes.ManageCategories"): @noteCategoriesNote?.Title</h5>
+                <button type="button" class="btn-close" @onclick="CloseNoteCategoriesModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (!categories.Any())
+                {
+                    <div class="alert alert-info">
+                        @Localizer.GetString("Notes.NoCategories")
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group">
+                        @foreach (var category in categories)
+                        {
+                            bool isAssigned = noteCategoriesNote?.Categories.Any(c => c.Id == category.Id) ?? false;
+                            <div class="list-group-item">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           checked="@isAssigned" 
+                                           @onchange="e => ToggleNoteCategory(category.Id, (bool)e.Value!)" 
+                                           id="category_@category.Id" />
+                                    <label class="form-check-label" for="category_@category.Id">
+                                        @category.Name
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" @onclick="CloseNoteCategoriesModal">@Localizer.GetString("Notes.Done")</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade @(isNoteCategoriesModalVisible ? "show" : "")" style="@(isNoteCategoriesModalVisible ? "display: block;" : "display: none;")"></div>
+
+<!-- Alert Toast -->
+@if (!string.IsNullOrEmpty(alertMessage))
+{
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header @alertClass">
+                <strong class="me-auto text-white">@Localizer.GetString("Notes.Notification")</strong>
+                <button type="button" class="btn-close" @onclick="() => alertMessage = null"></button>
+            </div>
+            <div class="toast-body">
+                @alertMessage
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Note> notes = new();
+    private List<NoteCategory> categories = new();
+    private Note currentNote = new();
+    private NoteCategory currentCategory = new();
+    private Note? noteCategoriesNote;
+    private int? selectedCategoryId;
+    private string? userId;
+    private string searchText = "";
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool isNoteModalVisible = false;
+    private bool isCategoryModalVisible = false;
+    private bool isNoteCategoriesModalVisible = false;
+    private string? alertMessage;
+    private string alertClass = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            NavigationManager.NavigateTo("/Account/Login");
+            return;
+        }
+
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId != null)
+        {
+            await LoadCategories();
+            await LoadNotes();
+        }
+    }
+
+    private async Task LoadNotes()
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        
+        try
+        {
+            isLoading = true;
+            
+            if (selectedCategoryId.HasValue)
+            {
+                var category = await NoteService.GetCategoryAsync(selectedCategoryId.Value, userId);
+                notes = category?.Notes.ToList() ?? new List<Note>();
+                
+                if (!string.IsNullOrWhiteSpace(searchText))
+                {
+                    notes = notes.Where(n => 
+                        n.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) || 
+                        n.Content.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
+            }
+            else
+            {
+                notes = (await NoteService.GetUserNotesAsync(userId, searchText)).ToList();
+            }
+            
+            notes = notes.OrderByDescending(n => n.UpdatedAt).ToList();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, "bg-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        
+        try
+        {
+            isLoading = true;
+            categories = (await NoteService.GetUserCategoriesAsync(userId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, "bg-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SelectCategory(int? categoryId)
+    {
+        selectedCategoryId = categoryId;
+        await LoadNotes();
+    }
+
+    private async Task HandleSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchNotes();
+        }
+    }
+
+    private async Task SearchNotes()
+    {
+        await LoadNotes();
+    }
+
+    private string FormatContent(string content)
+    {
+        if (string.IsNullOrEmpty(content)) return "";
+        
+        // Jednoduché formátování - nové řádky na <br>
+        return content.Replace(Environment.NewLine, "<br>").Replace("\n", "<br>");
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        return date.ToString("dd.MM.yyyy HH:mm");
+    }
+
+    // Note methods
+    private void ShowNoteModal(Note? note = null)
+    {
+        currentNote = note != null 
+            ? new Note 
+            { 
+                Id = note.Id,
+                Title = note.Title,
+                Content = note.Content,
+                CreatedAt = note.CreatedAt,
+                UpdatedAt = note.UpdatedAt,
+                ApplicationUserId = note.ApplicationUserId,
+                Categories = note.Categories.ToList()
+            } 
+            : new Note { ApplicationUserId = userId ?? "" };
+        isNoteModalVisible = true;
+    }
+
+    private void CloseNoteModal()
+    {
+        isNoteModalVisible = false;
+        currentNote = new Note();
+    }
+
+    private async Task SaveNote()
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        if (string.IsNullOrWhiteSpace(currentNote.Title))
+        {
+            ShowAlert(Localizer.GetString("Notes.TitleRequired"), "bg-danger");
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+            
+            bool success;
+            if (currentNote.Id == 0)
+            {
+                currentNote.ApplicationUserId = userId;
+                await NoteService.CreateNoteAsync(currentNote);
+                success = true;
+            }
+            else
+            {
+                success = await NoteService.UpdateNoteAsync(currentNote);
+            }
+
+            if (success)
+            {
+                ShowAlert(
+                    currentNote.Id == 0 
+                        ? Localizer.GetString("Notes.Created") 
+                        : Localizer.GetString("Notes.Updated"), 
+                    "bg-success");
+                
+                CloseNoteModal();
+                await LoadNotes();
+            }
+            else
+            {
+                ShowAlert(Localizer.GetString("Notes.Error"), "bg-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, "bg-danger");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void EditNote(Note note)
+    {
+        ShowNoteModal(note);
+    }
+
+    private async Task DeleteNote(int noteId)
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", Localizer.GetString("Notes.DeleteConfirmation"));
+        if (!confirmed) return;
+
+        try
+        {
+            isLoading = true;
+            var success = await NoteService.DeleteNoteAsync(noteId, userId);
+            
+            if (success)
+            {
+                ShowAlert(Localizer.GetString("Notes.Deleted"), "bg-success");
+                await LoadNotes();
+            }
+            else
+            {
+                ShowAlert(Localizer.GetString("Notes.Error"), "bg-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, "bg-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Category methods
+    private void ShowCategoryModal(NoteCategory? category = null)
+    {
+        currentCategory = category != null 
+            ? new NoteCategory 
+            { 
+                Id = category.Id,
+                Name = category.Name,
+                Description = category.Description ?? "",
+                ApplicationUserId = category.ApplicationUserId
+            } 
+            : new NoteCategory { ApplicationUserId = userId ?? "" };
+        isCategoryModalVisible = true;
+    }
+
+    private void CloseCategoryModal()
+    {
+        isCategoryModalVisible = false;
+        currentCategory = new NoteCategory();
+    }
+
+    private async Task SaveCategory()
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        if (string.IsNullOrWhiteSpace(currentCategory.Name))
+        {
+            ShowAlert(Localizer.GetString("Notes.Categories.NameRequired"), "bg-danger");
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+            
+            bool success;
+            if (currentCategory.Id == 0)
+            {
+                currentCategory.ApplicationUserId = userId;
+                await NoteService.CreateCategoryAsync(currentCategory);
+                success = true;
+            }
+            else
+            {
+                success = await NoteService.UpdateCategoryAsync(currentCategory);
+            }
+
+            if (success)
+            {
+                ShowAlert(
+                    currentCategory.Id == 0 
+                        ? Localizer.GetString("Notes.Categories.Created") 
+                        : Localizer.GetString("Notes.Categories.Updated"), 
+                    "bg-success");
+                
+                CloseCategoryModal();
+                await LoadCategories();
+            }
+            else
+            {
+                ShowAlert(Localizer.GetString("Notes.Error"), "bg-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, "bg-danger");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void EditCategory(NoteCategory category)
+    {
+        ShowCategoryModal(category);
+    }
+
+    private async Task DeleteCategory(int categoryId)
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", Localizer.GetString("Notes.Categories.DeleteConfirmation"));
+        if (!confirmed) return;
+
+        try
+        {
+            isLoading = true;
+            var success = await NoteService.DeleteCategoryAsync(categoryId, userId);
+            
+            if (success)
+            {
+                ShowAlert(Localizer.GetString("Notes.Categories.Deleted"), "bg-success");
+                
+                if (selectedCategoryId == categoryId)
+                {
+                    selectedCategoryId = null;
+                }
+                
+                await LoadCategories();
+                await LoadNotes();
+            }
+            else
+            {
+                ShowAlert(Localizer.GetString("Notes.Error"), "bg-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, "bg-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Note Categories management
+    private async Task ManageNoteCategories(Note note)
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        
+        noteCategoriesNote = await NoteService.GetNoteAsync(note.Id, userId);
+        if (noteCategoriesNote == null) return;
+        
+        isNoteCategoriesModalVisible = true;
+    }
+
+    private void CloseNoteCategoriesModal()
+    {
+        isNoteCategoriesModalVisible = false;
+        noteCategoriesNote = null;
+    }
+
+    private async Task ToggleNoteCategory(int categoryId, bool isAssigned)
+    {
+        if (string.IsNullOrEmpty(userId) || noteCategoriesNote == null) return;
+        
+        try
+        {
+            bool success;
+            
+            if (isAssigned)
+            {
+                success = await NoteService.AddNoteToCategoryAsync(noteCategoriesNote.Id, categoryId, userId);
+            }
+            else
+            {
+                success = await NoteService.RemoveNoteFromCategoryAsync(noteCategoriesNote.Id, categoryId, userId);
+            }
+            
+            if (success)
+            {
+                // Obnovit poznámku pro aktualizaci zobrazení
+                noteCategoriesNote = await NoteService.GetNoteAsync(noteCategoriesNote.Id, userId);
+                await LoadNotes();
+            }
+            else
+            {
+                ShowAlert(Localizer.GetString("Notes.Error"), "bg-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, "bg-danger");
+        }
+    }
+
+    private void ShowAlert(string message, string cssClass)
+    {
+        alertMessage = message;
+        alertClass = cssClass;
+        StateHasChanged();
+        
+        // Automaticky skrýt upozornění po 3 sekundách
+        Task.Delay(3000).ContinueWith(_ => {
+            if (alertMessage == message) // Ujistíme se, že neodstraníme novější zprávu
+            {
+                alertMessage = null;
+                StateHasChanged();
+            }
+        });
+    }
+} 

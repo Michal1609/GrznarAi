@@ -81,6 +81,12 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
+// Register PermissionService
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+// Register NoteService
+builder.Services.AddScoped<INoteService, NoteService>();
+
 // Configure Localization
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -186,6 +192,13 @@ using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
     await LocalizationDataSeeder.SeedAsync(factory);
+}
+
+// Seed application permissions
+using (var scope = app.Services.CreateScope())
+{
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+    await ApplicationPermissionSeeder.SeedAsync(factory);
 }
 
 // Import AI News z JSON souboru

@@ -1,0 +1,272 @@
+@page "/admin/administration/permissions"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using System.Security.Claims
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IPermissionService PermissionService
+@inject ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@Localizer.GetString("Administration.Permissions.Title")</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h2>@Localizer.GetString("Administration.Permissions.Title")</h2>
+                <p class="mb-0">@Localizer.GetString("Administration.Permissions.Description")</p>
+            </div>
+            <div>
+                <button class="btn btn-light" @onclick='() => NavigationManager.NavigateTo("/admin/administration")'>
+                    <i class="bi bi-arrow-left me-2"></i>@Localizer.GetString("Administration.Back")
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (isLoading)
+            {
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">@Localizer.GetString("Administration.Loading")</span>
+                    </div>
+                    <p class="mt-2">@Localizer.GetString("Administration.Loading")</p>
+                </div>
+            }
+            else
+            {
+                <!-- User Selection -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">@Localizer.GetString("Administration.Permissions.SelectUser")</label>
+                            <select class="form-select" @bind="selectedUserId" @bind:after="UserSelected">
+                                <option value="">-- @Localizer.GetString("Administration.Permissions.SelectUser") --</option>
+                                @foreach (var user in users)
+                                {
+                                    <option value="@user.Id">@user.Email</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(selectedUserId))
+                {
+                    <div class="row">
+                        <!-- User Permissions List -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h4>@Localizer.GetString("Administration.Permissions.UserPermissions")</h4>
+                                </div>
+                                <div class="card-body">
+                                    @if (!userPermissions.Any())
+                                    {
+                                        <div class="alert alert-info">
+                                            @Localizer.GetString("Administration.Permissions.NoPermissions")
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="list-group">
+                                            @foreach (var permission in userPermissions)
+                                            {
+                                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>@permission.Name</strong>
+                                                        @if (!string.IsNullOrEmpty(permission.Description))
+                                                        {
+                                                            <p class="mb-0 text-muted small">@permission.Description</p>
+                                                        }
+                                                    </div>
+                                                    <button class="btn btn-sm btn-danger" @onclick="() => RemovePermission(permission.Key)">
+                                                        <i class="bi bi-trash"></i> @Localizer.GetString("Administration.Permissions.RemovePermission")
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Available Permissions -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h4>@Localizer.GetString("Administration.Permissions.SelectPermission")</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group">
+                                        @foreach (var permission in availablePermissions)
+                                        {
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>@permission.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(permission.Description))
+                                                    {
+                                                        <p class="mb-0 text-muted small">@permission.Description</p>
+                                                    }
+                                                </div>
+                                                <button class="btn btn-sm btn-primary" @onclick="() => AssignPermission(permission.Key)">
+                                                    <i class="bi bi-plus-circle"></i> @Localizer.GetString("Administration.Permissions.AssignPermission")
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Alert message -->
+    @if (!string.IsNullOrEmpty(alertMessage))
+    {
+        <div class="alert @alertClass alert-dismissible fade show mt-3" role="alert">
+            @((MarkupString)alertMessage)
+            <button type="button" class="btn-close" @onclick="() => alertMessage = string.Empty"></button>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<ApplicationUser> users = new();
+    private List<ApplicationPermission> allPermissions = new();
+    private List<ApplicationPermission> userPermissions = new();
+    private List<ApplicationPermission> availablePermissions = new();
+    private string selectedUserId = string.Empty;
+    private string alertMessage = string.Empty;
+    private string alertClass = "alert-info";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            users = await UserManager.Users.OrderBy(u => u.Email).ToListAsync();
+            allPermissions = (await PermissionService.GetAllPermissionsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"{Localizer.GetString("Administration.Error")}: {ex.Message}", "alert-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task UserSelected()
+    {
+        if (string.IsNullOrEmpty(selectedUserId))
+        {
+            userPermissions.Clear();
+            availablePermissions.Clear();
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            
+            // Získat oprávnění uživatele
+            userPermissions = (await PermissionService.GetUserPermissionsAsync(selectedUserId)).ToList();
+            
+            // Získat dostupná oprávnění (ta, která uživatel ještě nemá)
+            var userPermissionKeys = userPermissions.Select(p => p.Key).ToHashSet();
+            availablePermissions = allPermissions
+                .Where(p => !userPermissionKeys.Contains(p.Key))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"{Localizer.GetString("Administration.Error")}: {ex.Message}", "alert-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task AssignPermission(string permissionKey)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(selectedUserId))
+                return;
+
+            isLoading = true;
+            
+            var success = await PermissionService.AddUserPermissionAsync(selectedUserId, permissionKey);
+            
+            if (success)
+            {
+                ShowAlert($"{Localizer.GetString("Administration.Success")}: {Localizer.GetString("Administration.Permissions.AssignPermission")}", "alert-success");
+                await UserSelected(); // Obnovit seznamy
+            }
+            else
+            {
+                ShowAlert($"{Localizer.GetString("Administration.Error")}", "alert-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"{Localizer.GetString("Administration.Error")}: {ex.Message}", "alert-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RemovePermission(string permissionKey)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(selectedUserId))
+                return;
+
+            isLoading = true;
+            
+            var success = await PermissionService.RemoveUserPermissionAsync(selectedUserId, permissionKey);
+            
+            if (success)
+            {
+                ShowAlert($"{Localizer.GetString("Administration.Success")}: {Localizer.GetString("Administration.Permissions.RemovePermission")}", "alert-success");
+                await UserSelected(); // Obnovit seznamy
+            }
+            else
+            {
+                ShowAlert($"{Localizer.GetString("Administration.Error")}", "alert-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"{Localizer.GetString("Administration.Error")}: {ex.Message}", "alert-danger");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ShowAlert(string message, string alertType)
+    {
+        alertMessage = message;
+        alertClass = alertType;
+        StateHasChanged();
+    }
+} 

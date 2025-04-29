@@ -20,6 +20,11 @@ namespace GrznarAi.Web.Data
         public DbSet<AiNewsError> AiNewsErrors { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
         public DbSet<GlobalSetting> GlobalSettings { get; set; }
+        public DbSet<ApplicationPermission> ApplicationPermissions { get; set; }
+        public DbSet<UserPermission> UserPermissions { get; set; }
+        public DbSet<Note> Notes { get; set; }
+        public DbSet<NoteCategory> NoteCategories { get; set; }
+        public DbSet<NoteCategoryRelation> NoteCategoryRelations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -83,6 +88,52 @@ namespace GrznarAi.Web.Data
                 .WithMany()
                 .HasForeignKey(e => e.SourceId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Konfigurace pro Note
+            builder.Entity<Note>()
+                .HasOne(n => n.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(n => n.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Konfigurace pro NoteCategory
+            builder.Entity<NoteCategory>()
+                .HasOne(nc => nc.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(nc => nc.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Konfigurace pro vztah Note-Category
+            builder.Entity<Note>()
+                .HasMany(n => n.Categories)
+                .WithMany(c => c.Notes)
+                .UsingEntity<NoteCategoryRelation>(
+                    j => j
+                        .HasOne(ncr => ncr.NoteCategory)
+                        .WithMany()
+                        .HasForeignKey(ncr => ncr.NoteCategoryId),
+                    j => j
+                        .HasOne(ncr => ncr.Note)
+                        .WithMany()
+                        .HasForeignKey(ncr => ncr.NoteId),
+                    j =>
+                    {
+                        j.HasKey(t => t.Id);
+                        j.HasIndex(t => new { t.NoteId, t.NoteCategoryId }).IsUnique();
+                    });
+
+            // Konfigurace pro UserPermission
+            builder.Entity<UserPermission>()
+                .HasOne(up => up.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(up => up.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserPermission>()
+                .HasOne(up => up.ApplicationPermission)
+                .WithMany()
+                .HasForeignKey(up => up.ApplicationPermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

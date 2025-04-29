@@ -102,6 +102,38 @@ namespace GrznarAi.Web.Data
             AddEntry("Footer.Contact", "Kontakt", "Contact", "Footer Link - Contact");
             AddEntry("Footer.Copyright", "&copy; {0} GrznarAI. Všechna práva vyhrazena.", "&copy; {0} GrznarAI. All rights reserved.", "Footer Copyright Text (with year placeholder {0})");
             
+            // --- Applications Menu Seed Data ---
+            AddEntry("NavMenu.Applications", "Aplikace", "Applications", "NavMenu Applications Dropdown");
+            AddEntry("NavMenu.Applications.Notes", "Poznámky", "Notes", "NavMenu Applications Link - Notes");
+
+            // --- Notes Application Seed Data ---
+            AddEntry("Notes.Title", "Poznámky", "Notes", "Notes page title");
+            AddEntry("Notes.Description", "Osobní poznámky", "Personal notes", "Notes page description");
+            AddEntry("Notes.NoNotes", "Zatím nemáte žádné poznámky", "You don't have any notes yet", "Message when user has no notes");
+            AddEntry("Notes.CreateNote", "Nová poznámka", "New note", "Button to create a new note");
+            AddEntry("Notes.EditNote", "Upravit poznámku", "Edit note", "Button to edit a note");
+            AddEntry("Notes.DeleteNote", "Smazat poznámku", "Delete note", "Button to delete a note");
+            AddEntry("Notes.Search", "Vyhledat poznámky", "Search notes", "Search placeholder");
+            AddEntry("Notes.Categories", "Kategorie", "Categories", "Categories section title");
+            AddEntry("Notes.NoCategories", "Zatím nemáte žádné kategorie", "You don't have any categories yet", "Message when user has no categories");
+            AddEntry("Notes.CreateCategory", "Nová kategorie", "New category", "Button to create a new category");
+            AddEntry("Notes.EditCategory", "Upravit kategorii", "Edit category", "Button to edit a category");
+            AddEntry("Notes.DeleteCategory", "Smazat kategorii", "Delete category", "Button to delete a category");
+            AddEntry("Notes.AddToCategory", "Přidat do kategorie", "Add to category", "Button to add note to category");
+            AddEntry("Notes.RemoveFromCategory", "Odebrat z kategorie", "Remove from category", "Button to remove note from category");
+            AddEntry("Notes.SaveNote", "Uložit poznámku", "Save note", "Button to save a note");
+            AddEntry("Notes.SaveCategory", "Uložit kategorii", "Save category", "Button to save a category");
+            AddEntry("Notes.Cancel", "Zrušit", "Cancel", "Button to cancel an action");
+            AddEntry("Notes.SearchResults", "Výsledky vyhledávání", "Search results", "Search results title");
+            AddEntry("Notes.Title.Label", "Název", "Title", "Note title label");
+            AddEntry("Notes.Content.Label", "Obsah", "Content", "Note content label");
+            AddEntry("Notes.Category.Label", "Název kategorie", "Category name", "Category name label");
+            AddEntry("Notes.Category.Description", "Popis", "Description", "Category description label");
+            AddEntry("Notes.ConfirmDelete", "Opravdu chcete smazat tuto položku?", "Are you sure you want to delete this item?", "Confirmation message for deletion");
+            AddEntry("Notes.Created", "Vytvořeno", "Created", "Created date label");
+            AddEntry("Notes.Updated", "Aktualizováno", "Updated", "Updated date label");
+            AddEntry("Notes.NoPermission", "Nemáte oprávnění pro používání aplikace Poznámky", "You don't have permission to use the Notes application", "No permission message");
+
             // --- Blog Seed Data ---
             AddEntry("Blog.Title", "Blog", "Blog", "Blog page title");
             AddEntry("Blog.Loading", "Načítání...", "Loading...", "Blog loading message");
@@ -293,6 +325,21 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.AiNews.Errors.ShowDetails", "Zobrazit detail", "Show Details", "Show error details button");
             AddEntry("Administration.AiNews.Errors.StackTrace", "Stack Trace:", "Stack Trace:", "Stack trace label");
             AddEntry("Administration.AiNews.Errors.NoStackTrace", "Stack trace není k dispozici", "Stack trace not available", "No stack trace message");
+
+            // --- Permissions Management Section ---
+            AddEntry("Administration.Permissions.Title", "Správa oprávnění", "Permission Management", "Permission management section title");
+            AddEntry("Administration.Permissions.Description", "Správa uživatelských oprávnění pro aplikace", "Manage user application permissions", "Permission management description");
+            AddEntry("Administration.Permissions.List", "Seznam oprávnění", "Permission List", "Permission list title");
+            AddEntry("Administration.Permissions.AssignPermission", "Přiřadit oprávnění", "Assign Permission", "Assign permission button");
+            AddEntry("Administration.Permissions.RemovePermission", "Odebrat oprávnění", "Remove Permission", "Remove permission button");
+            AddEntry("Administration.Permissions.SelectUser", "Vyberte uživatele", "Select User", "User selection label");
+            AddEntry("Administration.Permissions.SelectPermission", "Vyberte oprávnění", "Select Permission", "Permission selection label");
+            AddEntry("Administration.Permissions.UserPermissions", "Oprávnění uživatele", "User Permissions", "User permissions section title");
+            AddEntry("Administration.Permissions.NoPermissions", "Uživatel nemá žádná oprávnění", "User has no permissions", "No permissions message");
+            
+            // --- Blog Management Section ---
+            AddEntry("Administration.Blogs.Title", "Správa blogu", "Blog administration", "Blog administrationtitle");
+            AddEntry("Administration.Blogs.Description", "Správa blogu", "Blog administration", "Blog administrationtitle");
 
             // --- End Seed Data --- 
 

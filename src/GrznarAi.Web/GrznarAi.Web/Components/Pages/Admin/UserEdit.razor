@@ -13,6 +13,7 @@
 @inject RoleManager<IdentityRole> RoleManager
 @inject ILocalizationService Localizer
 @inject NavigationManager NavigationManager
+@inject IPermissionService PermissionService
 
 <PageTitle>@Localizer.GetString("Administration.Users.Edit")</PageTitle>
 
@@ -78,6 +79,98 @@
                                 </div>
                             }
                         </div>
+                    </div>
+
+                    <div class="mb-4 mt-4">
+                        <h4>@Localizer.GetString("Administration.Permissions.Title")</h4>
+                        <hr />
+                        
+                        @if (isLoadingPermissions)
+                        {
+                            <div class="d-flex justify-content-center my-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">@Localizer.GetString("Administration.Loading")</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                <!-- Uživatelská oprávnění -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h5>@Localizer.GetString("Administration.Permissions.UserPermissions")</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            @if (!userPermissions.Any())
+                                            {
+                                                <div class="alert alert-info">
+                                                    @Localizer.GetString("Administration.Permissions.NoPermissions")
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="list-group">
+                                                    @foreach (var permission in userPermissions)
+                                                    {
+                                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong>@permission.Name</strong>
+                                                                @if (!string.IsNullOrEmpty(permission.Description))
+                                                                {
+                                                                    <p class="mb-0 text-muted small">@permission.Description</p>
+                                                                }
+                                                            </div>
+                                                            <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemovePermission(permission.Key)">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dostupná oprávnění -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h5>@Localizer.GetString("Administration.Permissions.SelectPermission")</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            @if (!availablePermissions.Any())
+                                            {
+                                                <div class="alert alert-info">
+                                                    Žádná další oprávnění nejsou k dispozici.
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="list-group">
+                                                    @foreach (var permission in availablePermissions)
+                                                    {
+                                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong>@permission.Name</strong>
+                                                                @if (!string.IsNullOrEmpty(permission.Description))
+                                                                {
+                                                                    <p class="mb-0 text-muted small">@permission.Description</p>
+                                                                }
+                                                            </div>
+                                                            <button type="button" class="btn btn-sm btn-primary" @onclick="() => AssignPermission(permission.Key)">
+                                                                <i class="bi bi-plus-circle"></i>
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
 
                     @if (showPasswordFields)
@@ -152,6 +245,9 @@
     private string? errorMessage;
     private string? successMessage;
     private bool showPasswordFields;
+    private bool isLoadingPermissions;
+    private List<ApplicationPermission> userPermissions = new();
+    private List<ApplicationPermission> availablePermissions = new();
 
     private class UserEditModel
     {
@@ -178,6 +274,7 @@
     {
         await LoadRolesAsync();
         await LoadUserAsync();
+        await LoadPermissionsAsync();
     }
 
     private async Task LoadRolesAsync()
@@ -323,5 +420,89 @@
     private void GoBack()
     {
         NavigationManager.NavigateTo("/admin/administration/users");
+    }
+
+    private async Task LoadPermissionsAsync()
+    {
+        isLoadingPermissions = true;
+        
+        try
+        {
+            // Načtení všech dostupných oprávnění
+            var allPermissions = await PermissionService.GetAllPermissionsAsync();
+            
+            // Načtení oprávnění uživatele
+            userPermissions = (await PermissionService.GetUserPermissionsAsync(UserId)).ToList();
+            
+            // Dostupná oprávnění jsou ta, která uživatel ještě nemá
+            var userPermissionKeys = userPermissions.Select(p => p.Key).ToHashSet();
+            availablePermissions = allPermissions
+                .Where(p => !userPermissionKeys.Contains(p.Key))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Chyba při načítání oprávnění: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingPermissions = false;
+        }
+    }
+
+    private async Task AssignPermission(string permissionKey)
+    {
+        try
+        {
+            isLoadingPermissions = true;
+            
+            var success = await PermissionService.AddUserPermissionAsync(UserId, permissionKey);
+            
+            if (success)
+            {
+                successMessage = "Oprávnění bylo přidáno.";
+                await LoadPermissionsAsync(); // Obnovit seznamy
+            }
+            else
+            {
+                errorMessage = "Nepodařilo se přidat oprávnění.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Chyba při přidávání oprávnění: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingPermissions = false;
+        }
+    }
+
+    private async Task RemovePermission(string permissionKey)
+    {
+        try
+        {
+            isLoadingPermissions = true;
+            
+            var success = await PermissionService.RemoveUserPermissionAsync(UserId, permissionKey);
+            
+            if (success)
+            {
+                successMessage = "Oprávnění bylo odebráno.";
+                await LoadPermissionsAsync(); // Obnovit seznamy
+            }
+            else
+            {
+                errorMessage = "Nepodařilo se odebrat oprávnění.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Chyba při odebírání oprávnění: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingPermissions = false;
+        }
     }
 } 

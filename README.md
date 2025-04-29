@@ -46,7 +46,14 @@ Osobní webová aplikace postavená na ASP.NET Core Blazor s podporou blogu, pro
 
 ## AI News - Novinky ze světa umělé inteligence
 
-Aplikace umožňuje agregovat a zobrazovat novinky z oblasti umělé inteligence. 
+Tato aplikace obsahuje integraci a vizualizaci novinek z oblasti umělé inteligence získaných z externích zdrojů. Hlavní funkce:
+
+- 💊 Automatický import AI novinek z externích zdrojů
+- 🗂️ Stránkování a filtrování novinek podle kategorie a zdroje
+- 👍 Zobrazení karet novinek s náhledy, popisem a odkazy na zdroje
+- 🏠 Integrace nejnovějších novinek na domovské stránce
+- 🚀 Administrační rozhraní pro správu novinek a kategorizaci
+- 🧠 Kontrola duplicit při importu novinek - nyní konfigurovatelná!
 
 ### Funkce AI News
 
@@ -59,36 +66,55 @@ Aplikace umožňuje agregovat a zobrazovat novinky z oblasti umělé inteligence
 
 ### API pro správu AI novinek
 
-Aplikace poskytuje REST API pro automatizované přidávání novinek z externích zdrojů:
+Aplikace poskytuje API pro správu AI novinek:
 
-- **GET /api/ainews/sources** - Seznam aktivních zdrojů novinek
-- **POST /api/ainews/items** - Přidání nových AI novinek
-- **POST /api/ainews/errors** - Zaznamenání chyb při stahování novinek
+- 🔑 Autentizace přes API klíče
+- 📚 Koncový bod pro získání zdrojů `/api/ainews/sources`
+- 📝 Koncový bod pro přidání novinek `/api/ainews/add`
+- ⚠️ Koncový bod pro logování chyb `/api/ainews/log-error`
 
-Pro přístup k API je vyžadována autentizace pomocí API klíče.
+### Správa API klíčů
 
-## Správa API klíčů
+- 🔐 Administrační rozhraní pro správu API klíčů
+- 🆕 Generování nových API klíčů s popisem
+- 🛑 Deaktivace nepoužívaných API klíčů
+- 🧹 Odstranění nepotřebných API klíčů
 
-Aplikace obsahuje systém pro správu API klíčů, který umožňuje bezpečný přístup k API.
+## Globální nastavení (nová funkce!)
 
-### Funkce správy API klíčů
+Aplikace nyní obsahuje systém pro správu globálních nastavení přes administrační rozhraní. Hlavní funkce:
 
-- Generování nových API klíčů s možností nastavení platnosti
-- Aktivace/deaktivace existujících klíčů
-- Zobrazení historie klíčů
-- Ověřování API klíčů pro přístup k API endpoints
+- ⚙️ Centralizovaná správa konfigurací aplikace v databázi
+- 🔄 Možnost změny nastavení za běhu aplikace bez nutnosti restartu
+- 🧩 Typově bezpečné API pro práci s nastaveními (string, int, bool, atd.)
+- 🔍 Vyhledávání a filtrování nastavení podle klíče
+- 📊 Stránkování a řazení seznamu nastavení
+- 📝 CRUD operace pro správu nastavení
 
-### Přístup k API s API klíčem
+### Aktuálně implementovaná globální nastavení
 
-Pro volání API je nutné přidat API klíč do hlavičky požadavku:
+| Klíč | Typ | Výchozí hodnota | Popis |
+|------|-----|-----------------|-------|
+| Admin.GlobalSettings.PageSize | int | 10 | Počet záznamů na stránku v administraci globálních nastavení |
+| AiNews.DuplicateCheckDays | int | 10 | Počet dní zpětně pro kontrolu duplicit při importu AI novinek |
 
+### Příklad použití GlobalSettings v kódu
+
+```csharp
+// Injektování služby
+@inject IGlobalSettingsService GlobalSettings
+
+// Nebo v C# třídě
+private readonly IGlobalSettingsService _globalSettings;
+public Constructor(IGlobalSettingsService globalSettings)
+{
+    _globalSettings = globalSettings;
+}
+
+// Získání hodnoty s výchozí hodnotou
+int pageSize = _globalSettings.GetInt("Admin.PageSize", 10);
+bool enableFeature = _globalSettings.GetBool("Feature.Enabled", false);
 ```
-X-Api-Key: váš-api-klíč
-```
-
-### Administrace API klíčů
-
-Administrace API klíčů je dostupná na stránce `/admin/apikeys`. Tato stránka je přístupná pouze pro uživatele s rolí Admin.
 
 ## Konfigurace Google reCAPTCHA v3
 

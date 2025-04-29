@@ -10,10 +10,12 @@ namespace GrznarAi.Web.Services
     public class AiNewsService : IAiNewsService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly IGlobalSettingsService _globalSettings;
 
-        public AiNewsService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public AiNewsService(IDbContextFactory<ApplicationDbContext> contextFactory, IGlobalSettingsService globalSettings)
         {
             _contextFactory = contextFactory;
+            _globalSettings = globalSettings;
         }
 
         public async Task<(List<AiNewsItem> Items, int TotalCount)> GetAiNewsAsync(int page = 1, int pageSize = 20, string searchTerm = null, int? year = null, int? month = null)
@@ -166,10 +168,13 @@ namespace GrznarAi.Web.Services
             // Nastavit datum importu pro všechny položky
             var now = DateTime.UtcNow;
             
-            // Kontrola posledních 10 dní pro duplicity
-            var recentDate = now.AddDays(-10);
+            // Získat počet dní pro kontrolu duplicit z nastavení (výchozí hodnota 10)
+            int daysToCheck = _globalSettings.GetInt("AiNews.DuplicateCheckDays", 10);
             
-            // Získáme titulky existujících článků za posledních 10 dní
+            // Kontrola posledních X dní pro duplicity
+            var recentDate = now.AddDays(-daysToCheck);
+            
+            // Získáme titulky existujících článků za posledních X dní
             var existingTitles = await context.AiNewsItems
                 .Where(n => n.ImportedDate >= recentDate)
                 .Select(n => n.TitleEn.ToLower())

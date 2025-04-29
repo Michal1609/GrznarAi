@@ -335,6 +335,279 @@ git push
     3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
 *   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
 
+## Systém globálních nastavení (GlobalSettings)
+
+### Architektura a implementace globálních nastavení
+
+1. **Model globálního nastavení:**
+   * `GlobalSetting` - Entita reprezentující globální nastavení (`Data/GlobalSetting.cs`)
+     * `Id` - Identifikátor
+     * `Key` - Klíč nastavení (např. "AiNews.DuplicateCheckDays")
+     * `Value` - Hodnota nastavení (uložená jako string)
+     * `DataType` - Typ dat (string, int, bool, decimal, datetime, json)
+     * `Description` - Volitelný popis nastavení
+     * `CreatedAt`, `UpdatedAt` - Časové značky
+
+2. **Služba pro správu globálních nastavení:**
+   * `IGlobalSettingsService` a `GlobalSettingsService` - Hlavní služba pro práci s globálními nastaveními
+     * Implementována jako `IHostedService` pro načtení všech nastavení při startu aplikace
+     * Udržuje cache nastavení v paměti pro rychlý přístup
+     * Poskytuje typově bezpečné metody pro získání hodnot (`GetString`, `GetInt`, `GetBool`, `GetValue<T>`)
+     * Metody pro správu nastavení (`GetAllSettingsAsync`, `AddSettingAsync`, `UpdateSettingAsync`, `DeleteSettingAsync`)
+
+3. **Administrační rozhraní:**
+   * `Components/Pages/Admin/GlobalSettingsAdmin.razor` - Stránka pro správu globálních nastavení
+     * Tabulka s podporou stránkování, vyhledávání a řazení
+     * Formulář pro přidání a úpravu nastavení
+     * Konfirmace pro mazání nastavení
+     * Zabezpečeno atributem `[Authorize(Roles = "Admin")]`
+
+4. **Inicializace výchozích nastavení:**
+   * `GlobalSettingsDataSeeder` - Třída pro inicializaci výchozích nastavení při prvním spuštění aplikace
+   * Kontroluje existenci nastavení podle klíče a nepřepisuje již existující hodnoty
+   * Volá se při startu aplikace v `Program.cs`
+
+### Použití GlobalSettings v kódu
+
+1. **Injektování služby:**
+   ```csharp
+   private readonly IGlobalSettingsService _globalSettings;
+
+   public MyService(IGlobalSettingsService globalSettings)
+   {
+       _globalSettings = globalSettings;
+   }
+   ```
+
+2. **Získání hodnot:**
+   ```csharp
+   // String hodnota (s výchozí hodnotou)
+   string siteName = _globalSettings.GetString("General.SiteName", "Default Site Name");
+   
+   // Integer hodnota
+   int pageSize = _globalSettings.GetInt("Admin.PageSize", 10);
+   
+   // Boolean hodnota
+   bool enableComments = _globalSettings.GetBool("Blog.EnableComments", true);
+   ```
+
+3. **Přidání nové hodnoty přes GlobalSettingsDataSeeder:**
+   ```csharp
+   AddSetting("Kategorie.NazevNastaveni", "VychoziHodnota", "int", "Popis nastavení");
+   ```
+
+### Příklad implementace dynamické konfigurace pomocí GlobalSettings
+
+V rámci úprav byla implementována dynamická konfigurace pro kontrolu duplicitních AI novinek při importu:
+
+1. **Původní hardcoded implementace:**
+   ```csharp
+   // Kontrola posledních 10 dní pro duplicity
+   var recentDate = now.AddDays(-10);
+   
+   // Získáme titulky existujících článků za posledních 10 dní
+   var existingTitles = await context.AiNewsItems
+       .Where(n => n.ImportedDate >= recentDate)
+       .Select(n => n.TitleEn.ToLower())
+       .ToListAsync();
+   ```
+
+2. **Nová dynamická implementace s GlobalSettings:**
+   ```csharp
+   // Získat počet dní pro kontrolu duplicit z nastavení (výchozí hodnota 10)
+   int daysToCheck = _globalSettings.GetInt("AiNews.DuplicateCheckDays", 10);
+   
+   // Kontrola posledních X dní pro duplicity
+   var recentDate = now.AddDays(-daysToCheck);
+   
+   // Získáme titulky existujících článků za posledních X dní
+   var existingTitles = await context.AiNewsItems
+       .Where(n => n.ImportedDate >= recentDate)
+       .Select(n => n.TitleEn.ToLower())
+       .ToListAsync();
+   ```
+
+3. **Přidání nastavení do seederu:**
+   ```csharp
+   // Nastavení pro AI News
+   AddSetting("AiNews.DuplicateCheckDays", "10", "int", "Počet dní pro kontrolu duplicit při importu AI novinek");
+   ```
+
+### Výhody použití GlobalSettings
+
+1. **Centralizovaná správa nastavení:** Všechna globální nastavení aplikace jsou na jednom místě v databázi
+2. **Možnost změn za běhu:** Nastavení lze měnit bez nutnosti restartovat aplikaci nebo nasazovat novou verzi
+3. **Typová bezpečnost:** Služba poskytuje typově bezpečné metody pro získání hodnot
+4. **Cachování v paměti:** Rychlý přístup k nastavením díky cachování
+5. **Admin rozhraní:** Jednoduché rozhraní pro správu nastavení přímo v aplikaci
+6. **Výchozí hodnoty:** Podpora výchozích hodnot v případě, že nastavení neexistuje
+
+## Úpravy administračního rozhraní GlobalSettings
+
+V rámci implementace byla provedena restrukturalizace komponenty GlobalSettingsAdmin pro lepší údržbu kódu:
+
+1. **Oddělení UI a logiky pomocí code-behind vzoru:**
+   * `GlobalSettingsAdmin.razor` - Obsahuje pouze UI (markup)
+   * `GlobalSettingsAdmin.razor.cs` - Obsahuje aplikační logiku
+
+2. **Struktura code-behind souboru:**
+   * Třída `GlobalSettingsAdminBase` dědící z `ComponentBase`
+   * Injektování závislostí pomocí atributu `[Inject]`
+   * Implementace metod volaných z UI
+   * Definice stavových proměnných a datových modelů
+
+3. **Zabránění chybám při překladu lambda výrazů:**
+   * Implementace jednoúčelových metod pro události (např. `SortTableByKey`, `SortTableByValue`)
+   * Zjednodušení volání v UI bez nutnosti použití lambda výrazů
+
+4. **Reaktivní změna počtu záznamů na stránku:**
+   * Implementace metody `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů
+   * Nastavení `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty
+   * Resetování stránkování na první stránku při změně počtu záznamů
+
+### Příklad řešení problémů s lambda výrazy v Blazoru
+
+Pro řešení chyb překladu lambda výrazů v Blazoru:
+
+1. **Původní problematický kód:**
+   ```html
+   <th @onclick="() => SortTable("key")">...</th>
+   ```
+
+2. **Nové elegantní řešení:**
+   ```csharp
+   // V code-behind souboru
+   protected async Task SortTableByKey()
+   {
+       await SortTable("key");
+   }
+   ```
+   ```html
+   <!-- V Razor souboru -->
+   <th @onclick="SortTableByKey">...</th>
+   ```
+
+Tento přístup eliminuje problémy s parsováním lambda výrazů během kompilace Blazor komponent a poskytuje čistší, typově bezpečný kód.
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
 ## Rychlý checklist pro lokalizaci nové stránky
 
 1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
@@ -343,3 +616,12 @@ git push
 4. ✅ Pro každý text přidat český a anglický překlad
 5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
 6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 

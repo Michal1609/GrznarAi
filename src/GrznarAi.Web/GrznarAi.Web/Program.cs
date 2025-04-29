@@ -44,6 +44,9 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(opt => opt.UseSqlServ
 // Register ProjectService
 builder.Services.AddScoped<IProjectService, ProjectService>();
 
+// Register GlobalSettingsService
+builder.Services.AddScoped<IGlobalSettingsService, GlobalSettingsService>();
+
 // Register BlogService
 builder.Services.AddScoped<IBlogService, BlogService>();
 

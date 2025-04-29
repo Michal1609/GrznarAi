@@ -19,6 +19,7 @@ namespace GrznarAi.Web.Data
         public DbSet<AiNewsSource> AiNewsSources { get; set; }
         public DbSet<AiNewsError> AiNewsErrors { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
+        public DbSet<GlobalSetting> GlobalSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

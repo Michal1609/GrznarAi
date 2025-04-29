@@ -5,10 +5,12 @@
 @using System.Security.Cryptography
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject ILogger<ApiKeys> Logger
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Správa API klíčů</PageTitle>
 
@@ -60,10 +62,28 @@
                     <p><strong>DŮLEŽITÉ:</strong> Uložte si klíč, již ho nebude možné zobrazit v této podobě:</p>
                     <div class="d-flex align-items-center">
                         <pre class="bg-light p-2 flex-grow-1"><code>@newlyCreatedApiKey.Value</code></pre>
-                        <button class="btn btn-sm btn-outline-primary ms-2" @onclick="@CopyApiKeyToClipboard">
+                        <button class="btn btn-sm btn-outline-primary ms-2" @onclick="() => CopyToClipboard(newlyCreatedApiKey.Value)">
                             <i class="bi bi-clipboard"></i> Kopírovat
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (shownApiKeyValue != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5>Hodnota API klíče:</h5>
+                    <div class="d-flex align-items-center">
+                        <pre class="bg-light p-2 flex-grow-1"><code>@shownApiKeyValue</code></pre>
+                        <button class="btn btn-sm btn-outline-primary ms-2" @onclick="() => CopyToClipboard(shownApiKeyValue)">
+                            <i class="bi bi-clipboard"></i> Kopírovat
+                        </button>
+                    </div>
+                    <button class="btn btn-sm btn-secondary mt-2" @onclick="CloseShownApiKey">Zavřít</button>
                 </div>
             </div>
         </div>
@@ -124,6 +144,12 @@
                                             Aktivovat
                                         </button>
                                     }
+                                    <button class="btn btn-sm btn-info" @onclick="@(() => ShowApiKeyValue(apiKey.Id))">
+                                        Zobrazit
+                                    </button>
+                                    <button class="btn btn-sm btn-warning" @onclick="@(() => RefreshApiKey(apiKey.Id))">
+                                        Obnovit
+                                    </button>
                                     <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteApiKey(apiKey.Id))">
                                         Smazat
                                     </button>
@@ -149,6 +175,7 @@
     private ApiKey newlyCreatedApiKey = new();
     private int? expiresInDays = 365;
     private bool showNewApiKey = false;
+    private string? shownApiKeyValue = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -273,10 +300,69 @@
         }
     }
 
-    private void CopyApiKeyToClipboard()
+    private async Task CopyToClipboard(string text)
     {
-        // Implementace kopírování do schránky by vyžadovala JavaScript Interop
-        // Pro jednoduchost tuto funkcionalitu vynecháme, uživatel může použít
-        // standardní kopírování (Ctrl+C)
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+            // Volitelně můžete přidat oznámení o úspěšném zkopírování
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při kopírování do schránky");
+        }
+    }
+
+    private async Task ShowApiKeyValue(int id)
+    {
+        try
+        {
+            using var context = await DbContextFactory.CreateDbContextAsync();
+            var apiKey = await context.ApiKeys.FindAsync(id);
+            if (apiKey != null)
+            {
+                shownApiKeyValue = apiKey.Value;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při zobrazení hodnoty klíče");
+        }
+    }
+
+    private void CloseShownApiKey()
+    {
+        shownApiKeyValue = null;
+    }
+
+    private async Task RefreshApiKey(int id)
+    {
+        try
+        {
+            using var context = await DbContextFactory.CreateDbContextAsync();
+            var apiKey = await context.ApiKeys.FindAsync(id);
+            if (apiKey != null)
+            {
+                // Vygenerování nového API klíče
+                var keyBytes = new byte[32];
+                using var rng = RandomNumberGenerator.Create();
+                rng.GetBytes(keyBytes);
+                var keyValue = Convert.ToBase64String(keyBytes);
+
+                // Aktualizace hodnoty klíče
+                apiKey.Value = keyValue;
+                apiKey.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+
+                // Zobrazit nově vygenerovaný klíč
+                shownApiKeyValue = keyValue;
+                
+                await LoadApiKeys();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při obnovení API klíče");
+        }
     }
 } 

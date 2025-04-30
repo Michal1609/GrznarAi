@@ -83,10 +83,19 @@ namespace GrznarAi.Web.Data
             AddEntry("ContactPage.Form.SendingText", "Odesílání...", "Sending...", "Contact form sending text");
             
             // --- NavMenu Seed Data ---
-            AddEntry("NavMenu.Home", "Domů", "Home", "NavMenu Link - Home");
-            AddEntry("NavMenu.Blog", "Blog", "Blog", "NavMenu Link - Blog");
+            AddEntry("NavMenu.Home", "Úvod", "Home", "NavMenu Link - Home");
+            AddEntry("NavMenu.About", "O mně", "About", "NavMenu Link - About");
             AddEntry("NavMenu.Projects", "Projekty", "Projects", "NavMenu Link - Projects");
-            AddEntry("NavMenu.Meteo", "Meteo", "Meteo", "NavMenu Link - Meteo");
+            AddEntry("NavMenu.Blog", "Blog", "Blog", "NavMenu Link - Blog");
+            AddEntry("NavMenu.AiNews", "AI Novinky", "AI News", "NavMenu Link - AiNews");
+            AddEntry("NavMenu.Contact", "Kontakt", "Contact", "NavMenu Link - Contact");
+            AddEntry("NavMenu.MeteoStation", "Meteostanice", "Weather Station", "NavMenu Link - Weather Station");
+            
+            // Applications section
+            AddEntry("NavMenu.Applications", "Aplikace", "Applications", "NavMenu Applications section heading");
+            AddEntry("NavMenu.Applications.Notes", "Poznámky", "Notes", "NavMenu Link - Notes under Applications");
+
+            // Admin section
             AddEntry("NavMenu.Admin.Title", "Administrace", "Administration", "NavMenu Dropdown - Admin");
             AddEntry("NavMenu.Admin.Projects", "Projekty", "Projects", "NavMenu Admin Link - Projects");
             AddEntry("NavMenu.Admin.Localization", "Lokalizace", "Localization", "NavMenu Admin Link - Localization");
@@ -207,6 +216,81 @@ namespace GrznarAi.Web.Data
             
             // NavMenu entry for Notes
             AddEntry("NavMenu.Notes", "Poznámky", "Notes", "NavMenu Link - Notes");
+
+            // --- Meteo Page Localization ---
+            AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+            AddEntry("Meteo.Description", "Tato stránka zobrazuje data z osobní meteostanice v reálném čase. Data jsou pravidelně aktualizována.", "This page displays real-time data from my personal weather station. The data is regularly updated.", "Meteo page description");
+            AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+            AddEntry("Meteo.IndoorConditions", "Vnitřní podmínky", "Indoor Conditions", "Indoor conditions section title");
+            AddEntry("Meteo.Precipitation", "Srážky", "Precipitation", "Precipitation section title");
+            AddEntry("Meteo.SolarRadiation", "Sluneční záření", "Solar Radiation", "Solar radiation section title");
+            AddEntry("Meteo.Loading", "Načítání...", "Loading...", "Loading text");
+            AddEntry("Meteo.Error", "Nepodařilo se načíst data z meteostanice. Zkuste to prosím později.", "Failed to load weather station data. Please try again later.", "Error message");
+            AddEntry("Meteo.LastUpdated", "Poslední aktualizace", "Last updated", "Last updated label");
+            AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+            AddEntry("Meteo.Humidity", "Vlhkost", "Humidity", "Humidity label");
+            AddEntry("Meteo.Pressure", "Tlak", "Pressure", "Pressure label");
+            AddEntry("Meteo.WindSpeed", "Rychlost větru", "Wind Speed", "Wind speed label");
+            AddEntry("Meteo.WindDirection", "Směr větru", "Wind Direction", "Wind direction label");
+            AddEntry("Meteo.IndoorTemperature", "Vnitřní teplota", "Indoor Temperature", "Indoor temperature label");
+            AddEntry("Meteo.IndoorHumidity", "Vnitřní vlhkost", "Indoor Humidity", "Indoor humidity label");
+            AddEntry("Meteo.FeelsLike", "Pocitová teplota", "Feels Like", "Feels like temperature label");
+            AddEntry("Meteo.Unknown", "Neznámý", "Unknown", "Unknown value");
+            AddEntry("Meteo.RainfallRate", "Intenzita srážek", "Rainfall Rate", "Rainfall rate label");
+            AddEntry("Meteo.RainfallDaily", "Denní srážky", "Daily Rainfall", "Daily rainfall label");
+            AddEntry("Meteo.RainfallWeekly", "Týdenní srážky", "Weekly Rainfall", "Weekly rainfall label");
+            AddEntry("Meteo.RainfallMonthly", "Měsíční srážky", "Monthly Rainfall", "Monthly rainfall label");
+            AddEntry("Meteo.SolarRadiation", "Sluneční záření", "Solar Radiation", "Solar radiation label");
+            AddEntry("Meteo.UVIndex", "UV index", "UV Index", "UV Index label");
+            AddEntry("Meteo.IndexUnit", "index", "index", "Index unit");
+            AddEntry("Meteo.DewPoint", "Rosný bod", "Dew Point", "Dew point label");
+            AddEntry("Meteo.WindGust", "Poryvy větru", "Wind Gust", "Wind gust label");
+            AddEntry("Meteo.RefreshData", "Aktualizovat data", "Refresh Data", "Refresh data button");
+
+            // Weather types
+            AddEntry("Meteo.Weather.Rainy", "Deštivo", "Rainy", "Rainy weather type");
+            AddEntry("Meteo.Weather.Snowy", "Sněžení", "Snowy", "Snowy weather type");
+            AddEntry("Meteo.Weather.Sunny", "Slunečno", "Sunny", "Sunny weather type");
+            AddEntry("Meteo.Weather.Humid", "Vlhko", "Humid", "Humid weather type");
+            AddEntry("Meteo.Weather.PartlyCloudy", "Polojasno", "Partly Cloudy", "Partly cloudy weather type");
+
+            // Wind directions
+            AddEntry("Meteo.WindDirection.N", "Sever", "North", "North wind direction");
+            AddEntry("Meteo.WindDirection.NE", "Severovýchod", "Northeast", "Northeast wind direction");
+            AddEntry("Meteo.WindDirection.E", "Východ", "East", "East wind direction");
+            AddEntry("Meteo.WindDirection.SE", "Jihovýchod", "Southeast", "Southeast wind direction");
+            AddEntry("Meteo.WindDirection.S", "Jih", "South", "South wind direction");
+            AddEntry("Meteo.WindDirection.SW", "Jihozápad", "Southwest", "Southwest wind direction");
+            AddEntry("Meteo.WindDirection.W", "Západ", "West", "West wind direction");
+            AddEntry("Meteo.WindDirection.NW", "Severozápad", "Northwest", "Northwest wind direction");
+
+            // --- Cache Admin Localization ---
+            AddEntry("CacheAdmin.Title", "Správa cache", "Cache Management", "Cache admin page title");
+            AddEntry("CacheAdmin.Description", "Správa systémové cache, možnost prohlížení a invalidace kešovaných dat.", "Manage system cache, view and invalidate cached data.", "Cache admin page description");
+            AddEntry("CacheAdmin.Refresh", "Obnovit", "Refresh", "Refresh button");
+            AddEntry("CacheAdmin.ClearAll", "Vyčistit vše", "Clear All", "Clear all button");
+            AddEntry("CacheAdmin.TotalItems", "Celkem položek", "Total Items", "Total items label");
+            AddEntry("CacheAdmin.TotalSize", "Celková velikost", "Total Size", "Total size label");
+            AddEntry("CacheAdmin.ExpiredItems", "Expirované položky", "Expired Items", "Expired items label");
+            AddEntry("CacheAdmin.SearchPlaceholder", "Hledat podle klíče nebo typu...", "Search by key or type...", "Search placeholder");
+            AddEntry("CacheAdmin.Loading", "Načítání...", "Loading...", "Loading text");
+            AddEntry("CacheAdmin.NoItems", "Žádné položky v cache", "No items in cache", "No items message");
+            AddEntry("CacheAdmin.NoSearchResults", "Žádné výsledky pro vaše vyhledávání", "No results for your search", "No search results message");
+            AddEntry("CacheAdmin.Key", "Klíč", "Key", "Key column header");
+            AddEntry("CacheAdmin.Type", "Typ", "Type", "Type column header");
+            AddEntry("CacheAdmin.Created", "Vytvořeno", "Created", "Created column header");
+            AddEntry("CacheAdmin.Expires", "Expiruje", "Expires", "Expires column header");
+            AddEntry("CacheAdmin.Size", "Velikost", "Size", "Size column header");
+            AddEntry("CacheAdmin.Actions", "Akce", "Actions", "Actions column header");
+            AddEntry("CacheAdmin.NoExpiration", "Bez expirace", "No expiration", "No expiration text");
+            AddEntry("CacheAdmin.ConfirmClearTitle", "Vyčištění cache", "Clear Cache", "Clear cache confirmation title");
+            AddEntry("CacheAdmin.ConfirmClearMessage", "Opravdu chcete vyčistit celou cache? Tato akce odstraní všechna kešovaná data.", "Are you sure you want to clear the entire cache? This action will remove all cached data.", "Clear cache confirmation message");
+            AddEntry("CacheAdmin.ConfirmDeleteTitle", "Odstranit položku", "Delete Item", "Delete item confirmation title");
+            AddEntry("CacheAdmin.ConfirmDeleteMessage", "Opravdu chcete odstranit tuto položku z cache?", "Are you sure you want to remove this item from cache?", "Delete item confirmation message");
+            AddEntry("CacheAdmin.Cancel", "Zrušit", "Cancel", "Cancel button");
+            AddEntry("CacheAdmin.Confirm", "Potvrdit", "Confirm", "Confirm button");
+
+            // --- End of new sections ---
 
             // --- End Seed Data --- 
 

@@ -1,0 +1,331 @@
+@page "/admin/cache"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Services
+@using System.Diagnostics
+@using System.Text.Json
+
+@inject ICacheService CacheService
+@inject ILocalizationService Localizer
+@inject ILogger<CacheAdmin> Logger
+
+<PageTitle>@Localizer.GetString("CacheAdmin.Title") - GrznarAI</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">@Localizer.GetString("CacheAdmin.Title")</h2>
+            <div>
+                <button class="btn btn-light" @onclick="LoadCacheInfoAsync">
+                    <i class="bi bi-arrow-clockwise me-2"></i>@Localizer.GetString("CacheAdmin.Refresh")
+                </button>
+                <button class="btn btn-danger ms-2" @onclick="() => showClearCacheConfirm = true">
+                    <i class="bi bi-trash me-2"></i>@Localizer.GetString("CacheAdmin.ClearAll")
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">@Localizer.GetString("CacheAdmin.TotalItems")</h5>
+                                <h2 class="text-primary">@cacheItems.Count</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">@Localizer.GetString("CacheAdmin.TotalSize")</h5>
+                                <h2 class="text-primary">@FormatSize(totalSize)</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">@Localizer.GetString("CacheAdmin.ExpiredItems")</h5>
+                                <h2 class="text-primary">@expiredItems</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="@Localizer.GetString("CacheAdmin.SearchPlaceholder")" 
+                           @bind-value="searchTerm" @bind-value:event="oninput" @onkeyup="FilterItems" />
+                    @if (!string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        <button class="btn btn-outline-secondary" @onclick="ClearSearch">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    }
+                </div>
+            </div>
+            
+            @if (isLoading)
+            {
+                <div class="d-flex justify-content-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">@Localizer.GetString("CacheAdmin.Loading")</span>
+                    </div>
+                </div>
+            }
+            else if (!filteredItems.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    @if (string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        @Localizer.GetString("CacheAdmin.NoItems")
+                    }
+                    else
+                    {
+                        @Localizer.GetString("CacheAdmin.NoSearchResults")
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%">@Localizer.GetString("CacheAdmin.Key")</th>
+                                <th style="width: 15%">@Localizer.GetString("CacheAdmin.Type")</th>
+                                <th style="width: 15%">@Localizer.GetString("CacheAdmin.Created")</th>
+                                <th style="width: 15%">@Localizer.GetString("CacheAdmin.Expires")</th>
+                                <th style="width: 10%">@Localizer.GetString("CacheAdmin.Size")</th>
+                                <th style="width: 15%">@Localizer.GetString("CacheAdmin.Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in filteredItems)
+                            {
+                                <tr class="@(IsExpired(item) ? "table-warning" : "")">
+                                    <td class="text-truncate" style="max-width: 200px;">@item.Key</td>
+                                    <td>@item.Type</td>
+                                    <td>@item.Created.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                    <td>
+                                        @if (item.Expires.HasValue)
+                                        {
+                                            @item.Expires.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@Localizer.GetString("CacheAdmin.NoExpiration")</span>
+                                        }
+                                    </td>
+                                    <td>@FormatSize(item.Size)</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => ShowDeleteItemConfirm(item.Key)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Potvrzovací dialog pro smazání celé cache -->
+@if (showClearCacheConfirm)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">@Localizer.GetString("CacheAdmin.ConfirmClearTitle")</h5>
+                    <button type="button" class="btn-close" @onclick="() => showClearCacheConfirm = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@Localizer.GetString("CacheAdmin.ConfirmClearMessage")</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => showClearCacheConfirm = false">
+                        @Localizer.GetString("CacheAdmin.Cancel")
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ClearCacheAsync">
+                        @Localizer.GetString("CacheAdmin.Confirm")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Potvrzovací dialog pro smazání položky -->
+@if (!string.IsNullOrEmpty(itemToDelete))
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">@Localizer.GetString("CacheAdmin.ConfirmDeleteTitle")</h5>
+                    <button type="button" class="btn-close" @onclick="() => itemToDelete = null"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@Localizer.GetString("CacheAdmin.ConfirmDeleteMessage")</p>
+                    <p><strong>@itemToDelete</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => itemToDelete = null">
+                        @Localizer.GetString("CacheAdmin.Cancel")
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="DeleteItemAsync">
+                        @Localizer.GetString("CacheAdmin.Confirm")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<CacheItemInfo> cacheItems = new();
+    private List<CacheItemInfo> filteredItems = new();
+    private bool isLoading = true;
+    private long totalSize = 0;
+    private int expiredItems = 0;
+    private string searchTerm = "";
+    private bool showClearCacheConfirm = false;
+    private string itemToDelete = null;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCacheInfoAsync();
+    }
+    
+    private async Task LoadCacheInfoAsync()
+    {
+        try
+        {
+            isLoading = true;
+            
+            // Získat informace o cache
+            var items = await CacheService.GetCacheInfoAsync();
+            cacheItems = items.ToList();
+            
+            // Spočítat statistiky
+            totalSize = cacheItems.Sum(i => i.Size);
+            expiredItems = cacheItems.Count(IsExpired);
+            
+            // Filtrovat položky
+            FilterItems();
+            
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při načítání informací o cache");
+            isLoading = false;
+        }
+    }
+    
+    private void FilterItems()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredItems = cacheItems.ToList();
+        }
+        else
+        {
+            filteredItems = cacheItems
+                .Where(i => i.Key.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                           i.Type.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+    
+    private void ClearSearch()
+    {
+        searchTerm = "";
+        FilterItems();
+    }
+    
+    private bool IsExpired(CacheItemInfo item)
+    {
+        return item.Expires.HasValue && item.Expires.Value < DateTime.UtcNow;
+    }
+    
+    private async Task ClearCacheAsync()
+    {
+        try
+        {
+            isLoading = true;
+            showClearCacheConfirm = false;
+            
+            await CacheService.ClearAsync();
+            
+            Logger.LogInformation("Cache byla vyčištěna");
+            
+            // Znovu načíst informace o cache
+            await LoadCacheInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při čištění cache");
+            isLoading = false;
+        }
+    }
+    
+    private void ShowDeleteItemConfirm(string key)
+    {
+        itemToDelete = key;
+    }
+    
+    private async Task DeleteItemAsync()
+    {
+        if (string.IsNullOrEmpty(itemToDelete))
+            return;
+            
+        try
+        {
+            isLoading = true;
+            var key = itemToDelete;
+            itemToDelete = null;
+            
+            await CacheService.RemoveAsync(key);
+            
+            Logger.LogInformation($"Položka '{key}' byla odstraněna z cache");
+            
+            // Znovu načíst informace o cache
+            await LoadCacheInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"Chyba při odstraňování položky '{itemToDelete}' z cache");
+            isLoading = false;
+        }
+    }
+    
+    private string FormatSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        
+        return $"{len:0.##} {sizes[order]}";
+    }
+} 

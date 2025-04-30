@@ -87,6 +87,13 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 // Register NoteService
 builder.Services.AddScoped<INoteService, NoteService>();
 
+// Register CacheService as Singleton and Hosted Service
+builder.Services.AddSingleton<ICacheService, CacheService>();
+builder.Services.AddHostedService(sp => (CacheService)sp.GetRequiredService<ICacheService>());
+
+// Register WeatherService
+builder.Services.AddScoped<IWeatherService, WeatherService>();
+
 // Configure Localization
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {

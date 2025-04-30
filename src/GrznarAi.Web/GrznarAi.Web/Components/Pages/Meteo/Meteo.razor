@@ -1,55 +1,116 @@
 @page "/meteo"
-@inject IJSRuntime JSRuntime
+@inject IWeatherService WeatherService
+@inject ILocalizationService Localizer
+@using GrznarAi.Web.Models
+@using GrznarAi.Web.Services
+@using System.Globalization
+@rendermode InteractiveServer
 
-<PageTitle>Meteo Data - GrznarAI</PageTitle>
+<PageTitle>@Localizer.GetString("Meteo.Title") - GrznarAI</PageTitle>
 
 <div class="container mt-4">
-    <h1 class="mb-4">Meteo Data</h1>
+    <h1 class="mb-4">@Localizer.GetString("Meteo.Title")</h1>
     
-    <p class="lead mb-5">
-        This page displays weather statistics and data from my personal meteo stations.
-        The data is collected in real-time and updated regularly.
+    <p class="lead mb-4">
+        @Localizer.GetString("Meteo.Description")
     </p>
     
-    <!-- Current Weather Overview -->
-    <div class="row mb-5">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0">Current Weather</h3>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-4">
-                        <i class="bi bi-sun-fill text-warning me-3" style="font-size: 3rem;"></i>
-                        <div>
-                            <h4 class="mb-0">Sunny</h4>
-                            <p class="text-muted mb-0">Last updated: @DateTime.Now.ToString("HH:mm, dd MMM yyyy")</p>
+    @if (IsLoading)
+    {
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">@Localizer.GetString("Meteo.Loading")</span>
+            </div>
+        </div>
+    }
+    else if (WeatherData == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @Localizer.GetString("Meteo.Error")
+        </div>
+    }
+    else
+    {
+        <!-- Current Weather Overview -->
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">@Localizer.GetString("Meteo.CurrentWeather")</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-4">
+                            @{
+                                var icon = GetWeatherIcon();
+                                var iconClass = $"bi bi-{icon} text-warning me-3";
+                            }
+                            <i class="@iconClass" style="font-size: 3rem;"></i>
+                            <div>
+                                <h4 class="mb-0">@GetWeatherCondition()</h4>
+                                <p class="text-muted mb-0">@Localizer.GetString("Meteo.LastUpdated"): @FormatDateTime(WeatherData.Time)</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Outdoor?.Temperature?.RawValue)°@WeatherData.Data?.Outdoor?.Temperature?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.Temperature")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Outdoor?.Humidity?.RawValue)@WeatherData.Data?.Outdoor?.Humidity?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.Humidity")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Pressure?.Relative?.RawValue) @WeatherData.Data?.Pressure?.Relative?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.Pressure")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Wind?.WindSpeed?.RawValue) @WeatherData.Data?.Wind?.WindSpeed?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.WindSpeed")</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <div class="meteo-card">
-                                <div class="meteo-value">22°C</div>
-                                <div class="meteo-label">Temperature</div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">@Localizer.GetString("Meteo.IndoorConditions")</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mt-3">
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Indoor?.Temperature?.RawValue)°@WeatherData.Data?.Indoor?.Temperature?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.IndoorTemperature")</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="meteo-card">
-                                <div class="meteo-value">45%</div>
-                                <div class="meteo-label">Humidity</div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Indoor?.Humidity?.RawValue)@WeatherData.Data?.Indoor?.Humidity?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.IndoorHumidity")</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="meteo-card">
-                                <div class="meteo-value">1013 hPa</div>
-                                <div class="meteo-label">Pressure</div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Outdoor?.FeelsLike?.RawValue)°@WeatherData.Data?.Outdoor?.FeelsLike?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.FeelsLike")</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <div class="meteo-card">
-                                <div class="meteo-value">12 km/h</div>
-                                <div class="meteo-label">Wind Speed</div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatWindDirection(WeatherData.Data?.Wind?.WindDirection?.Value)</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.WindDirection")</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -57,191 +118,276 @@
             </div>
         </div>
         
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h3 class="mb-0">Station Location</h3>
-                </div>
-                <div class="card-body">
-                    <div id="map" style="height: 300px; background-color: #e9ecef; border-radius: 0.25rem;">
-                        <!-- Map will be loaded here -->
-                        <div class="d-flex justify-content-center align-items-center h-100">
-                            <p class="text-muted">Map loading...</p>
+        <!-- Additional Data -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">@Localizer.GetString("Meteo.Precipitation")</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Rainfall?.RainRate?.RawValue) @WeatherData.Data?.Rainfall?.RainRate?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.RainfallRate")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Daily?.RawValue) @WeatherData.Data?.Rainfall?.Daily?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.RainfallDaily")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Weekly?.RawValue) @WeatherData.Data?.Rainfall?.Weekly?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.RainfallWeekly")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Monthly?.RawValue) @WeatherData.Data?.Rainfall?.Monthly?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.RainfallMonthly")</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Temperature Chart -->
-    <div class="card mb-5">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="mb-0">Temperature History</h3>
-            <div class="btn-group">
-                <button class="btn btn-sm btn-outline-primary active">Day</button>
-                <button class="btn btn-sm btn-outline-primary">Week</button>
-                <button class="btn btn-sm btn-outline-primary">Month</button>
-            </div>
-        </div>
-        <div class="card-body">
-            <div id="temperatureChart" style="height: 300px; background-color: #f8f9fa; border-radius: 0.25rem;">
-                <!-- Chart will be loaded here -->
-                <div class="d-flex justify-content-center align-items-center h-100">
-                    <p class="text-muted">Chart loading...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Other Measurements -->
-    <h3 class="mb-4">Other Measurements</h3>
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h4 class="mb-0">Humidity & Pressure</h4>
-                </div>
-                <div class="card-body">
-                    <div id="humidityChart" style="height: 250px; background-color: #f8f9fa; border-radius: 0.25rem;">
-                        <!-- Chart will be loaded here -->
-                        <div class="d-flex justify-content-center align-items-center h-100">
-                            <p class="text-muted">Chart loading...</p>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">@Localizer.GetString("Meteo.SolarRadiation")</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.SolarAndUvi?.Solar?.RawValue) @WeatherData.Data?.SolarAndUvi?.Solar?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.SolarRadiation")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.SolarAndUvi?.Uvi?.RawValue) @Localizer.GetString("Meteo.IndexUnit")</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.UVIndex")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Outdoor?.DewPoint?.RawValue)°@WeatherData.Data?.Outdoor?.DewPoint?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.DewPoint")</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="meteo-card">
+                                    <div class="meteo-value">@FormatRawValue(WeatherData.Data?.Wind?.WindGust?.RawValue) @WeatherData.Data?.Wind?.WindGust?.Unit</div>
+                                    <div class="meteo-label">@Localizer.GetString("Meteo.WindGust")</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h4 class="mb-0">Wind Speed & Direction</h4>
-                </div>
-                <div class="card-body">
-                    <div id="windChart" style="height: 250px; background-color: #f8f9fa; border-radius: 0.25rem;">
-                        <!-- Chart will be loaded here -->
-                        <div class="d-flex justify-content-center align-items-center h-100">
-                            <p class="text-muted">Chart loading...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Refresh Button -->
+        <div class="d-flex justify-content-center mb-4">
+            <button class="btn btn-primary" @onclick="RefreshDataAsync" disabled="@IsLoading">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-arrow-clockwise me-2"></i>
+                }
+                @Localizer.GetString("Meteo.RefreshData")
+            </button>
         </div>
-    </div>
-    
-    <!-- Historical Data Table -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h3 class="mb-0">Historical Data</h3>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Temperature</th>
-                            <th>Humidity</th>
-                            <th>Pressure</th>
-                            <th>Wind Speed</th>
-                            <th>Wind Direction</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var record in historicalData)
-                        {
-                            <tr>
-                                <td>@record.Date.ToString("dd/MM/yyyy")</td>
-                                <td>@record.Date.ToString("HH:mm")</td>
-                                <td>@record.Temperature°C</td>
-                                <td>@record.Humidity%</td>
-                                <td>@record.Pressure hPa</td>
-                                <td>@record.WindSpeed km/h</td>
-                                <td>@record.WindDirection</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <button class="btn btn-outline-primary">Previous</button>
-                <span>Page 1 of 10</span>
-                <button class="btn btn-outline-primary">Next</button>
-            </div>
-        </div>
-    </div>
+    }
 </div>
 
-@code {
-    // Sample historical data - in a real application, this would come from a service or API
-    private List<MeteoRecord> historicalData = new List<MeteoRecord>
-    {
-        new MeteoRecord
-        {
-            Date = DateTime.Now.AddHours(-1),
-            Temperature = 22.5,
-            Humidity = 45,
-            Pressure = 1013,
-            WindSpeed = 12,
-            WindDirection = "NE"
-        },
-        new MeteoRecord
-        {
-            Date = DateTime.Now.AddHours(-2),
-            Temperature = 22.1,
-            Humidity = 46,
-            Pressure = 1012,
-            WindSpeed = 10,
-            WindDirection = "NE"
-        },
-        new MeteoRecord
-        {
-            Date = DateTime.Now.AddHours(-3),
-            Temperature = 21.8,
-            Humidity = 47,
-            Pressure = 1012,
-            WindSpeed = 11,
-            WindDirection = "NE"
-        },
-        new MeteoRecord
-        {
-            Date = DateTime.Now.AddHours(-4),
-            Temperature = 21.2,
-            Humidity = 48,
-            Pressure = 1011,
-            WindSpeed = 9,
-            WindDirection = "E"
-        },
-        new MeteoRecord
-        {
-            Date = DateTime.Now.AddHours(-5),
-            Temperature = 20.5,
-            Humidity = 50,
-            Pressure = 1011,
-            WindSpeed = 8,
-            WindDirection = "E"
-        }
-    };
-
-    public class MeteoRecord
-    {
-        public DateTime Date { get; set; }
-        public double Temperature { get; set; }
-        public int Humidity { get; set; }
-        public int Pressure { get; set; }
-        public int WindSpeed { get; set; }
-        public string WindDirection { get; set; }
+<style>
+    .meteo-card {
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        height: 100%;
     }
     
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    .meteo-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    
+    .meteo-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+</style>
+
+@code {
+    private WeatherData WeatherData { get; set; }
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
+        await LoadWeatherDataAsync();
+    }
+    
+    private async Task LoadWeatherDataAsync()
+    {
+        IsLoading = true;
+        try
         {
-            // In a real application, you would load charts and maps here
-            // This is just a placeholder for demonstration purposes
-            await Task.Delay(100);
+            WeatherData = await WeatherService.GetWeatherDataAsync();
         }
+        catch (Exception)
+        {
+            // Logování chyby
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+    
+    private async Task RefreshDataAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            WeatherData = await WeatherService.RefreshWeatherDataAsync();
+        }
+        catch (Exception)
+        {
+            // Logování chyby
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+    
+    private string GetWeatherIcon()
+    {
+        if (WeatherData?.Data?.Outdoor == null)
+            return "question-circle";
+        
+        double temp = 0;
+        double humidity = 0;
+        double uvi = 0;
+        double rain = 0;
+        
+        double.TryParse(WeatherData.Data.Outdoor.Temperature?.RawValue, out temp);
+        double.TryParse(WeatherData.Data.Outdoor.Humidity?.RawValue, out humidity);
+        double.TryParse(WeatherData.Data.SolarAndUvi?.Uvi?.RawValue, out uvi);
+        double.TryParse(WeatherData.Data.Rainfall?.RainRate?.RawValue, out rain);
+        
+        if (rain > 0)
+            return "cloud-rain";
+        else if (temp < 0)
+            return "snow";
+        else if (uvi > 5)
+            return "sun";
+        else if (humidity > 80)
+            return "cloud-haze";
+        else
+            return "cloud-sun";
+    }
+    
+    private string GetWeatherCondition()
+    {
+        if (WeatherData?.Data?.Outdoor == null)
+            return Localizer.GetString("Meteo.Unknown");
+        
+        double temp = 0;
+        double humidity = 0;
+        double uvi = 0;
+        double rain = 0;
+        
+        double.TryParse(WeatherData.Data.Outdoor.Temperature?.RawValue, out temp);
+        double.TryParse(WeatherData.Data.Outdoor.Humidity?.RawValue, out humidity);
+        double.TryParse(WeatherData.Data.SolarAndUvi?.Uvi?.RawValue, out uvi);
+        double.TryParse(WeatherData.Data.Rainfall?.RainRate?.RawValue, out rain);
+        
+        if (rain > 0)
+            return Localizer.GetString("Meteo.Weather.Rainy");
+        else if (temp < 0)
+            return Localizer.GetString("Meteo.Weather.Snowy");
+        else if (uvi > 5)
+            return Localizer.GetString("Meteo.Weather.Sunny");
+        else if (humidity > 80)
+            return Localizer.GetString("Meteo.Weather.Humid");
+        else
+            return Localizer.GetString("Meteo.Weather.PartlyCloudy");
+    }
+    
+    private string FormatDateTime(string dateTimeStr)
+    {
+        if (string.IsNullOrEmpty(dateTimeStr))
+            return DateTime.Now.ToString("HH:mm, dd MMM yyyy");
+            
+        if (DateTime.TryParse(dateTimeStr, out var dateTime))
+            return dateTime.ToString("HH:mm, dd MMM yyyy");
+            
+        // Pokud je to unix timestamp
+        if (long.TryParse(dateTimeStr, out var timestamp))
+        {
+            var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
+            return dateTimeOffset.DateTime.ToString("HH:mm, dd MMM yyyy");
+        }
+        
+        return dateTimeStr;
+    }
+    
+    private string FormatValue(double? value)
+    {
+        if (value == null)
+            return "N/A";
+            
+        return value.Value.ToString("0.0", CultureInfo.InvariantCulture);
+    }
+    
+    private string FormatRawValue(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "N/A";
+            
+        if (double.TryParse(value, out var numValue))
+            return numValue.ToString("0.0", CultureInfo.InvariantCulture);
+            
+        return value;
+    }
+    
+    private string FormatWindDirection(double? degrees)
+    {
+        if (degrees == null)
+            return "N/A";
+            
+        var dir = degrees.Value;
+        
+        if (dir >= 337.5 || dir < 22.5)
+            return Localizer.GetString("Meteo.WindDirection.N");
+        else if (dir >= 22.5 && dir < 67.5)
+            return Localizer.GetString("Meteo.WindDirection.NE");
+        else if (dir >= 67.5 && dir < 112.5)
+            return Localizer.GetString("Meteo.WindDirection.E");
+        else if (dir >= 112.5 && dir < 157.5)
+            return Localizer.GetString("Meteo.WindDirection.SE");
+        else if (dir >= 157.5 && dir < 202.5)
+            return Localizer.GetString("Meteo.WindDirection.S");
+        else if (dir >= 202.5 && dir < 247.5)
+            return Localizer.GetString("Meteo.WindDirection.SW");
+        else if (dir >= 247.5 && dir < 292.5)
+            return Localizer.GetString("Meteo.WindDirection.W");
+        else
+            return Localizer.GetString("Meteo.WindDirection.NW");
     }
 }

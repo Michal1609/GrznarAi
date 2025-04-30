@@ -8,6 +8,38 @@ main {
     flex: 1;
 }
 
+/* Navbar styling */
+.navbar {
+    background-color: var(--bs-dark, #212529);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    padding: 0;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    padding: 0.5rem 0;
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.navbar-brand img.logo {
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+}
+
+.navbar .container-fluid {
+    padding: 0 1rem;
+}
+
+@media (min-width: 992px) {
+    .navbar .container-fluid {
+        padding: 0 1.5rem;
+    }
+}
+
 .sidebar {
     background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
 }

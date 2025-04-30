@@ -5,7 +5,7 @@
 @inject GrznarAi.Web.Services.ILocalizationService Localizer
 
 <!-- Left Aligned Nav Items -->
-<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+<ul class="navbar-nav me-auto mb-lg-0">
     <li class="nav-item">
         <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
             <span class="nav-icon-wrapper"><i class="bi bi-house-door-fill"></i></span> @Localizer.GetString("NavMenu.Home")
@@ -78,10 +78,10 @@
     <!-- End Administration Section -->
 </ul>
 
-<!-- Language Selector (Now part of Auth section alignment) -->
-<div class="d-flex align-items-center ms-auto"> <!-- Use ms-auto here to push remaining items right -->
-    <div class="dropdown me-3"> <!-- Add margin to separate from Auth -->
-        <button class="btn btn-secondary dropdown-toggle text-truncate" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="max-width: 150px;"> 
+<!-- Language Selector and Auth Section -->
+<div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+    <div class="nav-item dropdown me-2">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"> 
              @currentCulture.NativeName
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
@@ -93,43 +93,39 @@
     <!-- Auth Links/User Menu -->
     <AuthorizeView>
         <Authorized>
-            <ul class="navbar-nav">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" @onclick="ToggleDropdown" @onclick:preventDefault>
-                        <span class="nav-icon-wrapper"><i class="bi bi-person-fill"></i></span> @context.User.Identity?.Name
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end @(isDropdownOpen ? "show" : "")">
-                        <li>
-                            <NavLink class="dropdown-item" href="Account/Manage">
-                                <span class="nav-icon-wrapper"><i class="bi bi-gear"></i></span> @Localizer.GetString("NavMenu.User.ManageAccount")
-                            </NavLink>
-                        </li>
-                        <li>
-                            <form action="Account/Logout" method="post">
-                                <AntiforgeryToken />
-                                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                                <button type="submit" class="dropdown-item">
-                                    <span class="nav-icon-wrapper"><i class="bi bi-box-arrow-left"></i></span> @Localizer.GetString("NavMenu.User.Logout")
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" @onclick="ToggleDropdown" @onclick:preventDefault>
+                    <span class="nav-icon-wrapper"><i class="bi bi-person-fill"></i></span> @context.User.Identity?.Name
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end @(isDropdownOpen ? "show" : "")">
+                    <li>
+                        <NavLink class="dropdown-item" href="Account/Manage">
+                            <span class="nav-icon-wrapper"><i class="bi bi-gear"></i></span> @Localizer.GetString("NavMenu.User.ManageAccount")
+                        </NavLink>
+                    </li>
+                    <li>
+                        <form action="Account/Logout" method="post">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                            <button type="submit" class="dropdown-item">
+                                <span class="nav-icon-wrapper"><i class="bi bi-box-arrow-left"></i></span> @Localizer.GetString("NavMenu.User.Logout")
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
         </Authorized>
         <NotAuthorized>
-             <ul class="navbar-nav">
-                 <li class="nav-item">
-                     <NavLink class="nav-link" href="Account/Register">
-                         <span class="nav-icon-wrapper"><i class="bi bi-person-plus"></i></span> @Localizer.GetString("NavMenu.Auth.Register")
-                     </NavLink>
-                 </li>
-                 <li class="nav-item">
-                     <NavLink class="nav-link" href="Account/Login">
-                         <span class="nav-icon-wrapper"><i class="bi bi-box-arrow-in-right"></i></span> @Localizer.GetString("NavMenu.Auth.Login")
-                     </NavLink>
-                 </li>
-             </ul>
+            <div class="nav-item me-2">
+                <NavLink class="nav-link" href="Account/Register">
+                    <span class="nav-icon-wrapper"><i class="bi bi-person-plus"></i></span> @Localizer.GetString("NavMenu.Auth.Register")
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="Account/Login">
+                    <span class="nav-icon-wrapper"><i class="bi bi-box-arrow-in-right"></i></span> @Localizer.GetString("NavMenu.Auth.Login")
+                </NavLink>
+            </div>
         </NotAuthorized>
     </AuthorizeView>
 </div>

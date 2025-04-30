@@ -19,8 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents()
-    .AddAuthenticationStateSerialization();
+    .AddInteractiveWebAssemblyComponents();
 
 // Přidat kontrolery pro API
 builder.Services.AddControllers();
@@ -151,7 +150,6 @@ app.UseAntiforgery();
 // Namapovat API kontrolery
 app.MapControllers();
 
-app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()

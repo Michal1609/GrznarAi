@@ -731,3 +731,1920 @@ Všechny texty v aplikaci Poznámky jsou plně lokalizovány s využitím služb
 * `Notes.NoCategories` - Text při neexistenci kategorií
 
 Překlady jsou definovány v souboru `LocalizationDataSeeder.cs` a jsou dostupné v češtině a angličtině. 
+
+## Systém univerzální cache (CacheService)
+
+### Architektura a implementace cache služby
+
+1. **Model cache služby:**
+   * Implementace jako `ICacheService` a `CacheService` s podporou `IHostedService`
+   * Interní třída `CacheItem` pro ukládání položek v cache s metadaty
+   * Použití `ConcurrentDictionary` pro thread-safe přístup k datům
+   * Automatické čištění expirovaných položek pomocí Timer mechanismu
+
+2. **Hlavní vlastnosti:**
+   * Implementována jako **Singleton** pro sdílení cache v celé aplikaci
+   * Typově bezpečné metody pro ukládání a získávání dat
+   * Podpora expirace položek (absolutní čas)
+   * Automatické čištění expirovaných položek na pozadí
+   * Podpora pro získávání dat z factory funkce, pokud data nejsou v cache
+   * Odhad velikosti položek v cache pro statistiky
+
+3. **Administrační rozhraní:**
+   * `Components/Pages/Admin/CacheAdmin.razor` - Stránka pro správu cache
+   * Seznam všech položek v cache s metadaty (klíč, typ, velikost, čas vytvoření, expirace)
+   * Možnost vyhledávání podle klíče
+   * Statistiky využití cache (celkový počet položek, velikost, počet expirovaných položek)
+   * Tlačítka pro invalidaci cache (jednotlivé položky nebo celá cache)
+
+4. **Registrace služby v `Program.cs`:**
+   ```csharp
+   // Registrace CacheService jako Singleton a IHostedService
+   builder.Services.AddSingleton<ICacheService, CacheService>();
+   builder.Services.AddHostedService(sp => (CacheService)sp.GetRequiredService<ICacheService>());
+   ```
+
+### Použití cache služby v kódu
+
+1. **Injektování služby:**
+   ```csharp
+   private readonly ICacheService _cacheService;
+
+   public MyService(ICacheService cacheService)
+   {
+       _cacheService = cacheService;
+   }
+   ```
+
+2. **Příklady použití:**
+   ```csharp
+   // Získání nebo vytvoření položky v cache
+   var data = await _cacheService.GetOrCreateAsync("key", async () => {
+       // Tato factory funkce se spustí pouze pokud data nejsou v cache
+       return await DataService.GetExpensiveDataAsync(); 
+   }, TimeSpan.FromMinutes(10)); // Expiruje po 10 minutách
+   
+   // Přímé uložení do cache
+   await _cacheService.SetAsync("key", value, TimeSpan.FromHours(1));
+   
+   // Získání z cache (vrací default(T) pokud není nalezeno)
+   var cachedData = await _cacheService.GetAsync<DataType>("key");
+   
+   // Odstranění z cache
+   await _cacheService.RemoveAsync("key");
+   
+   // Vyčištění celé cache
+   await _cacheService.ClearAsync();
+   ```
+
+### Konkrétní příklad: WeatherService s cachováním
+
+Příklad implementace služby WeatherService, která využívá cache:
+
+```csharp
+public class WeatherService : IWeatherService
+{
+    private readonly ICacheService _cacheService;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _cacheKey = "WeatherData";
+    private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
+
+    public WeatherService(ICacheService cacheService, IHttpClientFactory httpClientFactory)
+    {
+        _cacheService = cacheService;
+        _httpClientFactory = httpClientFactory;
+    }
+
+    public async Task<WeatherData> GetWeatherDataAsync()
+    {
+        // Získá data z cache nebo zavolá factory funkci pro jejich vytvoření
+        return await _cacheService.GetOrCreateAsync(_cacheKey, FetchWeatherDataAsync, _cacheExpiration);
+    }
+
+    public async Task<WeatherData> RefreshWeatherDataAsync()
+    {
+        // Vynutí obnovení dat v cache
+        var weatherData = await FetchWeatherDataAsync();
+        
+        if (weatherData != null)
+        {
+            await _cacheService.SetAsync(_cacheKey, weatherData, _cacheExpiration);
+        }
+        
+        return weatherData;
+    }
+
+    private async Task<WeatherData> FetchWeatherDataAsync()
+    {
+        // Implementace volání API
+    }
+}
+```
+
+### Výhody použití univerzální cache
+
+1. **Zlepšení výkonu:**
+   * Snížení počtu volání externích API a databázových dotazů
+   * Rychlejší odezva pro uživatele díky uloženým datům v paměti
+
+2. **Redukce zátěže:**
+   * Snížení počtu HTTP požadavků na externí služby
+   * Omezení počtu dotazů na databázi pro často používaná data
+
+3. **Flexibilita:**
+   * Typově bezpečné API pro různé typy dat
+   * Konfigurovatelná doba platnosti pro různé typy dat
+   * Možnost vynutit obnovení dat v cache
+
+4. **Centralizovaná správa:**
+   * Jednotné místo pro správu cache v celé aplikaci
+   * Administrační rozhraní pro monitorování a správu cache
+   * Automatické čištění expirovaných položek
+
+5. **Jednoduché použití:**
+   * Intuitivní API s pomocí generických metod
+   * Factory funkce zjednodušující implementaci cache
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
+*   **Řešení:**
+    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
+    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
+    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
+*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
+
+### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
+
+*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
+*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
+*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
+
+### Problém: Chyba při vytváření API klíče - "The Value field is required"
+
+*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
+*   **Řešení:**
+    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
+    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
+    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
+*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
+
+### Problém: Chyba při kompilaci Blazor komponenty - chybějící parametr pro metodu
+
+*   **Kontext:** Při kompilaci souboru `GlobalSettingsAdmin.razor` se vyskytla chyba `error CS7036: There is no argument given that corresponds to the required parameter 'column' of 'GlobalSettingsAdminBase.SortTable(string)'`.
+*   **Řešení:**
+    1. Rozdělili jsme komponentu na dvě části pomocí code-behind vzoru (`GlobalSettingsAdmin.razor` a `GlobalSettingsAdmin.razor.cs`).
+    2. V code-behind jsme vytvořili jednoúčelové metody pro jednotlivé sloupce (např. `SortTableByKey`, `SortTableByValue`), které interně volají `SortTable` s příslušným parametrem.
+    3. V Razor souboru jsme nahradili lambda výrazy (`@onclick="() => SortTable("key")"`) přímým voláním těchto metod (`@onclick="SortTableByKey"`).
+*   **Poučení:** Lambda výrazy v Blazoru mohou způsobovat problémy při kompilaci, zejména při předávání parametrů. Vytvoření jednoúčelových metod bez parametrů je elegantní řešení, které eliminuje tyto problémy.
+
+### Problém: Reaktivita výběru počtu záznamů na stránku
+
+*   **Kontext:** Při změně počtu záznamů na stránku v rozbalovacím seznamu se změna neprojevila okamžitě, ale až po přechodu na jinou stránku.
+*   **Řešení:**
+    1. Přidali jsme atribut `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty při změně.
+    2. Implementovali jsme metodu `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů.
+    3. V metodě `PageSizeChanged` jsme resetovali stránkování na první stránku, aby nedošlo k problémům s rozsahem.
+*   **Poučení:** Pro zajištění okamžité reaktivity Blazor komponent je potřeba správně nastavit binding události a implementovat metody pro zpracování těchto událostí.
+
+## Rychlý checklist pro lokalizaci nové stránky
+
+1. ✅ Přidat `@inject ILocalizationService Localizer` na začátek stránky
+2. ✅ Nahradit všechny hardcoded texty voláním `@Localizer.GetString("PageName.Section.Text")`
+3. ✅ Přidat překlady do `LocalizationDataSeeder.cs` s logickými klíči
+4. ✅ Pro každý text přidat český a anglický překlad
+5. ✅ Otestovat stránku v obou jazycích přepnutím jazyka v UI
+6. ✅ Překontrolovat, zda nezůstaly nepřeložené texty nebo odkazy 
+
+## Rychlý checklist pro vytvoření nového globálního nastavení
+
+1. ✅ Přidat nové nastavení do `GlobalSettingsDataSeeder.cs` s klíčem, hodnotou, typem a popisem
+2. ✅ Použít vhodný prefix kategorie pro klíč (např. `AiNews.`, `Admin.`, `General.`)
+3. ✅ Injektovat `IGlobalSettingsService` do třídy, která bude nastavení používat
+4. ✅ Používat typově bezpečné metody pro získání hodnoty (`GetString`, `GetInt`, `GetBool`)
+5. ✅ Vždy definovat výchozí hodnotu jako druhý parametr metody
+6. ✅ Otestovat funkcionalitu po nasazení změn 
+
+## Aplikace Meteostanice
+
+### Implementace a struktura meteostanice
+
+1. **Datový model:**
+   * `WeatherData` - Hlavní model pro data z meteostanice (GrznarAi.Web/Models/WeatherData.cs)
+   * Hierarchická struktura odpovídající JSON odpovědi z API meteostanice
+   * Použití atributu `[JsonPropertyName]` pro mapování JSON vlastností
+   * Implementace převodu stringových hodnot na číselné typy pomocí vlastní vlastnosti `RawValue`
+
+2. **Servisní vrstva:**
+   * `IWeatherService` a `WeatherService` - Služba pro komunikaci s API meteostanice
+   * Cachování dat pomocí `ICacheService` pro optimalizaci výkonu
+   * Konfigurace pomocí user secrets pro API klíče
+   * Metody pro získání dat z cache nebo vynucení aktualizace
+
+3. **UI komponenty:**
+   * `Components/Pages/Meteo/Meteo.razor` - Hlavní stránka zobrazující data z meteostanice
+   * Responzivní design s využitím Bootstrap karet
+   * Zobrazení aktuálních podmínek, vnitřních podmínek, srážek a slunečního záření
+   * Automatické určení ikony a popisu počasí podle aktuálních dat
+   * Podpora pro manuální aktualizaci dat
+
+4. **Integrace s Ecowitt API:**
+   * Volání API `https://api.ecowitt.net/api/v3/device/real_time` s příslušnými parametry
+   * Deserializace JSON odpovědi do C# objektů
+   * Ošetření chyb a logování
+
+5. **Konfigurace v user secrets:**
+   ```bash
+   dotnet user-secrets set "WeatherService:ApplicationKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:ApiKey" "YOUR-KEY"
+   dotnet user-secrets set "WeatherService:Mac" "EC:FA:BC:XX:XX:XX"
+   ```
+
+### Zpracování dat z meteostanice
+
+Pro správné zpracování dat z API meteostanice byla implementována následující strategie:
+
+1. **Problém s deserializací:**
+   * API vrací číselné hodnoty jako stringy (např. `"value": "23.5"`)
+   * Standardní deserializace pomocí `System.Text.Json` očekává číselné hodnoty pro vlastnosti typu `double`
+
+2. **Řešení pomocí vlastní konverze:**
+   * Vytvoření základní třídy `BaseValueData` pro všechny hodnoty:
+   ```csharp
+   public class BaseValueData : BaseTimeData
+   {
+       private string _rawValue;
+       private double? _parsedValue;
+
+       [JsonPropertyName("value")]
+       public string RawValue
+       {
+           get => _rawValue;
+           set
+           {
+               _rawValue = value;
+               if (double.TryParse(value, out double parsed))
+               {
+                   _parsedValue = parsed;
+               }
+               else
+               {
+                   _parsedValue = null;
+               }
+           }
+       }
+
+       [JsonIgnore]
+       public double? Value => _parsedValue;
+
+       [JsonIgnore]
+       public bool HasValue => Value.HasValue;
+   }
+   ```
+
+3. **Použití v UI:**
+   * Získávání hodnot pomocí `RawValue` pro přímé zobrazení
+   * Použití `Value` pro operace s hodnotami (výpočty, porovnávání)
+   * Formátování hodnot pomocí metody `FormatRawValue` pro konzistentní zobrazení
+
+### Lokalizace stránky meteostanice
+
+Všechny texty na stránce meteostanice jsou plně lokalizovány pomocí `ILocalizationService`:
+
+```csharp
+// Příklad lokalizačních klíčů
+AddEntry("Meteo.Title", "Meteostanice", "Weather Station", "Meteo page title");
+AddEntry("Meteo.CurrentWeather", "Aktuální počasí", "Current Weather", "Current weather section title");
+AddEntry("Meteo.Temperature", "Teplota", "Temperature", "Temperature label");
+```
+
+## Postup pro práci s Gitem
+
+**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
+
+### Základní Git workflow
+
+1. **Zjištění stavu repozitáře:**
+   ```bash
+   git status
+   ```
+   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
+
+2. **Přidání změn do stage:**
+   ```bash
+   git add .              # Přidá všechny změněné soubory
+   # nebo
+   git add cesta/k/souboru # Přidá konkrétní soubor
+   ```
+
+3. **Vytvoření commitu:**
+   ```bash
+   git commit -m "Popis změn v commitu"
+   ```
+   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
+
+4. **Push změn na GitHub:**
+   ```bash
+   git push
+   ```
+   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
+
+### Příklad kompletního workflow
+
+```bash
+# Zkontroluj stav repozitáře
+git status
+
+# Přidej změny do stage
+git add .
+
+# Vytvoř commit se smysluplným popisem
+git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
+
+# Pošli změny na GitHub
+git push
+```
+
+### Užitečné Git příkazy
+
+- **Zobrazení historie commitů:**
+  ```bash
+  git log
+  git log --oneline    # Zkrácený formát
+  ```
+
+- **Stažení změn z GitHubu:**
+  ```bash
+  git pull
+  ```
+  
+- **Vytvoření a přepnutí na novou větev:**
+  ```bash
+  git checkout -b nazev-vetve
+  ```
+  
+- **Přepnutí na existující větev:**
+  ```bash
+  git checkout nazev-vetve
+  ```
+  
+- **Sloučení jiné větve do aktuální:**
+  ```bash
+  git merge nazev-vetve
+  ```
+
+## Řešení problémů při vývoji
+
+### Problém: Chyba migrace - Tabulka 'Projects' již existuje
+
+*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is

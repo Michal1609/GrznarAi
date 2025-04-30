@@ -12,12 +12,15 @@ Osobní webová aplikace postavená na ASP.NET Core Blazor s podporou blogu, pro
 - Správa uživatelů a rolí
 - Ochrana proti spamu pomocí Google reCAPTCHA v3
 - API pro správu AI novinek s autentizací pomocí API klíčů
+- Univerzální cache služba pro optimalizaci výkonu
+- Zobrazení dat z osobní meteostanice
 
 ## Požadavky
 
 - .NET 9
 - SQL Server (nebo LocalDB)
 - Účet Google reCAPTCHA (pro ochranu komentářů)
+- Pro meteostanici: API klíče k Ecowitt Weather API (volitelné)
 
 ## Instalace
 
@@ -43,6 +46,76 @@ Osobní webová aplikace postavená na ASP.NET Core Blazor s podporou blogu, pro
    ```bash
    dotnet run
    ```
+
+## Univerzální Cache Služba (nová funkce!)
+
+Aplikace nyní obsahuje centralizovanou cache službu pro ukládání dat s následujícími funkcemi:
+
+- 🚀 Automatické cachování dat s podporou expirace
+- 🗑️ Automatické čištění expirovaných položek v pozadí
+- 📊 Typově bezpečné API pro práci s cached daty
+- 🖥️ Administrační rozhraní pro správu cache
+- 📈 Přehled využití, velikosti a počtu položek v cache
+
+### Příklad použití Cache Služby v kódu
+
+```csharp
+// Injektování služby
+@inject ICacheService CacheService
+
+// Nebo v C# třídě
+private readonly ICacheService _cacheService;
+public Constructor(ICacheService cacheService)
+{
+    _cacheService = cacheService;
+}
+
+// Získání nebo vytvoření položky v cache
+var data = await _cacheService.GetOrCreateAsync("key", async () => {
+    // Tato funkce se zavolá pouze pokud data nejsou v cache
+    return await DataService.GetDataAsync(); 
+}, TimeSpan.FromMinutes(10)); // Cache na 10 minut
+
+// Přímé uložení do cache
+await _cacheService.SetAsync("key", data, TimeSpan.FromHours(1));
+
+// Získání z cache
+var cachedData = await _cacheService.GetAsync<DataType>("key");
+
+// Smazání z cache
+await _cacheService.RemoveAsync("key");
+```
+
+### Administrace Cache
+
+- 📋 Zobrazení seznamu všech položek v cache
+- 🔍 Vyhledávání v cache podle klíče nebo typu dat
+- 📉 Zobrazení statistik využití cache
+- 🗑️ Možnost invalidace jednotlivých položek nebo celé cache
+- ⏱️ Informace o čase vytvoření a expirace položek
+
+## Meteostanice (nová funkce!)
+
+Aplikace nyní obsahuje integraci s osobní meteostanicí pomocí Ecowitt Weather API:
+
+- 🌡️ Zobrazení aktuálních teplot (venkovní, vnitřní, pocitová)
+- 💧 Vlhkost vzduchu (venkovní, vnitřní)
+- 🌬️ Rychlost a směr větru, včetně poryvů
+- ☔ Srážkové údaje (aktuální intenzita, denní, týdenní, měsíční)
+- ☀️ Sluneční záření a UV index
+- 🔄 Automatická aktualizace dat s možností manuálního obnovení
+- 💾 Cachování dat pro optimální výkon a snížení počtu API volání
+
+### Konfigurace Meteostanice
+
+Pro připojení k Ecowitt Weather API je nutné nastavit API klíče. Doporučujeme ukládat klíče v User Secrets:
+
+```bash
+cd src/GrznarAi.Web/GrznarAi.Web
+dotnet user-secrets set "WeatherService:ApplicationKey" "VÁŠ-APPLICATION-KEY"
+dotnet user-secrets set "WeatherService:ApiKey" "VÁŠ-API-KEY"
+dotnet user-secrets set "WeatherService:Mac" "MAC-ADRESA-VAŠÍ-METEOSTANICE"
+```
 
 ## AI News - Novinky ze světa umělé inteligence
 

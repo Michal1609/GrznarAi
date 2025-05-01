@@ -111,11 +111,13 @@ namespace GrznarAi.Web.Data
                     j => j
                         .HasOne(ncr => ncr.NoteCategory)
                         .WithMany()
-                        .HasForeignKey(ncr => ncr.NoteCategoryId),
+                        .HasForeignKey(ncr => ncr.NoteCategoryId)
+                        .OnDelete(DeleteBehavior.Cascade),
                     j => j
                         .HasOne(ncr => ncr.Note)
                         .WithMany()
-                        .HasForeignKey(ncr => ncr.NoteId),
+                        .HasForeignKey(ncr => ncr.NoteId)
+                        .OnDelete(DeleteBehavior.ClientSetNull),
                     j =>
                     {
                         j.HasKey(t => t.Id);

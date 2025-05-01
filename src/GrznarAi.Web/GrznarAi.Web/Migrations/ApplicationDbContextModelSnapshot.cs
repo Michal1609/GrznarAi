@@ -1051,7 +1051,6 @@ namespace GrznarAi.Web.Migrations
                     b.HasOne("GrznarAi.Web.Data.Note", "Note")
                         .WithMany()
                         .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Note");

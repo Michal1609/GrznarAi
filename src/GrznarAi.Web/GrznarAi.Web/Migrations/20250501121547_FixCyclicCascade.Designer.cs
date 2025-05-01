@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GrznarAi.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250501120501_FixCascadingDelete")]
-    partial class FixCascadingDelete
+    [Migration("20250501121547_FixCyclicCascade")]
+    partial class FixCyclicCascade
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1054,7 +1054,6 @@ namespace GrznarAi.Web.Migrations
                     b.HasOne("GrznarAi.Web.Data.Note", "Note")
                         .WithMany()
                         .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Note");

@@ -119,7 +119,7 @@ namespace GrznarAi.Web.Migrations
                         column: x => x.NoteCategoryId,
                         principalTable: "NoteCategories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_NoteCategoryRelations_Notes_NoteId",
                         column: x => x.NoteId,

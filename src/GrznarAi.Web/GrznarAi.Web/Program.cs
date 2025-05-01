@@ -13,9 +13,16 @@ using System.Globalization;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 using GrznarAi.Web.Models;
+using Serilog;
 
+var log = new LoggerConfiguration()
+    .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+log.Information("Starting application...");
 var builder = WebApplication.CreateBuilder(args);
 
+log.Information("AddRazorComponents...");
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -36,8 +43,10 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
+log.Information("connectionString...");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
+log.Information("ApplicationDbContext...");
 builder.Services.AddDbContextFactory<ApplicationDbContext>(opt => opt.UseSqlServer(connectionString));
 
 // Register ProjectService
@@ -94,6 +103,7 @@ builder.Services.AddHostedService(sp => (CacheService)sp.GetRequiredService<ICac
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 
 // Configure Localization
+log.Information("Configure...");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     var supportedCultures = new[]
@@ -107,8 +117,10 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider()); // Read from cookie first
 });
 
+log.Information("AddDatabaseDeveloperPageExceptionFilter...");
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+log.Information("AddIdentityCore...");
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -117,21 +129,25 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+log.Information("app...");
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    log.Information("UseWebAssemblyDebugging...");
     app.UseWebAssemblyDebugging();
     app.UseMigrationsEndPoint();
 }
 else
 {
+    log.Information("UseExceptionHandler...");
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
+log.Information("UseHttpsRedirection...");
 app.UseHttpsRedirection();
 
 // Aktivovat middleware pro směrování
@@ -150,6 +166,7 @@ app.UseAntiforgery();
 // Namapovat API kontrolery
 app.MapControllers();
 
+log.Information("MapRazorComponents...");
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
@@ -184,124 +201,77 @@ app.MapGet("/Culture/SetCulture", (string culture, string redirectUri, HttpConte
 });
 
 // Migrate database
-using (var scope = app.Services.CreateScope())
-{
-    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
-    using var context = await factory.CreateDbContextAsync();
-    context.Database.EnsureCreated();
-    context.Database.Migrate();
-}
-
-// Seed localization data
-using (var scope = app.Services.CreateScope())
-{
-    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
-    await LocalizationDataSeeder.SeedAsync(factory);
-}
-
-// Seed application permissions
-using (var scope = app.Services.CreateScope())
-{
-    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
-    await ApplicationPermissionSeeder.SeedAsync(factory);
-}
-
-// Import AI News z JSON souboru
-try
+try 
 {
     using (var scope = app.Services.CreateScope())
     {
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
         using var context = await factory.CreateDbContextAsync();
-        
-        // Pokud nejsou v databázi žádné AI News, importujeme je z JSON
-        if (!await context.AiNewsItems.AnyAsync())
-        {
-            Console.WriteLine("Importuji AI News z JSON souboru...");
-            
-            try
-            {
-                // Cesta k JSON souboru
-                string jsonPath = Path.Combine(app.Environment.ContentRootPath, "result.json");
-                
-                if (File.Exists(jsonPath))
-                {
-                    string jsonText = await File.ReadAllTextAsync(jsonPath);
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-                    
-                    var newsItems = JsonSerializer.Deserialize<List<NewsItem>>(jsonText, options);
-                    
-                    if (newsItems != null && newsItems.Any())
-                    {
-                        foreach (var item in newsItems)
-                        {
-                            var aiNewsItem = new AiNewsItem
-                            {
-                                TitleEn = item.Title ?? string.Empty,  // Původní titulek jde do obou
-                                TitleCz = item.Title ?? string.Empty,  // Původní titulek jde do obou
-                                ContentEn = string.Empty,              // Prázdný obsah v angličtině
-                                ContentCz = item.ContentCz ?? string.Empty,
-                                SummaryEn = item.SummaryEn ?? string.Empty,
-                                SummaryCz = item.SummaryCz ?? string.Empty,
-                                Url = item.Url ?? string.Empty,
-                                ImageUrl = item.ImageUrl ?? string.Empty,
-                                SourceName = item.SourceName ?? string.Empty,
-                                PublishedDate = item.Date,
-                                ImportedDate = item.ImportedDate,
-                                IsActive = true
-                            };
-                            
-                            context.AiNewsItems.Add(aiNewsItem);
-                        }
-                        
-                        await context.SaveChangesAsync();
-                        Console.WriteLine($"Úspěšně importováno {newsItems.Count} AI News do databáze.");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"JSON soubor nenalezen na cestě: {jsonPath}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Chyba při importu AI News z JSON: {ex.Message}");
-            }
-        }
+        context.Database.EnsureCreated();
+        context.Database.Migrate();
     }
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Chyba při kontrole a importu AI News: {ex.Message}");
+    log.Error(ex, "Chyba při migraci databáze");
 }
 
-// Create admin accout if not exists
-using (var scope = app.Services.CreateScope())
+// Seed localization data
+try
 {
-    var adminEmail = "admin@admin.com";
-    var pass = "Admin123!";
-    var roleName = "Admin";
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-    var admin = await userManager.FindByEmailAsync(adminEmail);
-    if (admin is null)
+    using (var scope = app.Services.CreateScope())
     {
-        await userManager.CreateAsync(new ApplicationUser
-        {
-            EmailConfirmed = true,
-            Email = adminEmail,
-            UserName = adminEmail
-        }, pass);
-
-        admin = await userManager.FindByEmailAsync(adminEmail);
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+        await LocalizationDataSeeder.SeedAsync(factory);
     }
+}
+catch (Exception ex)
+{
+    log.Error(ex, "Chyba při seedování lokalizačních dat");
+}
 
-    var role = await roleManager.FindByNameAsync("Admin");
-    
+// Seed application permissions
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+        await ApplicationPermissionSeeder.SeedAsync(factory);
+    }
+}
+catch (Exception ex)
+{
+    log.Error(ex, "Chyba při seedování oprávnění aplikace");
+}
+
+// Import AI News z JSON souboru
+
+// Create admin accout if not exists
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var adminEmail = "admin@admin.com";
+        var pass = "Admin123!";
+        var roleName = "Admin";
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+        var admin = await userManager.FindByEmailAsync(adminEmail);
+        if (admin is null)
+        {
+            await userManager.CreateAsync(new ApplicationUser
+            {
+                EmailConfirmed = true,
+                Email = adminEmail,
+                UserName = adminEmail
+            }, pass);
+
+            admin = await userManager.FindByEmailAsync(adminEmail);
+        }
+
+        var role = await roleManager.FindByNameAsync("Admin");
+
         if (role is null)
         {
             await roleManager.CreateAsync(new IdentityRole
@@ -309,9 +279,15 @@ using (var scope = app.Services.CreateScope())
                 Name = roleName,
                 NormalizedName = roleName.ToUpperInvariant()
             });
-        };    
+        }
+        ;
 
-    await userManager.AddToRoleAsync(admin, roleName);
+        await userManager.AddToRoleAsync(admin, roleName);
+    }
+}
+catch (Exception ex)
+{
+    log.Error(ex, "Chyba při vytváření administrátorského účtu");
 }
 
 // Vytvoření výchozího API klíče, pokud není žádný v databázi
@@ -330,6 +306,7 @@ try
 }
 catch (Exception ex)
 {
+    log.Error(ex, "Chyba při vytváření výchozího API klíče");
     Console.WriteLine($"Chyba při vytváření výchozího API klíče: {ex.Message}");
 }
 

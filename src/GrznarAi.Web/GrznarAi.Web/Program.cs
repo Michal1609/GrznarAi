@@ -127,7 +127,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+// Registrujeme vlastní implementaci IEmailSender<ApplicationUser>
+builder.Services.AddScoped<IEmailSender<ApplicationUser>, IdentityEmailSender>();
 
 log.Information("app...");
 var app = builder.Build();
@@ -310,4 +311,4 @@ catch (Exception ex)
     Console.WriteLine($"Chyba při vytváření výchozího API klíče: {ex.Message}");
 }
 
-app.Run();
+app.Run(); 

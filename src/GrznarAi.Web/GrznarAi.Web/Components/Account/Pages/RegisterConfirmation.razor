@@ -10,26 +10,46 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Register confirmation</PageTitle>
+<PageTitle>Potvrzení registrace</PageTitle>
 
-<h1>Register confirmation</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h1 class="h4 mb-0">Potvrzení registrace</h1>
+                </div>
+                <div class="card-body">
+                    <StatusMessage Message="@statusMessage" />
 
-<StatusMessage Message="@statusMessage" />
+                    <div class="text-center mb-4">
+                        <i class="bi bi-envelope-check fs-1 text-success"></i>
+                    </div>
 
-@if (emailConfirmationLink is not null)
-{
-    <p>
-        This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-        Normally this would be emailed: <a href="@emailConfirmationLink">Click here to confirm your account</a>
-    </p>
-}
-else
-{
-    <p role="alert">Please check your email to confirm your account.</p>
-}
+                    <h2 class="card-title text-center mb-4">Děkujeme za registraci!</h2>
+                    
+                    <p class="card-text text-center">
+                        Na váš e-mail <strong>@Email</strong> jsme odeslali odkaz pro potvrzení účtu.
+                    </p>
+
+                    <p class="card-text text-center">
+                        Prosím zkontrolujte svou e-mailovou schránku a klikněte na odkaz v e-mailu pro dokončení registrace.
+                    </p>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Pokud e-mail nevidíte, zkontrolujte složku nevyžádané pošty (spam) nebo si <a href="/Account/ResendEmailConfirmation">nechte poslat nový potvrzovací e-mail</a>.
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="/" class="btn btn-outline-primary">Zpět na hlavní stránku</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    private string? emailConfirmationLink;
     private string? statusMessage;
 
     [CascadingParameter]
@@ -52,17 +72,7 @@ else
         if (user is null)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            statusMessage = "Error finding user for unspecified email";
-        }
-        else if (EmailSender is IdentityNoOpEmailSender)
-        {
-            // Once you add a real email sender, you should remove this code that lets you confirm the account
-            var userId = await UserManager.GetUserIdAsync(user);
-            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            emailConfirmationLink = NavigationManager.GetUriWithQueryParameters(
-                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+            statusMessage = "Chyba při hledání uživatele s tímto e-mailem";
         }
     }
 }

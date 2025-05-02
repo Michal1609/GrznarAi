@@ -253,6 +253,7 @@ namespace GrznarAi.Web.Data
             AddEntry("Meteo.Weather.Sunny", "Slunečno", "Sunny", "Sunny weather type");
             AddEntry("Meteo.Weather.Humid", "Vlhko", "Humid", "Humid weather type");
             AddEntry("Meteo.Weather.PartlyCloudy", "Polojasno", "Partly Cloudy", "Partly cloudy weather type");
+            AddEntry("Meteo.Weather.Night", "Noc", "Night", "Night weather type");
 
             // Wind directions
             AddEntry("Meteo.WindDirection.N", "Sever", "North", "North wind direction");
@@ -263,6 +264,63 @@ namespace GrznarAi.Web.Data
             AddEntry("Meteo.WindDirection.SW", "Jihozápad", "Southwest", "Southwest wind direction");
             AddEntry("Meteo.WindDirection.W", "Západ", "West", "West wind direction");
             AddEntry("Meteo.WindDirection.NW", "Severozápad", "Northwest", "Northwest wind direction");
+
+            // --- AI News Localization ---
+            AddEntry("AiNews.Title", "AI Novinky", "AI News", "AI News page title");
+            AddEntry("AiNews.Description", "Nejnovější zprávy ze světa umělé inteligence", "Latest news from the world of artificial intelligence", "AI News page description");
+            AddEntry("AiNews.SearchPlaceholder", "Vyhledat v novinkách...", "Search in news...", "Search placeholder for AI News");
+            AddEntry("AiNews.Search", "Vyhledat", "Search", "Search button text");
+            AddEntry("AiNews.Loading", "Načítání novinek...", "Loading news...", "Loading message for AI News");
+            AddEntry("AiNews.NoNews", "Žádné novinky k zobrazení", "No news to display", "Message when no news are available");
+            AddEntry("AiNews.ReadOriginal", "Číst originál", "Read original", "Button to read original article");
+            AddEntry("AiNews.CzechTranslation", "Český překlad", "Czech translation", "Button to see Czech translation");
+            AddEntry("AiNews.FilteringByDate", "Filtrování podle data", "Filtering by date", "Filtering by date message");
+            AddEntry("AiNews.TranslatedByAI", "Přeloženo pomocí AI", "Translated by AI", "Translated by AI message");
+
+            // --- Administration AI News Section ---
+            AddEntry("Administration.AiNews.Title", "Správa AI novinek", "AI News Management", "AI News administration title");
+            AddEntry("Administration.AiNews.Description", "Správa novinek o umělé inteligenci, zdrojů a chyb", "Manage artificial intelligence news, sources and errors", "AI News administration description");
+            AddEntry("Administration.AiNews.List", "Seznam novinek", "News List", "News list tab");
+            AddEntry("Administration.AiNews.Sources", "Zdroje", "Sources", "Sources tab");
+            AddEntry("Administration.AiNews.Errors", "Chyby", "Errors", "Errors tab");
+            AddEntry("Administration.AiNews.Filter", "Filtrovat novinky...", "Filter news...", "Filter placeholder");
+            AddEntry("Administration.AiNews.NoItems", "Žádné novinky k zobrazení", "No news to display", "Message when no news are available");
+            AddEntry("Administration.AiNews.Delete", "Smazat", "Delete", "Delete button");
+            AddEntry("Administration.AiNews.DeleteConfirmation", "Opravdu chcete smazat tuto novinku?", "Are you sure you want to delete this news item?", "Delete confirmation");
+            
+            // AI News Sources Administration
+            AddEntry("Administration.AiNews.Sources.Add", "Přidat zdroj", "Add source", "Add source button");
+            AddEntry("Administration.AiNews.Sources.Edit", "Upravit zdroj", "Edit source", "Edit source button");
+            AddEntry("Administration.AiNews.Sources.Delete", "Smazat zdroj", "Delete source", "Delete source button");
+            AddEntry("Administration.AiNews.Sources.DeleteConfirmation", "Opravdu chcete smazat tento zdroj?", "Are you sure you want to delete this source?", "Delete source confirmation");
+            AddEntry("Administration.AiNews.Sources.DeleteWarning", "Smazáním zdroje budou odstraněny všechny novinky z tohoto zdroje!", "Deleting the source will remove all news from this source!", "Delete source warning");
+            AddEntry("Administration.AiNews.Sources.NoItems", "Žádné zdroje k zobrazení", "No sources to display", "No sources message");
+            AddEntry("Administration.AiNews.Sources.Name", "Název zdroje", "Source name", "Source name label");
+            AddEntry("Administration.AiNews.Sources.Url", "URL adresa", "URL address", "Source URL label");
+            AddEntry("Administration.AiNews.Sources.Type", "Typ zdroje", "Source type", "Source type label");
+            AddEntry("Administration.AiNews.Sources.Active", "Aktivní", "Active", "Active source checkbox");
+            AddEntry("Administration.AiNews.Sources.Description", "Popis", "Description", "Source description label");
+            AddEntry("Administration.AiNews.Sources.Parameters", "Parametry", "Parameters", "Source parameters label");
+            AddEntry("Administration.AiNews.Sources.ParametersHelp", "Zadejte parametry ve formátu JSON pro rozšířené nastavení (volitelné)", "Enter parameters in JSON format for advanced configuration (optional)", "Source parameters help text");
+            
+            // AI News Errors Administration
+            AddEntry("Administration.AiNews.Errors.NoItems", "Žádné chyby k zobrazení", "No errors to display", "No errors message");
+            AddEntry("Administration.AiNews.Errors.Delete", "Smazat chybu", "Delete error", "Delete error button");
+            AddEntry("Administration.AiNews.Errors.DeleteConfirmation", "Opravdu chcete smazat tento záznam o chybě?", "Are you sure you want to delete this error record?", "Delete error confirmation");
+            AddEntry("Administration.AiNews.Errors.ShowDetails", "Zobrazit detaily", "Show details", "Show details button");
+            AddEntry("Administration.AiNews.Errors.StackTrace", "Detaily chyby (Stack Trace)", "Error details (Stack Trace)", "Error stack trace label");
+            AddEntry("Administration.AiNews.Errors.NoStackTrace", "Žádné detaily chyby k dispozici", "No error details available", "No stack trace message");
+            
+            // Common Admin Terms
+            AddEntry("Administration.Search", "Hledat", "Search", "Admin search button");
+            AddEntry("Administration.Loading", "Načítání...", "Loading...", "Admin loading message");
+            AddEntry("Administration.Save", "Uložit", "Save", "Admin save button");
+            AddEntry("Administration.Cancel", "Zrušit", "Cancel", "Admin cancel button");
+            AddEntry("Administration.Actions", "Akce", "Actions", "Admin actions column");
+            AddEntry("Administration.Confirmation", "Potvrzení", "Confirmation", "Admin confirmation dialog title");
+            
+            // Common Terms
+            AddEntry("Common.Clear", "Vymazat", "Clear", "Clear button/filter");
 
             // --- Cache Admin Localization ---
             AddEntry("CacheAdmin.Title", "Správa cache", "Cache Management", "Cache admin page title");

@@ -15,7 +15,21 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <NavMenu />
+                <ErrorBoundary>
+                    <ChildContent>
+                        <NavMenu />
+                    </ChildContent>
+                    <ErrorContent>
+                        <div class="alert alert-danger">
+                            <p>Chyba při načítání menu. Zkuste obnovit stránku.</p>
+                        </div>
+                        <ul class="navbar-nav me-auto mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">Domů</a>
+                            </li>
+                        </ul>
+                    </ErrorContent>
+                </ErrorBoundary>
             </div>
         </div>
     </nav>

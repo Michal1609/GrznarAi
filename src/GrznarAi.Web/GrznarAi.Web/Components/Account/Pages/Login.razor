@@ -152,7 +152,20 @@
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
-            RedirectManager.RedirectTo(ReturnUrl);
+            
+            string targetUrl = ReturnUrl ?? "/";
+            
+            // Použijeme JavaScript k přesměrování s obnovením stránky
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("window.location.href", targetUrl);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Chyba při přesměrování: {Message}", ex.Message);
+                // Fallback pokud selže JS přesměrování
+                NavigationManager.NavigateTo(targetUrl);
+            }
         }
         else if (result.RequiresTwoFactor)
         {

@@ -208,13 +208,23 @@ try
     {
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
         using var context = await factory.CreateDbContextAsync();
-        context.Database.EnsureCreated();
-        context.Database.Migrate();
+        
+        // Použijeme pouze metodu EnsureCreated, která vytvoří databázi, pokud neexistuje
+        // A nezpůsobuje konflikt s migrací jako kombinace EnsureCreated + Migrate
+        var dbExists = await context.Database.EnsureCreatedAsync();
+        if (dbExists)
+        {
+            log.Information("Databáze již existuje, EnsureCreated neprovede žádné změny");
+        }
+        else 
+        {
+            log.Information("Databáze byla vytvořena metodou EnsureCreated");
+        }
     }
 }
 catch (Exception ex)
 {
-    log.Error(ex, "Chyba při migraci databáze");
+    log.Error(ex, "Chyba při inicializaci databáze");
 }
 
 // Seed localization data

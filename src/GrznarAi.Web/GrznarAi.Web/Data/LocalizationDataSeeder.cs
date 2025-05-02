@@ -316,6 +316,8 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.AiNews.Errors.NoStackTrace", "Žádné detaily chyby k dispozici", "No error details available", "No stack trace message");
             
             // General Administration Keys
+            AddEntry("Administration.Title", "Administrace", "Administration", "Administration page title");
+            AddEntry("Administration.Description", "Správa systému a uživatelů", "System and user management", "Administration page description");
             AddEntry("Administration.Blogs.Title", "Správa blogu", "Blog Management", "Blog administration title");
             AddEntry("Administration.Blogs.Description", "Vytvářejte, upravujte a spravujte příspěvky na blogu", "Create, edit and manage blog posts", "Blog administration description");
             AddEntry("Administration.Users.Title", "Správa uživatelů", "User Management", "User administration title");

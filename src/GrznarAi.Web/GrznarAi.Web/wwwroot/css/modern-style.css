@@ -218,6 +218,95 @@ main {
   font-size: 1.25rem;
 }
 
+/* Dropdown menu styles - úplně přepracované */
+.dropdown-menu {
+  background-color: white !important;  /* Vždy bílé pozadí pro maximální kontrast */
+  border: 2px solid var(--primary-color);  /* Výrazný okraj v primární barvě */
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);  /* Velmi výrazný stín */
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  z-index: 1200;
+  max-width: none;
+  min-width: 200px;
+}
+
+.dropdown-item {
+  color: #212529 !important;  /* Vždy tmavý text pro maximální kontrast na bílém pozadí */
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: var(--primary-color) !important;  /* Oranžové pozadí při najetí */
+  color: white !important;  /* Bílý text při najetí pro dobrý kontrast */
+}
+
+.dropdown-item.active, .dropdown-item:active {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+/* Applications dropdown specific styles */
+#applicationsDropdown {
+  color: var(--navbar-text);
+}
+
+#applicationsDropdown:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Kompletně nové styly pro Applications dropdown */
+li.nav-item.dropdown .dropdown-menu {
+  background-color: white !important; /* Vždy bílé pozadí */
+  border: 2px solid var(--primary-color);
+  min-width: 220px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  padding: 0.75rem;
+}
+
+.nav-item.dropdown .dropdown-menu {
+  border-radius: 0.5rem;
+}
+
+.nav-item.dropdown .dropdown-item {
+  color: #333333 !important; /* Tmavá barva textu pro dobrý kontrast */
+  background-color: #f8f9fa; /* Velmi světlé šedé pozadí pro položky */
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  border: 1px solid #dee2e6;
+}
+
+.nav-item.dropdown .dropdown-item:hover {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color);
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item.dropdown .dropdown-item.active {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border-color: var(--primary-color);
+}
+
+.nav-item.dropdown .dropdown-item .nav-icon-wrapper {
+  margin-right: 0.75rem;
+  color: var(--primary-color); /* Ikona v barvě primární barvy */
+}
+
+.nav-item.dropdown .dropdown-item:hover .nav-icon-wrapper {
+  color: white; /* Ikona bílá při najetí */
+}
+
 /* Cards */
 .card {
   background-color: var(--card-background);

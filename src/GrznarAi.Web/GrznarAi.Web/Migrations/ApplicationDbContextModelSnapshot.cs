@@ -552,6 +552,69 @@ namespace GrznarAi.Web.Migrations
                     b.ToTable("CommentVotes");
                 });
 
+            modelBuilder.Entity("GrznarAi.Web.Data.EmailTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AvailablePlaceholders")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateKey")
+                        .IsUnique();
+
+                    b.ToTable("EmailTemplates");
+                });
+
+            modelBuilder.Entity("GrznarAi.Web.Data.EmailTemplateTranslation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EmailTemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmailTemplateId", "LanguageCode")
+                        .IsUnique();
+
+                    b.ToTable("EmailTemplateTranslations");
+                });
+
             modelBuilder.Entity("GrznarAi.Web.Data.GlobalSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -1018,6 +1081,17 @@ namespace GrznarAi.Web.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GrznarAi.Web.Data.EmailTemplateTranslation", b =>
+                {
+                    b.HasOne("GrznarAi.Web.Data.EmailTemplate", "EmailTemplate")
+                        .WithMany("Translations")
+                        .HasForeignKey("EmailTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EmailTemplate");
+                });
+
             modelBuilder.Entity("GrznarAi.Web.Data.Note", b =>
                 {
                     b.HasOne("GrznarAi.Web.Data.ApplicationUser", "ApplicationUser")
@@ -1153,6 +1227,11 @@ namespace GrznarAi.Web.Migrations
                     b.Navigation("Replies");
 
                     b.Navigation("Votes");
+                });
+
+            modelBuilder.Entity("GrznarAi.Web.Data.EmailTemplate", b =>
+                {
+                    b.Navigation("Translations");
                 });
 
             modelBuilder.Entity("GrznarAi.Web.Data.Project", b =>

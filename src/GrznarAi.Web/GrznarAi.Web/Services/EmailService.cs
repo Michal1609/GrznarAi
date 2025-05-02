@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace GrznarAi.Web.Services
 {
@@ -9,17 +12,28 @@ namespace GrznarAi.Web.Services
         Task SendEmailAsync(string to, string subject, string body, bool isHtml = true);
         Task SendContactConfirmationEmailAsync(string to, string name);
         Task SendContactNotificationEmailAsync(string name, string email, string subject, string message);
+        
+        // Nové metody pro práci s šablonami
+        Task SendTemplatedEmailAsync(string to, string templateKey, Dictionary<string, string> placeholders, string languageCode = null);
     }
 
     public class EmailService : IEmailService
     {
         private readonly EmailSettings _emailSettings;
         private readonly ILogger<EmailService> _logger;
+        private readonly IEmailTemplateService _templateService;
+        private readonly ILocalizationService _localizationService;
 
-        public EmailService(IOptions<EmailSettings> emailSettings, ILogger<EmailService> logger)
+        public EmailService(
+            IOptions<EmailSettings> emailSettings, 
+            ILogger<EmailService> logger,
+            IEmailTemplateService templateService,
+            ILocalizationService localizationService)
         {
             _emailSettings = emailSettings.Value;
             _logger = logger;
+            _templateService = templateService;
+            _localizationService = localizationService;
         }
 
         public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
@@ -52,32 +66,59 @@ namespace GrznarAi.Web.Services
             }
         }
 
+        public async Task SendTemplatedEmailAsync(string to, string templateKey, Dictionary<string, string> placeholders, string languageCode = null)
+        {
+            // Pokud není specifikován jazyk, použijeme aktuální jazyk z cookies (z výběru v menu)
+            if (string.IsNullOrEmpty(languageCode))
+            {
+                // Jednoduše použijeme aktuální kulturu z CultureInfo
+                // Ale kontrolujeme zda je to cs nebo en, jinak použijeme en jako fallback
+                var currentCulture = CultureInfo.CurrentUICulture.Name.ToLowerInvariant();
+                
+                if (currentCulture.StartsWith("cs"))
+                {
+                    languageCode = "cs";
+                }
+                else
+                {
+                    languageCode = "en"; // Výchozí jazyk je angličtina
+                }
+            }
+
+            var (subject, body) = await _templateService.GetRenderedTemplateAsync(templateKey, languageCode, placeholders);
+
+            if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
+            {
+                _logger.LogWarning($"Template with key '{templateKey}' for language '{languageCode}' not found or incomplete. Unable to send email.");
+                return;
+            }
+
+            await SendEmailAsync(to, subject, body, true);
+        }
+
         public async Task SendContactConfirmationEmailAsync(string to, string name)
         {
-            var subject = "Děkujeme za Váš kontakt";
-            var body = $@"
-                <h2>Děkujeme za Váš kontakt</h2>
-                <p>Vážený/á {name},</p>
-                <p>děkujeme za Vaši zprávu. Obdrželi jsme ji a budeme se jí co nejdříve zabývat.</p>
-                <p>Očekávejte naši odpověď v nejbližších dnech.</p>
-                <p>S pozdravem,<br>Tým GrznarAI</p>
-            ";
+            // Použijeme novou metodu se šablonou
+            var placeholders = new Dictionary<string, string>
+            {
+                { "Name", name }
+            };
 
-            await SendEmailAsync(to, subject, body);
+            await SendTemplatedEmailAsync(to, "ContactConfirmation", placeholders);
         }
 
         public async Task SendContactNotificationEmailAsync(string name, string email, string subject, string message)
         {
-            var notificationSubject = $"Nová kontaktní zpráva: {subject}";
-            var body = $@"
-                <h2>Nová zpráva z kontaktního formuláře</h2>
-                <p><strong>Od:</strong> {name} ({email})</p>
-                <p><strong>Předmět:</strong> {subject}</p>
-                <p><strong>Zpráva:</strong></p>
-                <p>{message}</p>
-            ";
+            // Použijeme novou metodu se šablonou
+            var placeholders = new Dictionary<string, string>
+            {
+                { "Name", name },
+                { "Email", email },
+                { "Subject", subject },
+                { "Message", message }
+            };
 
-            await SendEmailAsync(_emailSettings.ContactEmail, notificationSubject, body);
+            await SendTemplatedEmailAsync(_emailSettings.ContactEmail, "ContactNotification", placeholders);
         }
     }
 

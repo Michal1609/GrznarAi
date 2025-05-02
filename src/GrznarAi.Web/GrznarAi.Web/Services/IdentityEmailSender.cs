@@ -1,6 +1,8 @@
 using GrznarAi.Web.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GrznarAi.Web.Services
 {
@@ -19,17 +21,14 @@ namespace GrznarAi.Web.Services
         {
             try
             {
-                string subject = "Potvrďte svůj účet";
-                string body = $@"
-                    <h2>Vítejte v aplikaci GrznarAI</h2>
-                    <p>Děkujeme za registraci.</p>
-                    <p>Pro dokončení registrace a aktivaci vašeho účtu klikněte prosím na následující odkaz:</p>
-                    <p><a href='{confirmationLink}'>Potvrdit účet</a></p>
-                    <p>Pokud jste se neregistrovali v aplikaci GrznarAI, tento email můžete ignorovat.</p>
-                    <p>S pozdravem,<br>Tým GrznarAI</p>
-                ";
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "ConfirmationLink", confirmationLink },
+                    { "Name", user.UserName ?? email },
+                    { "Email", email }
+                };
 
-                await _emailService.SendEmailAsync(email, subject, body, true);
+                await _emailService.SendTemplatedEmailAsync(email, "AccountConfirmation", placeholders);
                 _logger.LogInformation("Confirmation email sent to {Email}", email);
             }
             catch (Exception ex)
@@ -43,17 +42,14 @@ namespace GrznarAi.Web.Services
         {
             try
             {
-                string subject = "Obnovení hesla";
-                string body = $@"
-                    <h2>Obnovení hesla</h2>
-                    <p>Obdrželi jsme žádost o obnovení hesla pro váš účet.</p>
-                    <p>Pro nastavení nového hesla klikněte na následující odkaz:</p>
-                    <p><a href='{resetLink}'>Obnovit heslo</a></p>
-                    <p>Pokud jste o obnovení hesla nepožádali, tento email můžete ignorovat.</p>
-                    <p>S pozdravem,<br>Tým GrznarAI</p>
-                ";
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "ResetLink", resetLink },
+                    { "Name", user.UserName ?? email },
+                    { "Email", email }
+                };
 
-                await _emailService.SendEmailAsync(email, subject, body, true);
+                await _emailService.SendTemplatedEmailAsync(email, "PasswordResetLink", placeholders);
                 _logger.LogInformation("Password reset email sent to {Email}", email);
             }
             catch (Exception ex)
@@ -67,16 +63,14 @@ namespace GrznarAi.Web.Services
         {
             try
             {
-                string subject = "Kód pro obnovení hesla";
-                string body = $@"
-                    <h2>Obnovení hesla</h2>
-                    <p>Obdrželi jsme žádost o obnovení hesla pro váš účet.</p>
-                    <p>Pro nastavení nového hesla použijte následující kód: <strong>{resetCode}</strong></p>
-                    <p>Pokud jste o obnovení hesla nepožádali, tento email můžete ignorovat.</p>
-                    <p>S pozdravem,<br>Tým GrznarAI</p>
-                ";
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "ResetCode", resetCode },
+                    { "Name", user.UserName ?? email },
+                    { "Email", email }
+                };
 
-                await _emailService.SendEmailAsync(email, subject, body, true);
+                await _emailService.SendTemplatedEmailAsync(email, "PasswordResetCode", placeholders);
                 _logger.LogInformation("Password reset code sent to {Email}", email);
             }
             catch (Exception ex)

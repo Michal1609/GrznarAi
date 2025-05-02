@@ -14,6 +14,7 @@ Osobní webová aplikace postavená na ASP.NET Core Blazor s podporou blogu, pro
 - API pro správu AI novinek s autentizací pomocí API klíčů
 - Univerzální cache služba pro optimalizaci výkonu
 - Zobrazení dat z osobní meteostanice
+- Systém pro správu emailových šablon s podporou více jazyků a placeholderů
 
 ## Požadavky
 
@@ -46,6 +47,52 @@ Osobní webová aplikace postavená na ASP.NET Core Blazor s podporou blogu, pro
    ```bash
    dotnet run
    ```
+
+## Systém emailových šablon (nová funkce!)
+
+Aplikace nyní obsahuje komplexní systém pro správu emailových šablon, který nahrazuje dříve hardcoded emailové texty:
+
+- 📧 Centralizovaná správa šablon emailů v databázi
+- 🌐 Podpora vícejazyčného obsahu (čeština, angličtina)
+- 🔄 Nahrazování placeholderů skutečnými hodnotami při odesílání
+- 🖋️ Editor s podporou vícejazyčného obsahu
+- 🔒 Admin rozhraní pro správu všech šablon
+
+### Dostupné emailové šablony
+
+| Klíč šablony | Popis | Dostupné placeholdery |
+|--------------|-------|------------------------|
+| Register | Uvítací email při registraci | {{UserName}}, {{ConfirmLink}} |
+| ResetPassword | Email pro obnovení hesla | {{UserName}}, {{ResetLink}} |
+| ContactForm | Odpověď na kontaktní formulář | {{UserName}}, {{Message}} |
+
+### Příklad použití emailových šablon v kódu
+
+```csharp
+// Injektování služeb
+@inject IEmailTemplateService EmailTemplateService
+@inject IEmailService EmailService
+
+// Získání obsahu emailu ze šablony
+var (subject, body) = await EmailTemplateService.GetTemplateTranslationAsync(
+    "ResetPassword", 
+    "cs" // nebo "en" pro angličtinu
+);
+
+// Definice placeholderů pro konkrétní email
+var placeholders = new Dictionary<string, string>
+{
+    { "UserName", user.UserName },
+    { "ResetLink", resetUrl }
+};
+
+// Odeslání emailu s placeholdery
+await EmailService.SendTemplatedEmailAsync(
+    user.Email,
+    "ResetPassword",
+    placeholders
+);
+```
 
 ## Univerzální Cache Služba (nová funkce!)
 

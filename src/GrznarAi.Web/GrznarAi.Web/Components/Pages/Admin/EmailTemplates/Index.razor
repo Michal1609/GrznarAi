@@ -1,0 +1,161 @@
+@page "/admin/email-templates"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@inject IEmailTemplateService EmailTemplateService
+@inject NavigationManager NavigationManager
+@inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
+
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Services
+@using GrznarAi.Web.Data
+@using Microsoft.JSInterop
+
+<PageTitle>@Localizer.GetString("EmailTemplates.Title") - GrznarAI</PageTitle>
+
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>@Localizer.GetString("EmailTemplates.Title")</h1>
+        <a href="/admin/email-templates/create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> @Localizer.GetString("EmailTemplates.Create")
+        </a>
+    </div>
+
+    <div class="admin-content">
+        @if (isLoading)
+        {
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">@Localizer.GetString("Common.Loading")</span>
+            </div>
+        }
+        else if (templates == null || !templates.Any())
+        {
+            <div class="alert alert-info">
+                @Localizer.GetString("EmailTemplates.NoTemplates")
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>@Localizer.GetString("EmailTemplates.TemplateKey")</th>
+                            <th>@Localizer.GetString("EmailTemplates.Description")</th>
+                            <th>@Localizer.GetString("EmailTemplates.Translations")</th>
+                            <th>@Localizer.GetString("EmailTemplates.Placeholders")</th>
+                            <th>@Localizer.GetString("Common.Actions")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var template in templates)
+                        {
+                            <tr>
+                                <td>@template.TemplateKey</td>
+                                <td>@template.Description</td>
+                                <td>
+                                    @if (template.Translations != null && template.Translations.Any())
+                                    {
+                                        <div class="language-badges">
+                                            @foreach (var translation in template.Translations)
+                                            {
+                                                <span class="badge bg-success">@translation.LanguageCode</span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-warning">@Localizer.GetString("EmailTemplates.NoTranslations")</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="placeholders">
+                                        @if (!string.IsNullOrEmpty(template.AvailablePlaceholders))
+                                        {
+                                            @foreach (var placeholder in template.AvailablePlaceholders.Split(','))
+                                            {
+                                                <span class="badge bg-info">{{@placeholder}}</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@Localizer.GetString("EmailTemplates.NoPlaceholders")</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="/admin/email-templates/edit/@template.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> @Localizer.GetString("Common.Edit")
+                                        </a>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteTemplate(template.Id)">
+                                            <i class="bi bi-trash"></i> @Localizer.GetString("Common.Delete")
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .admin-page {
+        padding: 2rem;
+    }
+    
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .language-badges {
+        display: flex;
+        gap: 0.3rem;
+    }
+    
+    .placeholders {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+</style>
+
+@code {
+    private List<EmailTemplate> templates;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplatesAsync();
+    }
+
+    private async Task LoadTemplatesAsync()
+    {
+        isLoading = true;
+        templates = await EmailTemplateService.GetAllTemplatesAsync();
+        isLoading = false;
+    }
+
+    private async Task DeleteTemplate(int id)
+    {
+        if (!await ConfirmDeleteAsync())
+            return;
+
+        await EmailTemplateService.DeleteTemplateAsync(id);
+        await LoadTemplatesAsync();
+    }
+
+    private async Task<bool> ConfirmDeleteAsync()
+    {
+        if (System.Diagnostics.Debugger.IsAttached)
+            return true;
+            
+        return await JSRuntime.InvokeAsync<bool>("confirm", Localizer.GetString("EmailTemplates.DeleteConfirmation"));
+    }
+} 

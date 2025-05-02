@@ -25,6 +25,8 @@ namespace GrznarAi.Web.Data
         public DbSet<Note> Notes { get; set; }
         public DbSet<NoteCategory> NoteCategories { get; set; }
         public DbSet<NoteCategoryRelation> NoteCategoryRelations { get; set; }
+        public DbSet<EmailTemplate> EmailTemplates { get; set; }
+        public DbSet<EmailTemplateTranslation> EmailTemplateTranslations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -135,6 +137,17 @@ namespace GrznarAi.Web.Data
                 .HasOne(up => up.ApplicationPermission)
                 .WithMany()
                 .HasForeignKey(up => up.ApplicationPermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Konfigurace pro EmailTemplate
+            builder.Entity<EmailTemplate>()
+                .HasIndex(et => et.TemplateKey)
+                .IsUnique();
+
+            builder.Entity<EmailTemplate>()
+                .HasMany(e => e.Translations)
+                .WithOne(t => t.EmailTemplate)
+                .HasForeignKey(t => t.EmailTemplateId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

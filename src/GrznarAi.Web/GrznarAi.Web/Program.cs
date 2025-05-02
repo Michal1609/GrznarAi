@@ -85,6 +85,9 @@ builder.Services.AddHostedService(sp => (LocalizationService)sp.GetRequiredServi
 builder.Services.AddScoped<IReCaptchaService, ReCaptchaService>();
 builder.Services.AddHttpClient();
 
+// Register EmailTemplateService
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+
 // Register EmailService
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
@@ -201,6 +204,129 @@ app.MapGet("/Culture/SetCulture", (string culture, string redirectUri, HttpConte
     return Results.LocalRedirect(localRedirectUri);
 });
 
+// Přidej na začátek programu, po registraci služeb
+// Ručně inicializujeme potřebné migrace a tabulky
+using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    
+    try
+    {
+        bool migrationsTableExists = false;
+        
+        try
+        {
+            // Kontrola existence tabulky __EFMigrationsHistory
+            migrationsTableExists = db.Database.ExecuteSqlRaw(
+                "SELECT COUNT(*) FROM __EFMigrationsHistory") > 0;
+        }
+        catch
+        {
+            // Tabulka neexistuje
+        }
+        
+        if (migrationsTableExists)
+        {
+            // Kontrola, jestli migrace existuje v tabulce
+            var fixCyclicCascadeMigrationExists = db.Database.ExecuteSqlRaw(
+                "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = '20250501121547_FixCyclicCascade'") > 0;
+                
+            if (!fixCyclicCascadeMigrationExists)
+            {
+                // Vložení záznamu o migraci do tabulky __EFMigrationsHistory
+                db.Database.ExecuteSqlRaw(
+                    "INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('20250501121547_FixCyclicCascade', '8.0.0')");
+                
+                Console.WriteLine("Migrace FixCyclicCascade byla ručně zaznamenána do __EFMigrationsHistory.");
+            }
+            
+            // Kontrola, jestli existují tabulky pro EmailTemplate
+            bool emailTemplatesTableExists = false;
+            
+            try
+            {
+                emailTemplatesTableExists = db.Database.ExecuteSqlRaw(
+                    "SELECT COUNT(*) FROM EmailTemplates") >= 0;
+            }
+            catch
+            {
+                // Tabulka neexistuje
+            }
+            
+            if (!emailTemplatesTableExists)
+            {
+                // Vytvoření tabulky EmailTemplates
+                db.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE [EmailTemplates] (
+                        [Id] int NOT NULL IDENTITY,
+                        [TemplateKey] nvarchar(100) NOT NULL,
+                        [Description] nvarchar(255) NOT NULL,
+                        [AvailablePlaceholders] nvarchar(max) NOT NULL,
+                        CONSTRAINT [PK_EmailTemplates] PRIMARY KEY ([Id])
+                    );
+                    
+                    CREATE UNIQUE INDEX [IX_EmailTemplates_TemplateKey] 
+                    ON [EmailTemplates] ([TemplateKey]);
+                ");
+                
+                Console.WriteLine("Tabulka EmailTemplates byla vytvořena ručně.");
+            }
+            
+            // Kontrola, jestli existují tabulky pro EmailTemplateTranslation
+            bool emailTemplateTranslationsTableExists = false;
+            
+            try
+            {
+                emailTemplateTranslationsTableExists = db.Database.ExecuteSqlRaw(
+                    "SELECT COUNT(*) FROM EmailTemplateTranslations") >= 0;
+            }
+            catch
+            {
+                // Tabulka neexistuje
+            }
+            
+            if (!emailTemplateTranslationsTableExists)
+            {
+                // Vytvoření tabulky EmailTemplateTranslations
+                db.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE [EmailTemplateTranslations] (
+                        [Id] int NOT NULL IDENTITY,
+                        [EmailTemplateId] int NOT NULL,
+                        [LanguageCode] nvarchar(10) NOT NULL,
+                        [Subject] nvarchar(255) NOT NULL,
+                        [Body] nvarchar(max) NOT NULL,
+                        CONSTRAINT [PK_EmailTemplateTranslations] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_EmailTemplateTranslations_EmailTemplates_EmailTemplateId] 
+                            FOREIGN KEY ([EmailTemplateId]) REFERENCES [EmailTemplates] ([Id]) ON DELETE CASCADE
+                    );
+                    
+                    CREATE UNIQUE INDEX [IX_EmailTemplateTranslations_EmailTemplateId_LanguageCode] 
+                    ON [EmailTemplateTranslations] ([EmailTemplateId], [LanguageCode]);
+                ");
+                
+                Console.WriteLine("Tabulka EmailTemplateTranslations byla vytvořena ručně.");
+            }
+            
+            // Vložení záznamu o migraci AddEmailTemplates do tabulky __EFMigrationsHistory
+            var addEmailTemplatesMigrationExists = db.Database.ExecuteSqlRaw(
+                "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = '20250502103228_AddEmailTemplates'") > 0;
+                
+            if (!addEmailTemplatesMigrationExists)
+            {
+                // Vložení záznamu o migraci do tabulky __EFMigrationsHistory
+                db.Database.ExecuteSqlRaw(
+                    "INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('20250502103228_AddEmailTemplates', '8.0.0')");
+                
+                Console.WriteLine("Migrace AddEmailTemplates byla ručně zaznamenána do __EFMigrationsHistory.");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Chyba při ručním zpracování migrace: {ex.Message}");
+    }
+}
+
 // Migrate database
 try 
 {
@@ -214,12 +340,13 @@ try
         var dbExists = await context.Database.EnsureCreatedAsync();
         if (dbExists)
         {
-            log.Information("Databáze již existuje, EnsureCreated neprovede žádné změny");
+            log.Information("Databáze již existuje, EnsureCreated neprovede žádné změny");            
         }
         else 
         {
             log.Information("Databáze byla vytvořena metodou EnsureCreated");
         }
+        context.Database.Migrate();
     }
 }
 catch (Exception ex)
@@ -253,6 +380,23 @@ try
 catch (Exception ex)
 {
     log.Error(ex, "Chyba při seedování oprávnění aplikace");
+}
+
+// Seed email templates
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        log.Information("Seedování emailových šablon...");
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<EmailTemplateDataSeeder>>();
+        var seeder = new EmailTemplateDataSeeder(logger, dbContext);
+        await seeder.SeedAsync();
+    }
+}
+catch (Exception ex)
+{
+    log.Error(ex, "Chyba při seedování emailových šablon");
 }
 
 // Import AI News z JSON souboru

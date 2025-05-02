@@ -1,0 +1,246 @@
+@page "/admin/email-templates/edit/{Id:int}"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@inject IEmailTemplateService EmailTemplateService
+@inject NavigationManager NavigationManager
+@inject ILocalizationService Localizer
+
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Services
+@using GrznarAi.Web.Data
+
+<PageTitle>@Localizer.GetString("EmailTemplates.Edit") - GrznarAI</PageTitle>
+
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>@Localizer.GetString("EmailTemplates.Edit")</h1>
+        <button class="btn btn-secondary" @onclick="@(e => NavigationManager.NavigateTo("/admin/email-templates"))">
+            <i class="bi bi-arrow-left"></i> @Localizer.GetString("Common.Back")
+        </button>
+    </div>
+
+    <div class="admin-content">
+        @if (isLoading)
+        {
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">@Localizer.GetString("Common.Loading")</span>
+            </div>
+        }
+        else if (template == null)
+        {
+            <div class="alert alert-danger">
+                @Localizer.GetString("EmailTemplates.NotFound")
+            </div>
+        }
+        else
+        {
+            <EditForm Model="@template" OnValidSubmit="SaveTemplateAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="templateKey">@Localizer.GetString("EmailTemplates.TemplateKey")</label>
+                            <InputText id="templateKey" @bind-Value="template.TemplateKey" class="form-control" />
+                            <ValidationMessage For="@(() => template.TemplateKey)" />
+                            <small class="form-text text-muted">@Localizer.GetString("EmailTemplates.TemplateKeyHelp")</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="description">@Localizer.GetString("EmailTemplates.Description")</label>
+                            <InputText id="description" @bind-Value="template.Description" class="form-control" />
+                            <ValidationMessage For="@(() => template.Description)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="placeholders">@Localizer.GetString("EmailTemplates.Placeholders")</label>
+                    <InputText id="placeholders" @bind-Value="template.AvailablePlaceholders" class="form-control" />
+                    <small class="form-text text-muted">@Localizer.GetString("EmailTemplates.PlaceholdersHelp")</small>
+                </div>
+
+                <div class="translations-section mb-4">
+                    <h3>@Localizer.GetString("EmailTemplates.Translations")</h3>
+                    <p class="text-muted">@Localizer.GetString("EmailTemplates.TranslationsHelp")</p>
+
+                    <div class="language-tabs">
+                        <div class="nav nav-tabs mb-3">
+                            @foreach (var lang in availableLanguages)
+                            {
+                                <button type="button" class="nav-link @(lang == selectedLanguage ? "active" : "")" 
+                                    @onclick="@(e => SelectLanguage(lang))">
+                                    @lang.ToUpper()
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    @foreach (var lang in availableLanguages)
+                    {
+                        <div class="translation-form @(lang == selectedLanguage ? "d-block" : "d-none")">
+                            <div class="form-group mb-3">
+                                <label>@Localizer.GetString("EmailTemplates.Subject") (@lang)</label>
+                                <InputText @bind-Value="translationSubjects[lang]" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label>@Localizer.GetString("EmailTemplates.Body") (@lang)</label>
+                                <InputTextArea @bind-Value="translationBodies[lang]" class="form-control" rows="10" />
+                                <small class="form-text text-muted">@Localizer.GetString("EmailTemplates.BodyHelp")</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="form-group text-end">
+                    <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="ms-1">@Localizer.GetString("Common.Saving")</span>
+                        }
+                        else
+                        {
+                            <span>@Localizer.GetString("Common.Save")</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+<style>
+    .admin-page {
+        padding: 2rem;
+    }
+    
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .translations-section {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+    }
+    
+    .language-tabs .nav-link {
+        cursor: pointer;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private EmailTemplate template;
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private List<string> availableLanguages = new List<string> { "cs", "en" };
+    private string selectedLanguage = "cs";
+    
+    // Pomocné slovníky pro ukládání překladů
+    private Dictionary<string, string> translationSubjects = new Dictionary<string, string>();
+    private Dictionary<string, string> translationBodies = new Dictionary<string, string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Inicializace slovníků pro překlady
+        foreach (var lang in availableLanguages)
+        {
+            translationSubjects[lang] = string.Empty;
+            translationBodies[lang] = string.Empty;
+        }
+
+        await LoadTemplateAsync();
+    }
+
+    private async Task LoadTemplateAsync()
+    {
+        isLoading = true;
+        
+        try
+        {
+            template = await EmailTemplateService.GetTemplateByIdAsync(Id);
+            
+            if (template != null && template.Translations != null)
+            {
+                // Načtení existujících překladů
+                foreach (var translation in template.Translations)
+                {
+                    if (translationSubjects.ContainsKey(translation.LanguageCode))
+                    {
+                        translationSubjects[translation.LanguageCode] = translation.Subject;
+                        translationBodies[translation.LanguageCode] = translation.Body;
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Zde by bylo vhodné zpracovat chybu a zobrazit uživateli
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectLanguage(string lang)
+    {
+        selectedLanguage = lang;
+        StateHasChanged(); // Vynutíme překreslení komponenty
+    }
+
+    private async Task SaveTemplateAsync()
+    {
+        isSaving = true;
+
+        try
+        {
+            // Nejprve uložíme hlavní šablonu
+            await EmailTemplateService.UpdateTemplateAsync(template);
+
+            // Poté upravíme překlady
+            foreach (var lang in availableLanguages)
+            {
+                // Uložíme překlad pouze pokud jsou vyplněné oba údaje (předmět a tělo)
+                if (!string.IsNullOrWhiteSpace(translationSubjects[lang]) && 
+                    !string.IsNullOrWhiteSpace(translationBodies[lang]))
+                {
+                    var translation = new EmailTemplateTranslation
+                    {
+                        EmailTemplateId = template.Id,
+                        LanguageCode = lang,
+                        Subject = translationSubjects[lang],
+                        Body = translationBodies[lang]
+                    };
+
+                    // Existující ID překladu pro tento jazyk najdeme v šabloně
+                    var existingTranslation = template.Translations?
+                        .FirstOrDefault(t => t.LanguageCode == lang);
+                        
+                    if (existingTranslation != null)
+                    {
+                        translation.Id = existingTranslation.Id;
+                    }
+
+                    await EmailTemplateService.UpsertTranslationAsync(translation);
+                }
+            }
+
+            NavigationManager.NavigateTo("/admin/email-templates");
+        }
+        catch (Exception)
+        {
+            // Zde by bylo vhodné zpracovat chybu a zobrazit uživateli
+            isSaving = false;
+        }
+    }
+} 

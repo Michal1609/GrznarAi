@@ -153,7 +153,11 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.Search.Placeholder", "Hledat v blogu...", "Search blog...", "Search input placeholder");
             AddEntry("Blog.Search.Button", "Hledat", "Search", "Search button text");
             AddEntry("Blog.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title");
+            AddEntry("Blog.Sidebar.PopularTags", "Populární štítky", "Popular Tags", "Sidebar popular tags heading");
+            AddEntry("Blog.Sidebar.NoTags", "Žádné štítky nebyly nalezeny", "No tags found", "Message when no tags are found in sidebar");
+            AddEntry("Blog.Sidebar.Archive", "Archiv", "Archive", "Sidebar archive heading");
             AddEntry("Blog.Archive", "Archiv", "Archive", "Archive section title");
+            AddEntry("Blog.NoArchives", "Žádné archivy", "No archives", "Message when no archives are found");
             AddEntry("Blog.ReadMore", "Číst více", "Read more", "Read more button text");
             AddEntry("Blog.CreatedOn", "Vytvořeno: {0}", "Created on: {0}", "Blog post creation date with date placeholder");
             AddEntry("Blog.Tags", "Štítky:", "Tags:", "Tags label");
@@ -311,6 +315,14 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.AiNews.Errors.StackTrace", "Detaily chyby (Stack Trace)", "Error details (Stack Trace)", "Error stack trace label");
             AddEntry("Administration.AiNews.Errors.NoStackTrace", "Žádné detaily chyby k dispozici", "No error details available", "No stack trace message");
             
+            // General Administration Keys
+            AddEntry("Administration.Blogs.Title", "Správa blogu", "Blog Management", "Blog administration title");
+            AddEntry("Administration.Blogs.Description", "Vytvářejte, upravujte a spravujte příspěvky na blogu", "Create, edit and manage blog posts", "Blog administration description");
+            AddEntry("Administration.Users.Title", "Správa uživatelů", "User Management", "User administration title");
+            AddEntry("Administration.Users.Description", "Spravujte uživatelské účty a oprávnění", "Manage user accounts and permissions", "User administration description");
+            AddEntry("Administration.Roles.Title", "Správa rolí", "Role Management", "Role administration title");
+            AddEntry("Administration.Roles.Description", "Definujte a spravujte uživatelské role a oprávnění", "Define and manage user roles and permissions", "Role administration description");
+
             // Common Admin Terms
             AddEntry("Administration.Search", "Hledat", "Search", "Admin search button");
             AddEntry("Administration.Loading", "Načítání...", "Loading...", "Admin loading message");

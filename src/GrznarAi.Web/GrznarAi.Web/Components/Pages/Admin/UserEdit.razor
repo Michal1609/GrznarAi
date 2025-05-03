@@ -176,13 +176,13 @@
                     @if (showPasswordFields)
                     {
                         <div class="mb-3">
-                            <label class="form-label" for="newPassword">Nové heslo</label>
+                            <label class="form-label" for="newPassword">@Localizer.GetString("Administration.Users.Password.New")</label>
                             <InputText id="newPassword" type="password" class="form-control" @bind-Value="model.NewPassword" />
                             <ValidationMessage For="() => model.NewPassword" />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label" for="confirmPassword">Potvrzení hesla</label>
+                            <label class="form-label" for="confirmPassword">@Localizer.GetString("Administration.Users.Password.Confirm")</label>
                             <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="model.ConfirmPassword" />
                             <ValidationMessage For="() => model.ConfirmPassword" />
                         </div>
@@ -191,7 +191,7 @@
                     {
                         <div class="mb-3">
                             <button type="button" class="btn btn-outline-secondary" @onclick="TogglePasswordFields">
-                                <i class="bi bi-key me-2"></i>Změnit heslo
+                                <i class="bi bi-key me-2"></i>@Localizer.GetString("Administration.Users.Password.Change")
                             </button>
                         </div>
                     }
@@ -251,7 +251,7 @@
 
     private class UserEditModel
     {
-        [Required(ErrorMessage = "Uživatelské jméno je povinné")]
+        [Required(ErrorMessage = "Uživatelské jméno je povinné")] // TODO: Použít Localizer
         public string UserName { get; set; } = "";
 
         [Required(ErrorMessage = "Email je povinný")]
@@ -309,7 +309,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Chyba při načítání uživatele: {ex.Message}";
+            errorMessage = string.Format(Localizer.GetString("Administration.Users.LoadError"), ex.Message);
         }
         finally
         {
@@ -355,7 +355,7 @@
             var user = await UserManager.FindByIdAsync(UserId);
             if (user == null)
             {
-                errorMessage = "Uživatel nebyl nalezen.";
+                errorMessage = Localizer.GetString("Administration.Users.NotFound");
                 return;
             }
 
@@ -402,14 +402,14 @@
                 await UserManager.AddToRolesAsync(user, rolesToAdd);
             }
 
-            successMessage = "Uživatel byl úspěšně aktualizován.";
+            successMessage = Localizer.GetString("Administration.Users.UpdateSuccess");
             showPasswordFields = false;
             model.NewPassword = null;
             model.ConfirmPassword = null;
         }
         catch (Exception ex)
         {
-            errorMessage = $"Chyba při ukládání uživatele: {ex.Message}";
+            errorMessage = string.Format(Localizer.GetString("Administration.Users.SaveError"), ex.Message);
         }
         finally
         {
@@ -442,7 +442,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Chyba při načítání oprávnění: {ex.Message}";
+            errorMessage = string.Format(Localizer.GetString("Administration.Users.PermissionsLoadError"), ex.Message);
         }
         finally
         {

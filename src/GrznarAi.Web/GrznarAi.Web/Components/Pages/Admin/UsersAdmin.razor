@@ -8,6 +8,7 @@
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Services
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<IdentityRole> RoleManager
@@ -112,7 +113,10 @@
                                             <button class="btn btn-sm btn-outline-primary" @onclick="() => EditUser(user.Id)">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteUser(user.Id)">
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    @onclick="() => ConfirmDeleteUser(user.Id)" 
+                                                    disabled="@(user.Id == CurrentUserId)"
+                                                    title="@(user.Id == CurrentUserId ? Localizer.GetString("Administration.Users.CannotDeleteSelf") : null)">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -131,6 +135,15 @@
         </div>
     </div>
 </div>
+
+<!-- Error Message -->
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
 
 <!-- Delete Confirmation Dialog -->
 @if (showDeleteConfirmation)
@@ -166,9 +179,22 @@
     private string searchText = "";
     private bool showDeleteConfirmation = false;
     private string? userIdToDelete;
+    private string? errorMessage;
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    
+    private string? CurrentUserId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        // Získání ID aktuálně přihlášeného uživatele
+        if (AuthenticationState != null)
+        {
+            var authState = await AuthenticationState;
+            CurrentUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+        
         await LoadUsersAsync();
     }
 
@@ -245,6 +271,14 @@
 
     private void ConfirmDeleteUser(string userId)
     {
+        // Kontrola, zda admin nezkouší smazat sám sebe
+        if (userId == CurrentUserId)
+        {
+            errorMessage = Localizer.GetString("Administration.Users.CannotDeleteSelf");
+            return;
+        }
+        
+        errorMessage = null;
         userIdToDelete = userId;
         showDeleteConfirmation = true;
     }
@@ -259,6 +293,15 @@
     {
         if (userIdToDelete != null)
         {
+            // Dodatečná kontrola, zda admin nezkouší smazat sám sebe
+            if (userIdToDelete == CurrentUserId)
+            {
+                errorMessage = Localizer.GetString("Administration.Users.CannotDeleteSelf");
+                showDeleteConfirmation = false;
+                userIdToDelete = null;
+                return;
+            }
+            
             var user = await UserManager.FindByIdAsync(userIdToDelete);
             if (user != null)
             {

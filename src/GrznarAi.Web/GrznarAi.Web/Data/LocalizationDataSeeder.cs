@@ -440,6 +440,7 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.Users.LoadError", "Chyba při načítání uživatele: {0}", "Error loading user: {0}", "User loading error message");
             AddEntry("Administration.Users.SaveError", "Chyba při ukládání uživatele: {0}", "Error saving user: {0}", "User saving error message");
             AddEntry("Administration.Users.PermissionsLoadError", "Chyba při načítání oprávnění: {0}", "Error loading permissions: {0}", "Permissions loading error message");
+            AddEntry("Administration.Users.CannotDeleteSelf", "Nemůžete smazat svůj vlastní účet.", "You cannot delete your own account.", "Error message when admin tries to delete themselves");
 
             // --- End of new sections ---
 

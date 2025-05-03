@@ -12,6 +12,7 @@
     <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" Version="8.0.8" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
     <ProjectReference Include="..\GrznarAi.Web.Client\GrznarAi.Web.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.15" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.15" />

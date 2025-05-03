@@ -364,6 +364,83 @@ namespace GrznarAi.Web.Data
             AddEntry("CacheAdmin.Cancel", "Zrušit", "Cancel", "Cancel button");
             AddEntry("CacheAdmin.Confirm", "Potvrdit", "Confirm", "Confirm button");
 
+            // Lokalizační řetězce pro emailové šablony
+            AddEntry("EmailTemplates.Title", "Správa emailových šablon", "Email Templates Management", "Email templates management title");
+            AddEntry("EmailTemplates.Create", "Vytvořit šablonu", "Create Template", "Create template button");
+            AddEntry("EmailTemplates.Edit", "Upravit šablonu", "Edit Template", "Edit template button");
+            AddEntry("EmailTemplates.TemplateKey", "Klíč šablony", "Template Key", "Template key label");
+            AddEntry("EmailTemplates.TemplateKeyHelp", "Unikátní identifikátor šablony používaný v kódu", "Unique identifier of the template used in code", "Template key help text");
+            AddEntry("EmailTemplates.Description", "Popis", "Description", "Description label");
+            AddEntry("EmailTemplates.Placeholders", "Dostupné placeholdery", "Available Placeholders", "Placeholders label");
+            AddEntry("EmailTemplates.PlaceholdersHelp", "Seznam placeholderů oddělených čárkou, např.: 'Name,Email,ConfirmationLink'", "Comma-separated list of placeholders, e.g.: 'Name,Email,ConfirmationLink'", "Placeholders help text");
+            AddEntry("EmailTemplates.Translations", "Překlady", "Translations", "Translations label");
+            AddEntry("EmailTemplates.TranslationsHelp", "Přidejte překlady pro každý podporovaný jazyk", "Add translations for each supported language", "Translations help text");
+            AddEntry("EmailTemplates.Subject", "Předmět", "Subject", "Subject label");
+            AddEntry("EmailTemplates.Body", "Obsah", "Body", "Body label");
+            AddEntry("EmailTemplates.BodyHelp", "Použijte HTML pro formátování obsahu. Placeholdery vložte ve formátu {{PlaceholderName}}", "Use HTML for formatting the content. Insert placeholders in format {{PlaceholderName}}", "Body help text");
+            AddEntry("EmailTemplates.NoTemplates", "Žádné šablony nebyly nalezeny", "No templates found", "No templates message");
+            AddEntry("EmailTemplates.NoTranslations", "Chybí překlady", "No translations", "No translations message");
+            AddEntry("EmailTemplates.NoPlaceholders", "Žádné placeholdery", "No placeholders", "No placeholders message");
+            AddEntry("EmailTemplates.DeleteConfirmation", "Opravdu chcete smazat tuto šablonu? Tato akce je nevratná.", "Are you sure you want to delete this template? This action cannot be undone.", "Delete confirmation message");
+            AddEntry("EmailTemplates.NotFound", "Šablona nebyla nalezena", "Template not found", "Template not found message");
+
+            // Popis emailových šablon v administraci
+            AddEntry("Administration.EmailTemplates.Description", "Správa šablon emailů s podporou více jazyků a placeholderů.", "Manage multilingual email templates with support for placeholders.", "Email templates administration description");
+
+            // Obecné lokalizační řetězce pro tlačítka a akce
+            AddEntry("Common.Save", "Uložit", "Save", "Save button");
+            AddEntry("Common.Saving", "Ukládám...", "Saving...", "Saving message");
+            AddEntry("Common.Back", "Zpět", "Back", "Back button");
+            AddEntry("Common.Edit", "Upravit", "Edit", "Edit button");
+            AddEntry("Common.Delete", "Smazat", "Delete", "Delete button");
+            AddEntry("Common.Actions", "Akce", "Actions", "Actions column header");
+            AddEntry("Common.Loading", "Načítání...", "Loading...", "Loading message");
+
+            // --- Administration Users Seed Data ---
+            AddEntry("Administration.Users.Title", "Administrace uživatelů", "User Administration", "User administration page title");
+            AddEntry("Administration.Users.List", "Seznam uživatelů", "User List", "User list section title");
+            AddEntry("Administration.Users.Create", "Vytvořit uživatele", "Create User", "Create user button");
+            AddEntry("Administration.Users.Filter", "Filtrovat uživatele...", "Filter users...", "Filter users placeholder");
+            AddEntry("Administration.Filter", "Filtrovat", "Filter", "Filter button text");
+            AddEntry("Administration.Reset", "Reset", "Reset", "Reset filter button text");
+            AddEntry("Administration.Users.ManageRoles", "Spravovat role", "Manage Roles", "Manage roles button");
+            AddEntry("Administration.Loading", "Načítání...", "Loading...", "Loading message");
+            AddEntry("Administration.Users.NoUsersFound", "Nebyli nalezeni žádní uživatelé", "No users found", "No users found message");
+            AddEntry("Administration.Users.Username", "Uživatelské jméno", "Username", "Username column header");
+            AddEntry("Administration.Users.Email", "Email", "Email", "Email column header");
+            AddEntry("Administration.Users.EmailConfirmed", "Email potvrzen", "Email Confirmed", "Email confirmed column header");
+            AddEntry("Administration.Users.Roles", "Role", "Roles", "Roles column header");
+            AddEntry("Administration.Actions", "Akce", "Actions", "Actions column header");
+            AddEntry("Administration.Confirmation", "Potvrzení", "Confirmation", "Confirmation dialog title");
+            AddEntry("Administration.Users.ConfirmDelete", "Opravdu chcete smazat tohoto uživatele?", "Are you sure you want to delete this user?", "Delete user confirmation message");
+            AddEntry("Administration.No", "Ne", "No", "No button text");
+            AddEntry("Administration.Yes", "Ano", "Yes", "Yes button text");
+            AddEntry("Administration.Back", "Zpět", "Back", "Back button text");
+            AddEntry("Administration.Users.Edit", "Upravit uživatele", "Edit User", "Edit user page title");
+            AddEntry("Administration.Users.LockoutEnabled", "Povoleno uzamčení", "Lockout Enabled", "Lockout enabled checkbox label");
+            AddEntry("Administration.Permissions.Title", "Oprávnění", "Permissions", "Permissions section title");
+            AddEntry("Administration.Permissions.UserPermissions", "Uživatelská oprávnění", "User Permissions", "User permissions section title");
+            AddEntry("Administration.Permissions.NoPermissions", "Žádná oprávnění", "No permissions", "No permissions message");
+            AddEntry("Administration.Permissions.SelectPermission", "Dostupná oprávnění", "Available Permissions", "Available permissions section title");
+            AddEntry("Administration.Saving", "Ukládání...", "Saving...", "Saving message");
+            AddEntry("Administration.Save", "Uložit", "Save", "Save button text");
+
+            // --- Administration Users Password Management ---
+            AddEntry("Administration.Users.Password.New", "Nové heslo", "New Password", "New password label");
+            AddEntry("Administration.Users.Password.Confirm", "Potvrzení hesla", "Confirm Password", "Confirm password label");
+            AddEntry("Administration.Users.Password.Change", "Změnit heslo", "Change Password", "Change password button");
+            AddEntry("Administration.Users.Password.LengthError", "Heslo musí být dlouhé alespoň {0} znaků.", "Password must be at least {0} characters long.", "Password length validation message");
+            AddEntry("Administration.Users.Password.ComplexityError", "Heslo musí obsahovat velké písmeno, malé písmeno, číslici a speciální znak.", "Password must contain uppercase letter, lowercase letter, digit, and special character.", "Password complexity validation message");
+            AddEntry("Administration.Users.Password.MatchError", "Hesla se neshodují", "Passwords do not match", "Password match validation message");
+            AddEntry("Administration.Users.UsernameRequired", "Uživatelské jméno je povinné", "Username is required", "Username required validation message");
+            AddEntry("Administration.Users.EmailRequired", "Email je povinný", "Email is required", "Email required validation message");
+            AddEntry("Administration.Users.EmailInvalid", "Neplatný formát emailu", "Invalid email format", "Email format validation message");
+            AddEntry("Administration.Users.NotFound", "Uživatel nebyl nalezen.", "User not found.", "User not found message");
+            AddEntry("Administration.Users.UpdateSuccess", "Uživatel byl úspěšně aktualizován.", "User was successfully updated.", "User update success message");
+            AddEntry("Administration.Users.LoadError", "Chyba při načítání uživatele: {0}", "Error loading user: {0}", "User loading error message");
+            AddEntry("Administration.Users.SaveError", "Chyba při ukládání uživatele: {0}", "Error saving user: {0}", "User saving error message");
+            AddEntry("Administration.Users.PermissionsLoadError", "Chyba při načítání oprávnění: {0}", "Error loading permissions: {0}", "Permissions loading error message");
+
             // --- End of new sections ---
 
             // --- End Seed Data --- 
@@ -400,73 +477,7 @@ namespace GrznarAi.Web.Data
                 throw; // Předání chyby dál pro zpracování
             }
 
-            // Přidáme lokalizační řetězce pro emailové šablony
-            var emailTemplatesStrings = new List<LocalizationString>
-            {
-                // České lokalizační řetězce
-                new LocalizationString { Key = "EmailTemplates.Title", LanguageCode = "cs", Value = "Správa emailových šablon" },
-                new LocalizationString { Key = "EmailTemplates.Create", LanguageCode = "cs", Value = "Vytvořit šablonu" },
-                new LocalizationString { Key = "EmailTemplates.Edit", LanguageCode = "cs", Value = "Upravit šablonu" },
-                new LocalizationString { Key = "EmailTemplates.TemplateKey", LanguageCode = "cs", Value = "Klíč šablony" },
-                new LocalizationString { Key = "EmailTemplates.TemplateKeyHelp", LanguageCode = "cs", Value = "Unikátní identifikátor šablony používaný v kódu" },
-                new LocalizationString { Key = "EmailTemplates.Description", LanguageCode = "cs", Value = "Popis" },
-                new LocalizationString { Key = "EmailTemplates.Placeholders", LanguageCode = "cs", Value = "Dostupné placeholdery" },
-                new LocalizationString { Key = "EmailTemplates.PlaceholdersHelp", LanguageCode = "cs", Value = "Seznam placeholderů oddělených čárkou, např.: 'Name,Email,ConfirmationLink'" },
-                new LocalizationString { Key = "EmailTemplates.Translations", LanguageCode = "cs", Value = "Překlady" },
-                new LocalizationString { Key = "EmailTemplates.TranslationsHelp", LanguageCode = "cs", Value = "Přidejte překlady pro každý podporovaný jazyk" },
-                new LocalizationString { Key = "EmailTemplates.Subject", LanguageCode = "cs", Value = "Předmět" },
-                new LocalizationString { Key = "EmailTemplates.Body", LanguageCode = "cs", Value = "Obsah" },
-                new LocalizationString { Key = "EmailTemplates.BodyHelp", LanguageCode = "cs", Value = "Použijte HTML pro formátování obsahu. Placeholdery vložte ve formátu {{PlaceholderName}}" },
-                new LocalizationString { Key = "EmailTemplates.NoTemplates", LanguageCode = "cs", Value = "Žádné šablony nebyly nalezeny" },
-                new LocalizationString { Key = "EmailTemplates.NoTranslations", LanguageCode = "cs", Value = "Chybí překlady" },
-                new LocalizationString { Key = "EmailTemplates.NoPlaceholders", LanguageCode = "cs", Value = "Žádné placeholdery" },
-                new LocalizationString { Key = "EmailTemplates.DeleteConfirmation", LanguageCode = "cs", Value = "Opravdu chcete smazat tuto šablonu? Tato akce je nevratná." },
-                new LocalizationString { Key = "EmailTemplates.NotFound", LanguageCode = "cs", Value = "Šablona nebyla nalezena" },
-
-                // Anglické lokalizační řetězce
-                new LocalizationString { Key = "EmailTemplates.Title", LanguageCode = "en", Value = "Email Templates Management" },
-                new LocalizationString { Key = "EmailTemplates.Create", LanguageCode = "en", Value = "Create Template" },
-                new LocalizationString { Key = "EmailTemplates.Edit", LanguageCode = "en", Value = "Edit Template" },
-                new LocalizationString { Key = "EmailTemplates.TemplateKey", LanguageCode = "en", Value = "Template Key" },
-                new LocalizationString { Key = "EmailTemplates.TemplateKeyHelp", LanguageCode = "en", Value = "Unique identifier of the template used in code" },
-                new LocalizationString { Key = "EmailTemplates.Description", LanguageCode = "en", Value = "Description" },
-                new LocalizationString { Key = "EmailTemplates.Placeholders", LanguageCode = "en", Value = "Available Placeholders" },
-                new LocalizationString { Key = "EmailTemplates.PlaceholdersHelp", LanguageCode = "en", Value = "Comma-separated list of placeholders, e.g.: 'Name,Email,ConfirmationLink'" },
-                new LocalizationString { Key = "EmailTemplates.Translations", LanguageCode = "en", Value = "Translations" },
-                new LocalizationString { Key = "EmailTemplates.TranslationsHelp", LanguageCode = "en", Value = "Add translations for each supported language" },
-                new LocalizationString { Key = "EmailTemplates.Subject", LanguageCode = "en", Value = "Subject" },
-                new LocalizationString { Key = "EmailTemplates.Body", LanguageCode = "en", Value = "Body" },
-                new LocalizationString { Key = "EmailTemplates.BodyHelp", LanguageCode = "en", Value = "Use HTML for formatting the content. Insert placeholders in format {{PlaceholderName}}" },
-                new LocalizationString { Key = "EmailTemplates.NoTemplates", LanguageCode = "en", Value = "No templates found" },
-                new LocalizationString { Key = "EmailTemplates.NoTranslations", LanguageCode = "en", Value = "No translations" },
-                new LocalizationString { Key = "EmailTemplates.NoPlaceholders", LanguageCode = "en", Value = "No placeholders" },
-                new LocalizationString { Key = "EmailTemplates.DeleteConfirmation", LanguageCode = "en", Value = "Are you sure you want to delete this template? This action cannot be undone." },
-                new LocalizationString { Key = "EmailTemplates.NotFound", LanguageCode = "en", Value = "Template not found" },
-
-                // Popis emailových šablon v administraci
-                new LocalizationString { Key = "Administration.EmailTemplates.Description", LanguageCode = "cs", Value = "Správa šablon emailů s podporou více jazyků a placeholderů." },
-                new LocalizationString { Key = "Administration.EmailTemplates.Description", LanguageCode = "en", Value = "Manage multilingual email templates with support for placeholders." },
-
-                // Obecné lokalizační řetězce pro tlačítka a akce
-                new LocalizationString { Key = "Common.Save", LanguageCode = "cs", Value = "Uložit" },
-                new LocalizationString { Key = "Common.Saving", LanguageCode = "cs", Value = "Ukládám..." },
-                new LocalizationString { Key = "Common.Back", LanguageCode = "cs", Value = "Zpět" },
-                new LocalizationString { Key = "Common.Edit", LanguageCode = "cs", Value = "Upravit" },
-                new LocalizationString { Key = "Common.Delete", LanguageCode = "cs", Value = "Smazat" },
-                new LocalizationString { Key = "Common.Actions", LanguageCode = "cs", Value = "Akce" },
-                new LocalizationString { Key = "Common.Loading", LanguageCode = "cs", Value = "Načítání..." },
-
-                new LocalizationString { Key = "Common.Save", LanguageCode = "en", Value = "Save" },
-                new LocalizationString { Key = "Common.Saving", LanguageCode = "en", Value = "Saving..." },
-                new LocalizationString { Key = "Common.Back", LanguageCode = "en", Value = "Back" },
-                new LocalizationString { Key = "Common.Edit", LanguageCode = "en", Value = "Edit" },
-                new LocalizationString { Key = "Common.Delete", LanguageCode = "en", Value = "Delete" },
-                new LocalizationString { Key = "Common.Actions", LanguageCode = "en", Value = "Actions" },
-                new LocalizationString { Key = "Common.Loading", LanguageCode = "en", Value = "Loading..." }
-            };
-
-            await context.LocalizationStrings.AddRangeAsync(emailTemplatesStrings);
-            await context.SaveChangesAsync();
+           
         }
     }
 } 

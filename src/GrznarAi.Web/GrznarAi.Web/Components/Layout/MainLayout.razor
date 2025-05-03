@@ -1,6 +1,8 @@
 ﻿@inherits LayoutComponentBase
 @inject IJSRuntime JSRuntime
 @inject GrznarAi.Web.Services.ILocalizationService Localizer
+@inject NavigationManager NavigationManager
+@implements IDisposable
 
 <div class="page">
     <nav class="navbar navbar-expand-lg fixed-top">
@@ -94,5 +96,27 @@
     private async Task ToggleNavbar()
     {
         await JSRuntime.InvokeVoidAsync("toggleMobileMenu");
+    }
+
+    protected override void OnInitialized()
+    {
+        // Přihlásíme se k odběru události změny navigace - jen pro state management
+        // Hlavní sledování Google Analytics je nyní implementováno čistě v JavaScriptu (gtag.js)
+        // a není závislé na Blazor životním cyklu nebo NavigationManager.LocationChanged události
+        NavigationManager.LocationChanged += HandleLocationChanged;
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Pouze vynutíme překreslení komponenty pro správné zobrazení obsahu
+        // Veškeré sledování Google Analytics je implementováno v gtag.js pomocí
+        // setInterval a popstate událostí pro maximální spolehlivost ve všech prohlížečích
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        // Odhlásíme se z odběru události změny navigace
+        NavigationManager.LocationChanged -= HandleLocationChanged;
     }
 }

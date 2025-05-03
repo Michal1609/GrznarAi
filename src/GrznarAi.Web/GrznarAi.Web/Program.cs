@@ -105,6 +105,9 @@ builder.Services.AddHostedService(sp => (CacheService)sp.GetRequiredService<ICac
 // Register WeatherService
 builder.Services.AddScoped<IWeatherService, WeatherService>();
 
+// Register Google Analytics Service
+builder.Services.AddScoped<GoogleAnalyticsService>();
+
 // Configure Localization
 log.Information("Configure...");
 builder.Services.Configure<RequestLocalizationOptions>(options =>

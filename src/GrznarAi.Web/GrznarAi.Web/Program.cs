@@ -402,8 +402,6 @@ catch (Exception ex)
     log.Error(ex, "Chyba při seedování emailových šablon");
 }
 
-// Import AI News z JSON souboru
-
 // Create admin accout if not exists
 try
 {
@@ -415,37 +413,59 @@ try
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        var admin = await userManager.FindByEmailAsync(adminEmail);
-        if (admin is null)
+        // Nejprve zkontrolujeme, zda existuje role Admin
+        var adminRole = await roleManager.FindByNameAsync(roleName);
+        if (adminRole is null)
         {
-            await userManager.CreateAsync(new ApplicationUser
-            {
-                EmailConfirmed = true,
-                Email = adminEmail,
-                UserName = adminEmail
-            }, pass);
-
-            admin = await userManager.FindByEmailAsync(adminEmail);
-        }
-
-        var role = await roleManager.FindByNameAsync("Admin");
-
-        if (role is null)
-        {
+            log.Information("Vytvářím roli Admin, protože neexistuje");
             await roleManager.CreateAsync(new IdentityRole
             {
                 Name = roleName,
                 NormalizedName = roleName.ToUpperInvariant()
             });
+            
+            adminRole = await roleManager.FindByNameAsync(roleName);
         }
-        ;
 
-        await userManager.AddToRoleAsync(admin, roleName);
+        // Zjistíme, zda existuje nějaký uživatel s rolí Admin
+        var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+        var usersInRole = await userManager.GetUsersInRoleAsync(roleName);
+        
+        if (usersInRole == null || !usersInRole.Any())
+        {
+            log.Information("Neexistuje žádný uživatel s rolí Admin. Vytvářím výchozího administrátora.");
+            
+            // Vytvoření nového administrátora
+            var admin = new ApplicationUser
+            {
+                EmailConfirmed = true,
+                Email = adminEmail,
+                UserName = adminEmail
+            };
+            
+            var result = await userManager.CreateAsync(admin, pass);
+            
+            if (result.Succeeded)
+            {
+                log.Information("Admin účet byl úspěšně vytvořen.");
+                await userManager.AddToRoleAsync(admin, roleName);
+                log.Information("Admin role byla přiřazena uživateli.");
+            }
+            else
+            {
+                log.Error("Nepodařilo se vytvořit admin účet: {Errors}", 
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+        }
+        else
+        {
+            log.Information("Administrátoři již existují v systému. Přeskakuji vytváření výchozího admina.");
+        }
     }
 }
 catch (Exception ex)
 {
-    log.Error(ex, "Chyba při vytváření administrátorského účtu");
+    log.Error(ex, "Chyba při kontrole/vytváření administrátorského účtu");
 }
 
 // Vytvoření výchozího API klíče, pokud není žádný v databázi

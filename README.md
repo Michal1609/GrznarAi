@@ -200,6 +200,39 @@ Aplikace poskytuje API pro správu AI novinek:
 - 🛑 Deaktivace nepoužívaných API klíčů
 - 🧹 Odstranění nepotřebných API klíčů
 
+## Twitter Integration (nová funkce!)
+
+Aplikace nyní obsahuje integraci s Twitterem pro automatické odesílání tweetů o novinkách:
+
+- 🐦 Automatické tweety při přidání nových AI novinek
+- 📣 Tweety při publikaci nových blogů
+- 🖼️ Podpora odesílání tweetů s obrázky
+- 🔑 Zabezpečení přes OAuth 1.0a a user secrets
+- 🌐 Konfigurovatelné URL pro odkazy v tweetech
+
+### Konfigurace Twitter integrace
+
+Pro zabezpečení se Twitter API přístupové údaje ukládají do user secrets:
+
+```bash
+cd src/GrznarAi.Web/GrznarAi.Web
+dotnet user-secrets set "TwitterSettings:ApiKey" "VÁŠ-API-KEY"
+dotnet user-secrets set "TwitterSettings:ApiKeySecret" "VÁŠ-API-KEY-SECRET"
+dotnet user-secrets set "TwitterSettings:AccessToken" "VÁŠ-ACCESS-TOKEN"
+dotnet user-secrets set "TwitterSettings:AccessTokenSecret" "VÁŠ-ACCESS-TOKEN-SECRET"
+dotnet user-secrets set "TwitterSettings:AiNewsUrl" "https://vaše-doména.cz/ai-news"
+dotnet user-secrets set "TwitterSettings:AiNewsImagePath" "wwwroot/images/UniverzalAiNews.jpg"
+```
+
+### Implementace Twitter integrace
+
+Twitter integrace je implementována pomocí knihovny RestSharp pro komunikaci s Twitter API:
+
+- Automatické odesílání tweetů při přidání nových AI novinek
+- Podpora textových tweetů i tweetů s obrázky
+- OAuth 1.0a autentizace pro Twitter API
+- Konfigurovatelné cesty k obrázkům a URL
+
 ## Globální nastavení (nová funkce!)
 
 Aplikace nyní obsahuje systém pro správu globálních nastavení přes administrační rozhraní. Hlavní funkce:

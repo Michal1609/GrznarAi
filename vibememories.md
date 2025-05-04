@@ -704,3 +704,67 @@ Pro řešení chyb překladu lambda výrazů v Blazoru:
    ```
 
 Tento přístup eliminuje problémy s parsováním lambda výrazů během kompilace Blazor komponent a poskytuje čistší, typově bezpečný kód.
+
+## Twitter Integration
+
+### Overview
+The application includes Twitter integration to automatically post tweets when new AI news items are added or when new blog posts are published. The tweets can include text and images.
+
+### Implementation
+Twitter integration is implemented using the RestSharp library for making API calls with OAuth 1.0a authentication. The implementation includes:
+
+- `TwitterService` class for posting tweets
+- Support for text-only tweets and tweets with media
+- Special methods for posting AI news and blog updates
+- Configurable URL shortening for better tweet appearance
+
+### Security
+For security, all Twitter API credentials have been moved to user secrets instead of storing them in appsettings.json:
+
+```bash
+dotnet user-secrets set "TwitterSettings:ApiKey" "your-api-key-here"
+dotnet user-secrets set "TwitterSettings:ApiKeySecret" "your-api-key-secret-here"
+dotnet user-secrets set "TwitterSettings:AccessToken" "your-access-token-here"
+dotnet user-secrets set "TwitterSettings:AccessTokenSecret" "your-access-token-secret-here"
+dotnet user-secrets set "TwitterSettings:AiNewsUrl" "https://yourdomain.com/ai-news"
+dotnet user-secrets set "TwitterSettings:AiNewsImagePath" "wwwroot/images/UniverzalAiNews.jpg"
+```
+
+### Configuration
+Twitter integration requires these settings in user secrets under the `TwitterSettings` section:
+
+- `ApiKey`: Twitter API key
+- `ApiKeySecret`: Twitter API key secret
+- `AccessToken`: Twitter access token
+- `AccessTokenSecret`: Twitter access token secret
+- `AiNewsUrl`: URL to your AI news page
+- `AiNewsImagePath`: Path to the default image for AI news tweets
+
+### Obtaining Twitter API Credentials
+To obtain these credentials:
+1. Create a Twitter Developer account at [developer.twitter.com](https://developer.twitter.com)
+2. Create a Twitter project and app
+3. Apply for Elevated access if needed for media uploads
+4. Generate consumer keys (API key and secret)
+5. Generate access token and secret for your account
+
+### Usage
+TwitterService can be injected into any component or service:
+
+```csharp
+private readonly ITwitterService _twitterService;
+
+public Constructor(ITwitterService twitterService)
+{
+    _twitterService = twitterService;
+}
+
+// Post a simple text tweet
+await _twitterService.PostTweetAsync("Hello, world!");
+
+// Post tweet with image
+await _twitterService.PostTweetWithImageAsync("Hello with image!", "path/to/image.jpg");
+
+// Post about new AI news
+await _twitterService.PostAiNewsAsync("Exciting new AI development", "Title of news");
+```

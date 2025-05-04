@@ -15,15 +15,18 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
     public class AiNewsItemsController : ControllerBase
     {
         private readonly IAiNewsService _newsService;
+        private readonly ITwitterService _twitterService;
         private readonly ILogger<AiNewsItemsController> _logger;
 
         public AiNewsItemsController(
             IAiNewsService newsService,
+            ITwitterService twitterService,
             ILogger<AiNewsItemsController> logger)
         {
             _newsService = newsService;
+            _twitterService = twitterService;
             _logger = logger;
-        }
+        }       
 
         /// <summary>
         /// Přidá nové AI novinky
@@ -75,6 +78,30 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
             
             _logger.LogInformation("Přidáno {AddedCount} AI novinek, přeskočeno {SkippedCount} duplicitních položek", 
                 addedCount, skippedCount);
+            
+            // Pokud byly přidány nějaké novinky, pošleme tweet
+            if (addedCount > 0)
+            {
+                try
+                {
+                    // Odešleme tweet o nových AI novinkách
+                    var tweetResult = await _twitterService.PostNewAiNewsAnnouncementAsync(addedCount);
+                    
+                    if (tweetResult)
+                    {
+                        _logger.LogInformation("Tweet o nových AI novinkách úspěšně odeslán");
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Nepodařilo se odeslat tweet o nových AI novinkách");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Nechceme, aby chyba při odesílání tweetu ovlivnila výsledek API volání
+                    _logger.LogError(ex, "Chyba při odesílání tweetu o nových AI novinkách");
+                }
+            }
             
             return Ok(new { 
                 itemsRequested = requestedCount,

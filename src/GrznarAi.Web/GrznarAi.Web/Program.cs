@@ -14,6 +14,7 @@ using Microsoft.Extensions.Options;
 using System.Text.Json;
 using GrznarAi.Web.Models;
 using Serilog;
+using GrznarAi.Web.Core.Options;
 
 var log = new LoggerConfiguration()
     .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
@@ -72,6 +73,10 @@ builder.Services.AddScoped<IAiNewsErrorService, AiNewsErrorService>();
 
 // Register AiNewsSourceService
 builder.Services.AddScoped<IAiNewsSourceService, AiNewsSourceService>();
+
+// Register Twitter Service and settings
+builder.Services.Configure<TwitterSettings>(builder.Configuration.GetSection("TwitterSettings"));
+builder.Services.AddScoped<ITwitterService, TwitterService>();
 
 // Register GitHubService (using Octokit)
 // Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();

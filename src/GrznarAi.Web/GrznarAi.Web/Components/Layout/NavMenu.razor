@@ -66,7 +66,7 @@
     <!-- End Applications Section -->
 
     <!-- Administration Section -->
-    <AuthorizeView>
+    <AuthorizeView Roles="Admin">
         <Authorized>
             <li class="nav-item">
                 <NavLink class="nav-link" href="admin/administration">
@@ -173,20 +173,30 @@
     {
         try
         {
-            // Administrátoři mají všechny oprávnění - zjednodušená kontrola
-            var user = AuthStateTask?.Result?.User;
-            if (user != null && user.Identity?.IsAuthenticated == true && user.IsInRole("Admin"))
+            // Pokud je k dispozici Task<AuthenticationState>
+            if (AuthStateTask == null)
+                return false;
+
+            var user = AuthStateTask.Result?.User;
+            if (user == null || !user.Identity?.IsAuthenticated == true)
+                return false;
+
+            // Administrátoři mají všechna oprávnění
+            if (user.IsInRole("Admin"))
                 return true;
             
-            // Pro uživatele bez Admin role defaultně povolíme všechna oprávnění
-            // Toto je dočasné řešení pro zjištění, co způsobuje problém
-            return true;
+            // Pro ostatní uživatele zkontrolujeme oprávnění synchronně
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return false;
+
+            // Použijeme Task.Run místo GetAwaiter().GetResult() pro bezpečnější volání
+            return Task.Run(() => PermissionService.UserHasPermissionAsync(userId, permissionKey)).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Chyba při ověřování oprávnění: {ex.Message}");
-            // V případě chyby vrátíme true, aby se aplikace nezasekla
-            return true;
+            return false; // V případě chyby raději nepovolíme
         }
     }
 

@@ -13,281 +13,307 @@
 @inject ILocalizationService Localizer
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject IPermissionService PermissionService
 
 <PageTitle>@Localizer.GetString("Notes.Title")</PageTitle>
 
-<div class="container-fluid mt-3">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">@Localizer.GetString("Notes.Categories")</h4>
-                    <button class="btn btn-sm btn-light" @onclick="() => ShowCategoryModal()">
-                        <i class="bi bi-plus-circle"></i>
+@if (isLoading)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">@Localizer.GetString("Notes.Loading")</span>
+        </div>
+        <p class="mt-2">@Localizer.GetString("Notes.Loading")</p>
+    </div>
+}
+else if (!hasPermission)
+{
+    <div class="alert alert-danger mt-4">
+        <h4 class="alert-heading">@Localizer.GetString("Notes.NoPermission")</h4>
+        <p>@Localizer.GetString("Notes.NoPermission")</p>
+        <hr>
+        <p class="mb-0">
+            <a href="/" class="btn btn-outline-primary">
+                <i class="bi bi-house-door"></i> @Localizer.GetString("NavMenu.Home")
+            </a>
+        </p>
+    </div>
+}
+else
+{
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 mb-3">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">@Localizer.GetString("Notes.Categories")</h4>
+                        <button class="btn btn-sm btn-light" @onclick="() => ShowCategoryModal()">
+                            <i class="bi bi-plus-circle"></i>
+                        </button>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <button type="button" 
+                            class="list-group-item list-group-item-action @(selectedCategoryId == null ? "active" : "")"
+                            @onclick="() => SelectCategory(null)">
+                            <i class="bi bi-journals me-2"></i> @Localizer.GetString("Notes.AllNotes")
+                        </button>
+                        
+                        @if (isLoading)
+                        {
+                            <div class="list-group-item text-center">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">@Localizer.GetString("Notes.Loading")</span>
+                                </div>
+                            </div>
+                        }
+                        else if (!categories.Any())
+                        {
+                            <div class="list-group-item text-center text-muted">
+                                @Localizer.GetString("Notes.NoCategories")
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var category in categories)
+                            {
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(selectedCategoryId == category.Id ? "active" : "")">
+                                    <div class="d-flex align-items-center" style="flex: 1; min-width: 0;" @onclick="() => SelectCategory(category.Id)">
+                                        <i class="bi bi-tag me-2"></i>
+                                        <span class="text-truncate">@category.Name</span>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditCategory(category)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategory(category.Id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main content -->
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="mb-0 me-2">@Localizer.GetString("Notes.Title")</h4>
+                        <div class="d-flex flex-grow-1 gap-2">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="@Localizer.GetString("Notes.Search")" 
+                                    @bind="searchText" @bind:event="oninput" @onkeyup="HandleSearch" />
+                                <button class="btn btn-light" @onclick="SearchNotes">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <button class="btn btn-light text-nowrap" style="min-width: 160px;" @onclick="() => ShowNoteModal()">
+                                <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.New")
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (isLoading)
+                        {
+                            <div class="text-center my-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">@Localizer.GetString("Notes.Loading")</span>
+                                </div>
+                                <p class="mt-2">@Localizer.GetString("Notes.Loading")</p>
+                            </div>
+                        }
+                        else if (!notes.Any())
+                        {
+                            <div class="text-center my-5">
+                                <i class="bi bi-journal-text display-1 text-muted"></i>
+                                <p class="lead mt-3">@Localizer.GetString("Notes.NoNotes")</p>
+                                <button class="btn btn-primary mt-3" @onclick="() => ShowNoteModal()">
+                                    <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.CreateFirst")
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                                @foreach (var note in notes)
+                                {
+                                    <div class="col">
+                                        <div class="card h-100 note-card">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="card-title mb-0 text-truncate">@note.Title</h5>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-link text-dark" type="button" data-bs-toggle="dropdown">
+                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li><button class="dropdown-item" @onclick="() => EditNote(note)"><i class="bi bi-pencil me-2"></i>@Localizer.GetString("Notes.Edit")</button></li>
+                                                        <li><button class="dropdown-item" @onclick="() => ManageNoteCategories(note)"><i class="bi bi-tags me-2"></i>@Localizer.GetString("Notes.ManageCategories")</button></li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><button class="dropdown-item text-danger" @onclick="() => DeleteNote(note.Id)"><i class="bi bi-trash me-2"></i>@Localizer.GetString("Notes.Delete")</button></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text note-content">@((MarkupString)FormatContent(note.Content))</p>
+                                            </div>
+                                            <div class="card-footer d-flex justify-content-between align-items-center text-muted">
+                                                <small>@FormatDate(note.UpdatedAt)</small>
+                                                @if (note.Categories.Any())
+                                                {
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        @foreach (var category in note.Categories.Take(3))
+                                                        {
+                                                            <span class="badge bg-secondary">@category.Name</span>
+                                                        }
+                                                        @if (note.Categories.Count > 3)
+                                                        {
+                                                            <span class="badge bg-secondary">+@(note.Categories.Count - 3)</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div class="modal fade @(isNoteModalVisible ? "show" : "")" tabindex="-1" style="@(isNoteModalVisible ? "display: block;" : "display: none;")" 
+        role="dialog" aria-hidden="@(!isNoteModalVisible)">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(currentNote.Id == 0 ? Localizer.GetString("Notes.AddNew") : Localizer.GetString("Notes.Edit"))</h5>
+                    <button type="button" class="btn-close" @onclick="CloseNoteModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="noteTitle" class="form-label">@Localizer.GetString("Notes.Title")</label>
+                        <input type="text" class="form-control" id="noteTitle" @bind="currentNote.Title" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="noteContent" class="form-label">@Localizer.GetString("Notes.Content")</label>
+                        <textarea class="form-control" id="noteContent" rows="10" @bind="currentNote.Content"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseNoteModal">@Localizer.GetString("Notes.Cancel")</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveNote" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        @Localizer.GetString("Notes.Save")
                     </button>
                 </div>
-                <div class="list-group list-group-flush">
-                    <button type="button" 
-                        class="list-group-item list-group-item-action @(selectedCategoryId == null ? "active" : "")"
-                        @onclick="() => SelectCategory(null)">
-                        <i class="bi bi-journals me-2"></i> @Localizer.GetString("Notes.AllNotes")
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade @(isNoteModalVisible ? "show" : "")" style="@(isNoteModalVisible ? "display: block;" : "display: none;")"></div>
+
+    <!-- Category Modal -->
+    <div class="modal fade @(isCategoryModalVisible ? "show" : "")" tabindex="-1" style="@(isCategoryModalVisible ? "display: block;" : "display: none;")" 
+        role="dialog" aria-hidden="@(!isCategoryModalVisible)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(currentCategory.Id == 0 ? Localizer.GetString("Notes.Categories.AddNew") : Localizer.GetString("Notes.Categories.Edit"))</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCategoryModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">@Localizer.GetString("Notes.Categories.Name")</label>
+                        <input type="text" class="form-control" id="categoryName" @bind="currentCategory.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">@Localizer.GetString("Notes.Categories.Description")</label>
+                        <textarea class="form-control" id="categoryDescription" rows="3" @bind="currentCategory.Description"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">@Localizer.GetString("Notes.Cancel")</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveCategory" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        @Localizer.GetString("Notes.Save")
                     </button>
-                    
-                    @if (isLoading)
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade @(isCategoryModalVisible ? "show" : "")" style="@(isCategoryModalVisible ? "display: block;" : "display: none;")"></div>
+
+    <!-- Note Categories Modal -->
+    <div class="modal fade @(isNoteCategoriesModalVisible ? "show" : "")" tabindex="-1" style="@(isNoteCategoriesModalVisible ? "display: block;" : "display: none;")" 
+        role="dialog" aria-hidden="@(!isNoteCategoriesModalVisible)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Localizer.GetString("Notes.ManageCategories"): @noteCategoriesNote?.Title</h5>
+                    <button type="button" class="btn-close" @onclick="CloseNoteCategoriesModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!categories.Any())
                     {
-                        <div class="list-group-item text-center">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                <span class="visually-hidden">@Localizer.GetString("Notes.Loading")</span>
-                            </div>
-                        </div>
-                    }
-                    else if (!categories.Any())
-                    {
-                        <div class="list-group-item text-center text-muted">
+                        <div class="alert alert-info">
                             @Localizer.GetString("Notes.NoCategories")
                         </div>
                     }
                     else
                     {
-                        @foreach (var category in categories)
-                        {
-                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(selectedCategoryId == category.Id ? "active" : "")">
-                                <div class="d-flex align-items-center" style="flex: 1; min-width: 0;" @onclick="() => SelectCategory(category.Id)">
-                                    <i class="bi bi-tag me-2"></i>
-                                    <span class="text-truncate">@category.Name</span>
-                                </div>
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditCategory(category)">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategory(category.Id)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        }
-                    }
-                </div>
-            </div>
-        </div>
-        
-        <!-- Main content -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
-                    <h4 class="mb-0 me-2">@Localizer.GetString("Notes.Title")</h4>
-                    <div class="d-flex flex-grow-1 gap-2">
-                        <div class="input-group">
-                            <input type="text" class="form-control" placeholder="@Localizer.GetString("Notes.Search")" 
-                                   @bind="searchText" @bind:event="oninput" @onkeyup="HandleSearch" />
-                            <button class="btn btn-light" @onclick="SearchNotes">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                        <button class="btn btn-light text-nowrap" style="min-width: 160px;" @onclick="() => ShowNoteModal()">
-                            <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.New")
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    @if (isLoading)
-                    {
-                        <div class="text-center my-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">@Localizer.GetString("Notes.Loading")</span>
-                            </div>
-                            <p class="mt-2">@Localizer.GetString("Notes.Loading")</p>
-                        </div>
-                    }
-                    else if (!notes.Any())
-                    {
-                        <div class="text-center my-5">
-                            <i class="bi bi-journal-text display-1 text-muted"></i>
-                            <p class="lead mt-3">@Localizer.GetString("Notes.NoNotes")</p>
-                            <button class="btn btn-primary mt-3" @onclick="() => ShowNoteModal()">
-                                <i class="bi bi-plus-circle me-2"></i>@Localizer.GetString("Notes.CreateFirst")
-                            </button>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-                            @foreach (var note in notes)
+                        <div class="list-group">
+                            @foreach (var category in categories)
                             {
-                                <div class="col">
-                                    <div class="card h-100 note-card">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h5 class="card-title mb-0 text-truncate">@note.Title</h5>
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm btn-link text-dark" type="button" data-bs-toggle="dropdown">
-                                                    <i class="bi bi-three-dots-vertical"></i>
-                                                </button>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li><button class="dropdown-item" @onclick="() => EditNote(note)"><i class="bi bi-pencil me-2"></i>@Localizer.GetString("Notes.Edit")</button></li>
-                                                    <li><button class="dropdown-item" @onclick="() => ManageNoteCategories(note)"><i class="bi bi-tags me-2"></i>@Localizer.GetString("Notes.ManageCategories")</button></li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li><button class="dropdown-item text-danger" @onclick="() => DeleteNote(note.Id)"><i class="bi bi-trash me-2"></i>@Localizer.GetString("Notes.Delete")</button></li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                        <div class="card-body">
-                                            <p class="card-text note-content">@((MarkupString)FormatContent(note.Content))</p>
-                                        </div>
-                                        <div class="card-footer d-flex justify-content-between align-items-center text-muted">
-                                            <small>@FormatDate(note.UpdatedAt)</small>
-                                            @if (note.Categories.Any())
-                                            {
-                                                <div class="d-flex flex-wrap gap-1">
-                                                    @foreach (var category in note.Categories.Take(3))
-                                                    {
-                                                        <span class="badge bg-secondary">@category.Name</span>
-                                                    }
-                                                    @if (note.Categories.Count > 3)
-                                                    {
-                                                        <span class="badge bg-secondary">+@(note.Categories.Count - 3)</span>
-                                                    }
-                                                </div>
-                                            }
-                                        </div>
+                                bool isAssigned = noteCategoriesNote?.Categories.Any(c => c.Id == category.Id) ?? false;
+                                <div class="list-group-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               checked="@isAssigned" 
+                                               @onchange="e => ToggleNoteCategory(category.Id, (bool)e.Value!)" 
+                                               id="category_@category.Id" />
+                                        <label class="form-check-label" for="category_@category.Id">
+                                            @category.Name
+                                        </label>
                                     </div>
                                 </div>
                             }
                         </div>
                     }
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Note Modal -->
-<div class="modal fade @(isNoteModalVisible ? "show" : "")" tabindex="-1" style="@(isNoteModalVisible ? "display: block;" : "display: none;")" 
-     role="dialog" aria-hidden="@(!isNoteModalVisible)">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">@(currentNote.Id == 0 ? Localizer.GetString("Notes.AddNew") : Localizer.GetString("Notes.Edit"))</h5>
-                <button type="button" class="btn-close" @onclick="CloseNoteModal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="noteTitle" class="form-label">@Localizer.GetString("Notes.Title")</label>
-                    <input type="text" class="form-control" id="noteTitle" @bind="currentNote.Title" />
-                </div>
-                <div class="mb-3">
-                    <label for="noteContent" class="form-label">@Localizer.GetString("Notes.Content")</label>
-                    <textarea class="form-control" id="noteContent" rows="10" @bind="currentNote.Content"></textarea>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" @onclick="CloseNoteCategoriesModal">@Localizer.GetString("Notes.Done")</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" @onclick="CloseNoteModal">@Localizer.GetString("Notes.Cancel")</button>
-                <button type="button" class="btn btn-primary" @onclick="SaveNote" disabled="@isSaving">
-                    @if (isSaving)
-                    {
-                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    }
-                    @Localizer.GetString("Notes.Save")
-                </button>
-            </div>
         </div>
     </div>
-</div>
-<div class="modal-backdrop fade @(isNoteModalVisible ? "show" : "")" style="@(isNoteModalVisible ? "display: block;" : "display: none;")"></div>
+    <div class="modal-backdrop fade @(isNoteCategoriesModalVisible ? "show" : "")" style="@(isNoteCategoriesModalVisible ? "display: block;" : "display: none;")"></div>
 
-<!-- Category Modal -->
-<div class="modal fade @(isCategoryModalVisible ? "show" : "")" tabindex="-1" style="@(isCategoryModalVisible ? "display: block;" : "display: none;")" 
-     role="dialog" aria-hidden="@(!isCategoryModalVisible)">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">@(currentCategory.Id == 0 ? Localizer.GetString("Notes.Categories.AddNew") : Localizer.GetString("Notes.Categories.Edit"))</h5>
-                <button type="button" class="btn-close" @onclick="CloseCategoryModal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="categoryName" class="form-label">@Localizer.GetString("Notes.Categories.Name")</label>
-                    <input type="text" class="form-control" id="categoryName" @bind="currentCategory.Name" />
+    <!-- Alert Toast -->
+    @if (!string.IsNullOrEmpty(alertMessage))
+    {
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+            <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header @alertClass">
+                    <strong class="me-auto text-white">@Localizer.GetString("Notes.Notification")</strong>
+                    <button type="button" class="btn-close" @onclick="() => alertMessage = null"></button>
                 </div>
-                <div class="mb-3">
-                    <label for="categoryDescription" class="form-label">@Localizer.GetString("Notes.Categories.Description")</label>
-                    <textarea class="form-control" id="categoryDescription" rows="3" @bind="currentCategory.Description"></textarea>
+                <div class="toast-body">
+                    @alertMessage
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">@Localizer.GetString("Notes.Cancel")</button>
-                <button type="button" class="btn btn-primary" @onclick="SaveCategory" disabled="@isSaving">
-                    @if (isSaving)
-                    {
-                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    }
-                    @Localizer.GetString("Notes.Save")
-                </button>
-            </div>
         </div>
-    </div>
-</div>
-<div class="modal-backdrop fade @(isCategoryModalVisible ? "show" : "")" style="@(isCategoryModalVisible ? "display: block;" : "display: none;")"></div>
-
-<!-- Note Categories Modal -->
-<div class="modal fade @(isNoteCategoriesModalVisible ? "show" : "")" tabindex="-1" style="@(isNoteCategoriesModalVisible ? "display: block;" : "display: none;")" 
-     role="dialog" aria-hidden="@(!isNoteCategoriesModalVisible)">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">@Localizer.GetString("Notes.ManageCategories"): @noteCategoriesNote?.Title</h5>
-                <button type="button" class="btn-close" @onclick="CloseNoteCategoriesModal"></button>
-            </div>
-            <div class="modal-body">
-                @if (!categories.Any())
-                {
-                    <div class="alert alert-info">
-                        @Localizer.GetString("Notes.NoCategories")
-                    </div>
-                }
-                else
-                {
-                    <div class="list-group">
-                        @foreach (var category in categories)
-                        {
-                            bool isAssigned = noteCategoriesNote?.Categories.Any(c => c.Id == category.Id) ?? false;
-                            <div class="list-group-item">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" 
-                                           checked="@isAssigned" 
-                                           @onchange="e => ToggleNoteCategory(category.Id, (bool)e.Value!)" 
-                                           id="category_@category.Id" />
-                                    <label class="form-check-label" for="category_@category.Id">
-                                        @category.Name
-                                    </label>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" @onclick="CloseNoteCategoriesModal">@Localizer.GetString("Notes.Done")</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal-backdrop fade @(isNoteCategoriesModalVisible ? "show" : "")" style="@(isNoteCategoriesModalVisible ? "display: block;" : "display: none;")"></div>
-
-<!-- Alert Toast -->
-@if (!string.IsNullOrEmpty(alertMessage))
-{
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
-        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header @alertClass">
-                <strong class="me-auto text-white">@Localizer.GetString("Notes.Notification")</strong>
-                <button type="button" class="btn-close" @onclick="() => alertMessage = null"></button>
-            </div>
-            <div class="toast-body">
-                @alertMessage
-            </div>
-        </div>
-    </div>
+    }
 }
 
 @code {
@@ -306,23 +332,61 @@
     private bool isNoteCategoriesModalVisible = false;
     private string? alertMessage;
     private string alertClass = "";
+    private bool hasPermission = false;
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity?.IsAuthenticated != true)
+        try
         {
-            NavigationManager.NavigateTo("/Account/Login");
-            return;
+            // Zjistíme, zda má uživatel oprávnění pro Notes
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                
+                // Administrátoři mají všechna oprávnění
+                if (user.IsInRole("Admin"))
+                {
+                    hasPermission = true;
+                }
+                else
+                {
+                    // Ověříme specifické oprávnění App.Notes
+                    hasPermission = await PermissionService.UserHasPermissionAsync(userId, "App.Notes");
+                }
+                
+                // Pouze pokud má uživatel oprávnění, načteme data
+                if (hasPermission)
+                {
+                    await LoadData();
+                }
+            }
+            
+            isLoading = false;
         }
-
-        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId != null)
+        catch (Exception ex)
         {
+            isLoading = false;
+            hasPermission = false;
+            Console.WriteLine($"Chyba při inicializaci stránky Notes: {ex.Message}");
+        }
+    }
+
+    private async Task LoadData()
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+        
+        try
+        {
+            isLoading = true;
             await LoadCategories();
             await LoadNotes();
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
@@ -337,15 +401,7 @@
             if (selectedCategoryId.HasValue)
             {
                 var category = await NoteService.GetCategoryAsync(selectedCategoryId.Value, userId);
-                notes = category?.Notes.ToList() ?? new List<Note>();
-                
-                if (!string.IsNullOrWhiteSpace(searchText))
-                {
-                    notes = notes.Where(n => 
-                        n.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) || 
-                        n.Content.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-                }
+                notes = category?.Notes?.ToList() ?? new List<Note>();
             }
             else
             {
@@ -356,6 +412,7 @@
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Chyba při načítání poznámek: {ex.Message}");
             ShowAlert(ex.Message, "bg-danger");
         }
         finally
@@ -375,6 +432,7 @@
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Chyba při načítání kategorií: {ex.Message}");
             ShowAlert(ex.Message, "bg-danger");
         }
         finally
@@ -386,7 +444,7 @@
     private async Task SelectCategory(int? categoryId)
     {
         selectedCategoryId = categoryId;
-        await LoadNotes();
+        await LoadData();
     }
 
     private async Task HandleSearch(KeyboardEventArgs e)
@@ -399,7 +457,7 @@
 
     private async Task SearchNotes()
     {
-        await LoadNotes();
+        await LoadData();
     }
 
     private string FormatContent(string content)
@@ -473,7 +531,7 @@
                     "bg-success");
                 
                 CloseNoteModal();
-                await LoadNotes();
+                await LoadData();
             }
             else
             {
@@ -510,7 +568,7 @@
             if (success)
             {
                 ShowAlert(Localizer.GetString("Notes.Deleted"), "bg-success");
-                await LoadNotes();
+                await LoadData();
             }
             else
             {
@@ -626,7 +684,7 @@
                 }
                 
                 await LoadCategories();
-                await LoadNotes();
+                await LoadData();
             }
             else
             {
@@ -681,7 +739,7 @@
             {
                 // Obnovit poznámku pro aktualizaci zobrazení
                 noteCategoriesNote = await NoteService.GetNoteAsync(noteCategoriesNote.Id, userId);
-                await LoadNotes();
+                await LoadData();
             }
             else
             {

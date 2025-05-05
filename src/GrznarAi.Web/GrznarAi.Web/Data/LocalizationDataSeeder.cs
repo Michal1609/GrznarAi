@@ -444,6 +444,61 @@ namespace GrznarAi.Web.Data
 
             // --- End of new sections ---
 
+            // --- Administration WeatherHistory --- 
+            AddEntry("Administration.WeatherHistory.Title", "Správa historie počasí", "Weather History Management", "Weather history admin page title");
+            AddEntry("Administration.WeatherHistory.Description", "Importujte historická data z CSV souborů nebo stáhněte aktuální data z Ecowitt API.", "Import historical data from CSV files or fetch current data from Ecowitt API.", "Weather history admin page description");
+            AddEntry("Administration.WeatherHistory.ImportCsv", "Import CSV souborů", "Import CSV Files", "CSV import section title");
+            AddEntry("Administration.WeatherHistory.ImportDescription", "Nahrání CSV souborů s historickými daty meteostanice. Soubory musí mít správný formát s hlavičkou a oddělovačem středníkem.", "Upload CSV files containing weather station historical data. Files must have correct format with header and semicolon separator.", "CSV import section description");
+            AddEntry("Administration.WeatherHistory.UploadFiles", "Nahrát soubory", "Upload Files", "Upload button text");
+            AddEntry("Administration.WeatherHistory.SelectedFiles", "Vybrané soubory", "Selected Files", "Selected files label");
+            AddEntry("Administration.WeatherHistory.UploadSuccess", "Úspěšně nahráno", "Successfully uploaded", "Upload success message");
+            AddEntry("Administration.WeatherHistory.UploadError", "Chyba při nahrávání", "Error uploading", "Upload error message");
+            AddEntry("Administration.WeatherHistory.ProcessedSuccessfully", "Úspěšně zpracováno", "Processed successfully", "File processed successfully message");
+            AddEntry("Administration.WeatherHistory.ProcessingError", "Chyba při zpracování", "Processing error", "File processing error message");
+            AddEntry("Administration.WeatherHistory.FileTooLarge", "Soubor je příliš velký", "File is too large", "File too large message");
+            AddEntry("Administration.WeatherHistory.FetchData", "Stažení dat z Ecowitt API", "Fetch Data from Ecowitt API", "Fetch data section title");
+            AddEntry("Administration.WeatherHistory.FetchDescription", "Stáhněte aktuální data z Ecowitt API. Data budou stažena od posledního záznamu v databázi.", "Fetch current data from Ecowitt API. Data will be fetched from the last record in database.", "Fetch data section description");
+            AddEntry("Administration.WeatherHistory.FetchButton", "Stáhnout data", "Fetch Data", "Fetch data button text");
+            AddEntry("Administration.WeatherHistory.FetchSuccess", "Data byla úspěšně stažena", "Data was successfully fetched", "Successful fetch message");
+            AddEntry("Administration.WeatherHistory.FetchError", "Chyba při stahování dat", "Error fetching data", "Fetch error message");
+            AddEntry("Administration.WeatherHistory.Stats", "Statistika", "Statistics", "Statistics section title");
+            AddEntry("Administration.WeatherHistory.LastRecord", "Poslední záznam", "Last record", "Last weather record date label");
+            AddEntry("Administration.WeatherHistory.TotalRecords", "Celkem záznamů", "Total records", "Total weather records count label");
+            AddEntry("Administration.WeatherHistory.NoRecords", "Žádné záznamy v databázi", "No records in database", "No weather records found message");
+            AddEntry("Common.Uploading", "Nahrávám", "Uploading", "Uploading text");
+            AddEntry("Administration.WeatherHistory.FileLimit", "Limit: {0} souborů najednou", "Limit: {0} files at once", "File upload limit text");
+
+            // --- Admin menu item ---
+            AddEntry("NavMenu.Admin.WeatherHistory", "Historie počasí", "Weather History", "Admin menu item - Weather History");
+
+            // --- Automatic fetch settings ---
+            AddEntry("Administration.WeatherHistory.AutoFetch", "Automatické stahování dat", "Automatic data fetching", "Automatic data fetch section title");
+            AddEntry("Administration.WeatherHistory.AutoFetchDescription", "Zapněte nebo vypněte automatické stahování dat z Ecowitt API každých 10 minut.", "Enable or disable automatic data fetching from Ecowitt API every 10 minutes.", "Automatic data fetch description");
+            AddEntry("Administration.WeatherHistory.AutoFetchEnabled", "Automatické stahování dat je ZAPNUTO", "Automatic data fetching is ENABLED", "Automatic data fetch enabled label");
+            AddEntry("Administration.WeatherHistory.AutoFetchDisabled", "Automatické stahování dat je VYPNUTO", "Automatic data fetching is DISABLED", "Automatic data fetch disabled label");
+            AddEntry("Administration.WeatherHistory.AutoFetchRunning", "Služba bude automaticky stahovat data každých 10 minut.", "Service will automatically fetch data every 10 minutes.", "Automatic data fetch running info");
+            AddEntry("Administration.WeatherHistory.AutoFetchStopped", "Služba pro automatické stahování je zastavena. Můžete stále používat ruční stahování.", "Automatic data fetching service is stopped. You can still use manual fetching.", "Automatic data fetch stopped info");
+            
+            // --- Process files ---
+            AddEntry("Common.Errors", "Chyby", "Errors", "Errors section title");
+            AddEntry("Common.Processing", "Zpracovávám", "Processing", "Processing action label");
+            AddEntry("Administration.WeatherHistory.ProcessFiles", "Zpracovat soubory", "Process files", "Process files button text");
+            
+            // --- Fetch for period ---
+            AddEntry("Administration.WeatherHistory.FetchPeriodTitle", "Stažení dat za specifické období", "Fetch data for specific period", "Fetch data for period section title");
+            AddEntry("Administration.WeatherHistory.FetchPeriodDescription", "Stáhněte data od zadaného data až po současnost. Maximální interval je 24 hodin.", "Fetch data from specified date to present. Maximum interval is 24 hours.", "Fetch data for period description");
+            AddEntry("Administration.WeatherHistory.StartDate", "Počáteční datum", "Start date", "Start date label");
+            AddEntry("Administration.WeatherHistory.FetchPeriodButton", "Stáhnout data za období", "Fetch data for period", "Fetch data for period button text");
+            AddEntry("Administration.WeatherHistory.FetchPeriodSuccess", "Data za zvolené období byla úspěšně stažena", "Data for selected period was successfully fetched", "Fetch data for period success message");
+            AddEntry("Administration.WeatherHistory.FetchPeriodError", "Chyba při stahování dat za zvolené období", "Error fetching data for selected period", "Fetch data for period error message");
+
+            // --- Error and confirmation messages ---
+            AddEntry("Administration.WeatherHistory.ErrorUpdatingSettings", "Chyba při aktualizaci nastavení", "Error updating settings", "Error message when settings update fails");
+            AddEntry("Administration.WeatherHistory.ConfirmDeleteHistory", "Opravdu chcete smazat všechna historická data? Tato akce je nevratná.", "Are you sure you want to delete all historical data? This action cannot be undone.", "Confirmation message for deleting all history");
+            AddEntry("Administration.WeatherHistory.DataDeletedSuccess", "Všechna historická data byla úspěšně smazána", "All historical data was successfully deleted", "Success message after deleting all history");
+            AddEntry("Administration.WeatherHistory.DataDeletedError", "Chyba při mazání historických dat", "Error deleting historical data", "Error message when deleting history fails");
+            AddEntry("Administration.WeatherHistory.ErrorLoadingStats", "Chyba při načítání statistik historie počasí", "Error loading weather history statistics", "Error message when loading statistics fails");
+
             // --- End Seed Data --- 
 
             try
@@ -477,8 +532,6 @@ namespace GrznarAi.Web.Data
                 }
                 throw; // Předání chyby dál pro zpracování
             }
-
-           
         }
     }
 } 

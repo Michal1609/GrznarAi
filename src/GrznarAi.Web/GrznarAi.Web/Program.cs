@@ -54,7 +54,8 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(opt => opt.UseSqlServ
 builder.Services.AddScoped<IProjectService, ProjectService>();
 
 // Register GlobalSettingsService
-builder.Services.AddScoped<IGlobalSettingsService, GlobalSettingsService>();
+builder.Services.AddSingleton<IGlobalSettingsService, GlobalSettingsService>();
+builder.Services.AddHostedService(sp => (GlobalSettingsService)sp.GetRequiredService<IGlobalSettingsService>());
 
 // Register BlogService
 builder.Services.AddScoped<IBlogService, BlogService>();
@@ -77,6 +78,9 @@ builder.Services.AddScoped<IAiNewsSourceService, AiNewsSourceService>();
 // Register Twitter Service and settings
 builder.Services.Configure<TwitterSettings>(builder.Configuration.GetSection("TwitterSettings"));
 builder.Services.AddScoped<ITwitterService, TwitterService>();
+
+// Register Ecowitt API settings
+builder.Services.Configure<EcowittApiSettings>(builder.Configuration.GetSection("EcowittApiSettings"));
 
 // Register GitHubService (using Octokit)
 // Remove the AddHttpClient line: builder.Services.AddHttpClient<IGitHubService, GitHubService>();
@@ -112,6 +116,14 @@ builder.Services.AddScoped<IWeatherService, WeatherService>();
 
 // Register Google Analytics Service
 builder.Services.AddScoped<GoogleAnalyticsService>();
+
+// Registrujeme IWeatherHistoryService
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IWeatherHistoryService, WeatherHistoryService>();
+
+// Registrujeme BackgroundTaskService jako singleton i jako HostedService
+builder.Services.AddSingleton<BackgroundTaskService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<BackgroundTaskService>());
 
 // Configure Localization
 log.Information("Configure...");

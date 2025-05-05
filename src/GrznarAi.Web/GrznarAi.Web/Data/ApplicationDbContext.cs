@@ -27,6 +27,7 @@ namespace GrznarAi.Web.Data
         public DbSet<NoteCategoryRelation> NoteCategoryRelations { get; set; }
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
         public DbSet<EmailTemplateTranslation> EmailTemplateTranslations { get; set; }
+        public DbSet<WeatherHistory> WeatherHistory { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

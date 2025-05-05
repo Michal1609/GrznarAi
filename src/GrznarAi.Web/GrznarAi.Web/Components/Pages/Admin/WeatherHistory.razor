@@ -1,0 +1,411 @@
+@page "/admin/weather-history"
+@using GrznarAi.Web.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@inject IWeatherHistoryService WeatherHistoryService
+@inject ILocalizationService LocalizationService
+@inject IJSRuntime JSRuntime
+@inject Microsoft.Extensions.Logging.ILogger<WeatherHistory> Logger
+@inject BackgroundTaskService BackgroundTaskService
+@inject IGlobalSettingsService GlobalSettingsService
+@inject Data.ApplicationDbContext DbContext
+
+<PageTitle>Weather History Admin</PageTitle>
+
+<div class="container-fluid px-0">
+    <h1>@LocalizationService.GetString("Administration.WeatherHistory.Title")</h1>
+    <p>@LocalizationService.GetString("Administration.WeatherHistory.Description")</p>
+
+    <div class="row">
+        <div class="col-md-12 col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>@LocalizationService.GetString("Administration.WeatherHistory.ImportCsv")</h5>
+                </div>
+                <div class="card-body">
+                    <p>@LocalizationService.GetString("Administration.WeatherHistory.ImportDescription")</p>
+                    
+                    <div class="mb-3">
+                        <InputFile OnChange="@OnInputFileChange" multiple accept=".csv" class="form-control" 
+                                   disabled="@(_isUploading || _isProcessing)" />
+                        <small class="text-muted mt-1">@string.Format(LocalizationService.GetString("Administration.WeatherHistory.FileLimit"), 50)</small>
+                    </div>
+                    
+                    @if (_files?.Count > 0)
+                    {
+                        <div class="mb-3">
+                            <h6>@LocalizationService.GetString("Administration.WeatherHistory.SelectedFiles"): @_files.Count</h6>
+                            
+                            <div class="list-group">
+                                @foreach (var file in _files)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@file.Name (@FormatFileSize(file.Size))</span>
+                                        <span>
+                                            @if (_processingProgress.ContainsKey(file.Name))
+                                            {
+                                                <span class="badge bg-primary">@_processingProgress[file.Name]%</span>
+                                            }
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-primary" @onclick="ProcessFiles" disabled="@(_isUploading || _isProcessing)">
+                                @if (_isProcessing)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <span>@LocalizationService.GetString("Common.Processing")...</span>
+                                }
+                                else
+                                {
+                                    <span>@LocalizationService.GetString("Administration.WeatherHistory.ProcessFiles")</span>
+                                }
+                            </button>
+                        </div>
+                    }
+                    
+                    @if (_processingErrors.Any())
+                    {
+                        <div class="alert alert-danger">
+                            <h6>@LocalizationService.GetString("Common.Errors"):</h6>
+                            <ul>
+                                @foreach (var error in _processingErrors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-12 col-lg-6">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>@LocalizationService.GetString("Administration.WeatherHistory.AutoFetch")</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>@LocalizationService.GetString("Administration.WeatherHistory.AutoFetchDescription")</p>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="autoFetchSwitch" 
+                                       @bind="_isEcowittDataFetchEnabled"
+                                       @bind:after="OnEcowittToggleChanged" />
+                                <label class="form-check-label" for="autoFetchSwitch">
+                                    @(_isEcowittDataFetchEnabled
+                                        ? LocalizationService.GetString("Administration.WeatherHistory.AutoFetchEnabled")
+                                        : LocalizationService.GetString("Administration.WeatherHistory.AutoFetchDisabled"))
+                                </label>
+                            </div>
+                            
+                            <div class="alert @(_isEcowittDataFetchEnabled ? "alert-info" : "alert-warning")">
+                                @(_isEcowittDataFetchEnabled
+                                    ? LocalizationService.GetString("Administration.WeatherHistory.AutoFetchRunning") 
+                                    : LocalizationService.GetString("Administration.WeatherHistory.AutoFetchStopped"))
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>@LocalizationService.GetString("Administration.WeatherHistory.FetchData")</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>@LocalizationService.GetString("Administration.WeatherHistory.FetchDescription")</p>
+                            
+                            <div class="mb-3">
+                                <button class="btn btn-secondary" @onclick="FetchFromEcowitt" disabled="@_isFetching">
+                                    @if (_isFetching)
+                                    {
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        <span>@LocalizationService.GetString("Common.Loading")...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@LocalizationService.GetString("Administration.WeatherHistory.FetchButton")</span>
+                                    }
+                                </button>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(_fetchResult))
+                            {
+                                <div class="alert @(_fetchError ? "alert-danger" : "alert-success")">
+                                    @_fetchResult
+                                </div>
+                            }
+                            
+                            @if (_isEcowittDataFetchEnabled)
+                            {
+                                <hr/>
+                                <h5>@LocalizationService.GetString("Administration.WeatherHistory.FetchPeriodTitle")</h5>
+                                <p>@LocalizationService.GetString("Administration.WeatherHistory.FetchPeriodDescription")</p>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="startDate" class="form-label">@LocalizationService.GetString("Administration.WeatherHistory.StartDate")</label>
+                                        <input type="date" class="form-control" id="startDate" @bind="_startDate" />
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <button class="btn btn-info" @onclick="FetchFromEcowittForPeriod" disabled="@_isFetchingPeriod">
+                                        @if (_isFetchingPeriod)
+                                        {
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            <span>@LocalizationService.GetString("Common.Loading")...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@LocalizationService.GetString("Administration.WeatherHistory.FetchPeriodButton")</span>
+                                        }
+                                    </button>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(_fetchPeriodResult))
+                                {
+                                    <div class="alert @(_fetchPeriodError ? "alert-danger" : "alert-success")">
+                                        @_fetchPeriodResult
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>@LocalizationService.GetString("Administration.WeatherHistory.Stats")</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (_isLoadingStats)
+                            {
+                                <div class="d-flex justify-content-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">@LocalizationService.GetString("Common.Loading")...</span>
+                                    </div>
+                                </div>
+                            }
+                            else if (_lastRecordDate.HasValue)
+                            {
+                                <dl class="row">
+                                    <dt class="col-sm-6">@LocalizationService.GetString("Administration.WeatherHistory.LastRecord"):</dt>
+                                    <dd class="col-sm-6">@_lastRecordDate.Value.ToString("yyyy-MM-dd HH:mm:ss")</dd>
+                                    
+                                    <dt class="col-sm-6">@LocalizationService.GetString("Administration.WeatherHistory.TotalRecords"):</dt>
+                                    <dd class="col-sm-6">@_totalRecords</dd>
+                                </dl>
+                            }
+                            else
+                            {
+                                <div class="alert alert-info">
+                                    @LocalizationService.GetString("Administration.WeatherHistory.NoRecords")
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<IBrowserFile> _files;
+    private List<string> _processingErrors = new List<string>();
+    private Dictionary<string, int> _processingProgress = new Dictionary<string, int>();
+    private bool _isUploading = false;
+    private bool _isProcessing = false;
+    private bool _isFetching = false;
+    private bool _isLoadingStats = false;
+    private string _fetchResult = string.Empty;
+    private bool _fetchError = false;
+    
+    private DateTime? _lastRecordDate;
+    private int _totalRecords;
+    
+    private DateTime _startDate = new DateTime(2025, 5, 4);
+    private bool _isFetchingPeriod = false;
+    private string _fetchPeriodResult = string.Empty;
+    private bool _fetchPeriodError = false;
+    
+    // Lokální proměnná pro sledování stavu
+    private bool _isEcowittDataFetchEnabled = false;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // Načtení aktuálního stavu při inicializaci
+        _isEcowittDataFetchEnabled = GlobalSettingsService.GetBool("Weather.IsEcowittApiEnabled", false);
+        await LoadStats();
+    }
+
+    private void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        _files = e.GetMultipleFiles(50).ToList(); // Zvýšení limitu na 50 souborů
+        _processingErrors.Clear();
+        _processingProgress.Clear();
+    }
+
+    private async Task ProcessFiles()
+    {
+        if (_files == null || !_files.Any())
+            return;
+            
+        _isProcessing = true;
+        _processingErrors.Clear();
+        
+        try
+        {
+            foreach (var file in _files)
+            {
+                try
+                {
+                    _processingProgress[file.Name] = 0;
+                    
+                    // Čtení obsahu CSV souboru
+                    using var stream = file.OpenReadStream(1024 * 1024 * 100); // Max 100 MB
+                    using var reader = new StreamReader(stream);
+                    var content = await reader.ReadToEndAsync();
+                    
+                    // Zpracování CSV souboru
+                    _processingProgress[file.Name] = 50;
+                    await WeatherHistoryService.ImportCsvDataAsync(content);
+                    _processingProgress[file.Name] = 100;
+                }
+                catch (Exception ex)
+                {
+                    _processingErrors.Add($"{file.Name}: {ex.Message}");
+                    Logger.LogError(ex, "Chyba při zpracování souboru {FileName}", file.Name);
+                }
+            }
+        }
+        finally
+        {
+            _isProcessing = false;
+            await LoadStats();
+        }
+    }
+
+    private async Task FetchFromEcowitt()
+    {
+        _isFetching = true;
+        _fetchResult = "";
+        _fetchError = false;
+
+        try
+        {
+            await WeatherHistoryService.FetchAndStoreEcowittDataAsync();
+            _fetchResult = LocalizationService.GetString("Administration.WeatherHistory.FetchSuccess");
+        }
+        catch (Exception ex)
+        {
+            _fetchResult = $"{LocalizationService.GetString("Administration.WeatherHistory.FetchError")}: {ex.Message}";
+            _fetchError = true;
+            Logger.LogError(ex, "Chyba při získávání dat z Ecowitt API");
+        }
+        finally
+        {
+            _isFetching = false;
+            await LoadStats();
+        }
+    }
+
+    private async Task FetchFromEcowittForPeriod()
+    {
+        _isFetchingPeriod = true;
+        _fetchPeriodResult = "";
+        _fetchPeriodError = false;
+
+        try
+        {
+            await WeatherHistoryService.FetchAndStoreEcowittDataForPeriodAsync(_startDate);
+            _fetchPeriodResult = LocalizationService.GetString("Administration.WeatherHistory.FetchPeriodSuccess");
+        }
+        catch (Exception ex)
+        {
+            _fetchPeriodResult = $"{LocalizationService.GetString("Administration.WeatherHistory.FetchPeriodError")}: {ex.Message}";
+            _fetchPeriodError = true;
+            Logger.LogError(ex, "Chyba při získávání dat z Ecowitt API pro zadané období");
+        }
+        finally
+        {
+            _isFetchingPeriod = false;
+            await LoadStats();
+        }
+    }
+    
+    private string FormatFileSize(long size)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int order = 0;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+
+        return $"{size:0.##} {sizes[order]}";
+    }
+
+    // Event handler pro změnu stavu checkboxu
+    private async Task OnEcowittToggleChanged()
+    {
+        try
+        {
+            // Použijeme BackgroundTaskService.IsEcowittDataFetchEnabled setter pro uložení hodnoty
+            // a zajištění konzistence mezi UI a background service
+            BackgroundTaskService.IsEcowittDataFetchEnabled = _isEcowittDataFetchEnabled;
+            
+            // Přidáme zprávu o úspěšné změně
+            _fetchResult = _isEcowittDataFetchEnabled 
+                ? LocalizationService.GetString("Administration.WeatherHistory.AutoFetchEnabled")
+                : LocalizationService.GetString("Administration.WeatherHistory.AutoFetchDisabled");
+            _fetchError = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při změně nastavení Ecowitt API: {Message}", ex.Message);
+            _fetchResult = LocalizationService.GetString("Administration.WeatherHistory.ErrorUpdatingSettings");
+            _fetchError = true;
+            
+            // Vrátíme původní hodnotu
+            _isEcowittDataFetchEnabled = GlobalSettingsService.GetBool("Weather.IsEcowittApiEnabled", false);
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task LoadStats()
+    {
+        _isLoadingStats = true;
+        
+        try
+        {
+            _lastRecordDate = await WeatherHistoryService.GetLastRecordDateAsync();
+            
+            if (_lastRecordDate.HasValue)
+            {
+                var records = await WeatherHistoryService.GetHistoryAsync(DateTime.MinValue, DateTime.MaxValue);
+                _totalRecords = records.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při načítání statistik historie počasí");
+        }
+        finally
+        {
+            _isLoadingStats = false;
+        }
+    }
+} 

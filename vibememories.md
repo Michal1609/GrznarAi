@@ -317,394 +317,6 @@ AddEntry("ContactPage.Form.NameLabel", "Vaše jméno", "Your Name", "Contact for
 AddEntry("ContactPage.Form.SendButton", "Odeslat zprávu", "Send Message", "Contact form send button");
 ```
 
-## AI News - systém pro správu novinek z oblasti AI
-
-### Struktura a implementace AI News
-
-1. **Datový model:**
-   * `AiNewsItem` - Hlavní entita pro AI novinky (`Data/AiNewsItem.cs`)
-     * Obsahuje pole pro vícejazyčný obsah (`TitleEn`, `TitleCz`, `ContentEn`, `ContentCz`, `SummaryEn`, `SummaryCz`)
-     * `ImageUrl` - URL obrázku (nepovinné pole)
-     * `Url` - Odkaz na originální zdroj
-     * `SourceName` - Název zdroje
-     * `PublishedDate` - Datum publikace
-     * `ImportedDate` - Datum importu
-     * `IsActive` - Zda je novinka aktivní
-   * `AiNewsSource` - Reprezentuje zdroj novinek (`Data/AiNewsSource.cs`)
-   * `AiNewsError` - Záznam chyb při zpracování novinek (`Data/AiNewsError.cs`)
-
-2. **Servisní vrstva:**
-   * `IAiNewsService` a `AiNewsService` - Hlavní služba pro operace s novinkami
-     * `GetAiNewsAsync` - Získání seznamu novinek s podporou stránkování, vyhledávání a filtrování
-     * `GetAiNewsItemByIdAsync` - Získání detailu konkrétní novinky
-     * `AddAiNewsItemAsync` a `AddAiNewsItemsAsync` - Přidání nových novinek
-     * `UpdateAiNewsItemAsync` - Aktualizace novinky
-     * `DeleteAiNewsItemAsync` - Smazání novinky
-     * `GetArchiveMonthsAsync` - Získání měsíců pro archiv
-   * `IAiNewsSourceService` a `AiNewsSourceService` - Služba pro práci se zdroji novinek
-   * `IAiNewsErrorService` a `AiNewsErrorService` - Služba pro práci s chybami
-
-3. **UI komponenty:**
-   * `Components/Pages/AiNews.razor` - Hlavní stránka se seznamem novinek
-     * Stránkování, vyhledávání, filtrování podle data
-     * Zobrazení novinek v responzivních kartách
-   * `Components/Pages/AiNewsDetail.razor` - Detail novinky
-     * Zobrazení kompletního obsahu, obrázku a odkazu na zdroj
-   * `Components/Pages/Admin/AiNews.razor` - Administrační rozhraní pro správu novinek
-
-4. **API rozhraní:**
-   * `Api/Controllers/AiNews/AiNewsItemsController.cs` - Kontroler pro správu novinek
-   * `Api/Controllers/AiNews/AiNewsSourcesController.cs` - Kontroler pro správu zdrojů
-   * `Api/Controllers/AiNews/AiNewsErrorsController.cs` - Kontroler pro správu chyb
-   * `Api/Models/AiNews/*.cs` - DTO modely pro API požadavky a odpovědi
-
-### Import AI novinek z externích zdrojů
-
-Aplikace podporuje automatizovaný import novinek z externích zdrojů pomocí API. Implementace zahrnuje:
-
-1. **API Endpoint `/api/ainews/items`:**
-   * HTTP POST metoda pro přidání nových novinek
-   * Očekává seznam `AiNewsItemRequest` objektů
-   * Autentizace pomocí API klíče v hlavičce `X-Api-Key`
-
-2. **Zpracování importovaných dat:**
-   * Novinky jsou validovány (povinná pole, formáty)
-   * Podpora pro multijazyčný obsah
-   * Zachycení a logování chyb pomocí `/api/ainews/errors` endpointu
-
-3. **Inicializační import z JSON:**
-   * V `Program.cs` je implementován blok kódu, který při prvním spuštění aplikace importuje testovací data z JSON souboru
-   * Slouží jako seed data pro zobrazení funkcí AI News
-
-## Systém API klíčů
-
-### Architektura a implementace API klíčů
-
-1. **Model API klíče:**
-   * `ApiKey` - Entita reprezentující API klíč (`Api/Models/ApiKey.cs`)
-     * `Id` - Identifikátor
-     * `Name` - Název klíče (pro administraci)
-     * `Value` - Hodnota klíče (Base64 řetězec)
-     * `Description` - Volitelný popis
-     * `CreatedAt`, `UpdatedAt` - Časové značky
-     * `ExpiresAt` - Volitelné datum expirace
-     * `IsActive` - Příznak aktivního stavu
-
-2. **Middleware pro ověření API klíčů:**
-   * `ApiKeyMiddleware` - Middleware komponenta (`Api/Middleware/ApiKeyMiddleware.cs`)
-     * Kontroluje hlavičku `X-Api-Key` pro požadavky směřující na `/api/*`
-     * Ověřuje existenci, platnost a aktivní stav klíče v databázi
-     * Vrací 401 Unauthorized při neplatném nebo chybějícím klíči
-   * `MiddlewareExtensions` - Extension metoda pro registraci middleware
-   * Registrace middleware v `Program.cs` pomocí volání `app.UseApiKeyMiddleware()`
-
-3. **Administrace API klíčů:**
-   * `Components/Pages/Admin/ApiKeys.razor` - UI pro správu API klíčů
-     * Formulář pro vytvoření nového klíče s možností nastavení doby platnosti
-     * Tabulka existujících klíčů s možnostmi deaktivace/aktivace/smazání
-     * Zabezpečeno atributem `[Authorize(Roles = "Admin")]`
-     * Použití `@rendermode InteractiveServer` pro server-side interaktivitu
-
-4. **Generování API klíčů:**
-   * Využití kryptograficky bezpečného generátoru náhodných čísel (`RandomNumberGenerator`)
-   * Generování 32 bytů (256 bitů) následně převedených do Base64 řetězce
-   * `ApiKeyGenerator` pomocná třída pro generování klíčů (`Tools/ApiKeyGenerator.cs`)
-
-5. **API kontrolery:**
-   * Registrace kontrolerů v `Program.cs`:
-     * `builder.Services.AddControllers()` - Přidání služby pro API kontrolery
-     * `app.UseRouting()` - Aktivace middleware pro routování
-     * `app.MapControllers()` - Namapování kontrolerů na endpointy
-
-### Použití API klíčů v kódu
-
-1. **Vytvoření API klíče:**
-   ```csharp
-   var keyBytes = new byte[32];
-   using var rng = RandomNumberGenerator.Create();
-   rng.GetBytes(keyBytes);
-   var keyValue = Convert.ToBase64String(keyBytes);
-   
-   var apiKey = new ApiKey
-   {
-       Name = "Název klíče",
-       Value = keyValue,
-       Description = "Popis klíče",
-       ExpiresAt = DateTime.UtcNow.AddDays(365), // Platnost 1 rok
-       IsActive = true
-   };
-   ```
-
-2. **Validace API klíče v middleware:**
-   ```csharp
-   var isValidApiKey = await dbContext.ApiKeys
-       .AnyAsync(k => k.Value == apiKeyValue && 
-                      k.IsActive && 
-                      (k.ExpiresAt == null || k.ExpiresAt > DateTime.UtcNow));
-   ```
-
-3. **Volání API s API klíčem v Postman:**
-   * Přidat hlavičku:
-     * Klíč: `X-Api-Key`
-     * Hodnota: `váš-api-klíč`
-   * URL example: `https://localhost:5001/api/ainews/sources`
-   * Metoda: `GET`
-
-## Postup pro práci s Gitem
-
-**Důležitá poznámka: Hlavní větev repozitáře se jmenuje `main`.**
-
-### Základní Git workflow
-
-1. **Zjištění stavu repozitáře:**
-   ```bash
-   git status
-   ```
-   Zobrazí aktuální stav - změněné soubory, soubory připravené k zapsání (staged) a další informace.
-
-2. **Přidání změn do stage:**
-   ```bash
-   git add .              # Přidá všechny změněné soubory
-   # nebo
-   git add cesta/k/souboru # Přidá konkrétní soubor
-   ```
-
-3. **Vytvoření commitu:**
-   ```bash
-   git commit -m "Popis změn v commitu"
-   ```
-   Dobrá zpráva pro commit by měla stručně a jasně popisovat, co změny přinášejí.
-
-4. **Push změn na GitHub:**
-   ```bash
-   git push
-   ```
-   Odešle lokální změny do vzdáleného repozitáře (na GitHub).
-
-### Příklad kompletního workflow
-
-```bash
-# Zkontroluj stav repozitáře
-git status
-
-# Přidej změny do stage
-git add .
-
-# Vytvoř commit se smysluplným popisem
-git commit -m "Přidána lokalizace stránky Contact a aktualizován návod k lokalizaci"
-
-# Pošli změny na GitHub
-git push
-```
-
-### Užitečné Git příkazy
-
-- **Zobrazení historie commitů:**
-  ```bash
-  git log
-  git log --oneline    # Zkrácený formát
-  ```
-
-- **Stažení změn z GitHubu:**
-  ```bash
-  git pull
-  ```
-  
-- **Vytvoření a přepnutí na novou větev:**
-  ```bash
-  git checkout -b nazev-vetve
-  ```
-  
-- **Přepnutí na existující větev:**
-  ```bash
-  git checkout nazev-vetve
-  ```
-  
-- **Sloučení jiné větve do aktuální:**
-  ```bash
-  git merge nazev-vetve
-  ```
-
-## Řešení problémů při vývoji
-
-### Problém: Chyba migrace - Tabulka 'Projects' již existuje
-
-*   **Kontext:** Při přidávání migrace `AddLocalizationStrings` (která kromě `LocalizationStrings` obsahovala i kód pro vytvoření `Projects` - pravděpodobně chyba při generování) selhala aplikace migrace (`dotnet ef database update`) s chybou `SqlException: There is already an object named 'Projects' in the database.`.
-*   **Řešení:**
-    1.  Otevřeli jsme soubor s problematickou migrací (`Data/Migrations/*_AddLocalizationStrings.cs`).
-    2.  V metodách `Up` a `Down` jsme zakomentovali nebo smazali části kódu týkající se tabulky `Projects` (`migrationBuilder.CreateTable(...)` a `migrationBuilder.DropTable(...)`).
-    3.  Znovu jsme spustili `dotnet ef database update`, což již proběhlo úspěšně, protože migrace se pokusila vytvořit pouze chybějící tabulku `LocalizationStrings`.
-*   **Poučení:** Pokud migrace selže kvůli existujícímu objektu, zkontrolujte obsah `.cs` souboru migrace, zda se nesnaží vytvořit něco, co už bylo vytvořeno předchozí migrací. Migrační soubory lze ručně upravovat.
-
-### Problém: Chyba kompilace CS0103 - 'CookieRequestCulture' neexistuje
-
-*   **Kontext:** V endpointu `/Culture/SetCulture` v `Program.cs` selhala kompilace na řádku `CookieRequestCulture.MakeCookieValue(...)` s chybou `CS0103: The name 'CookieRequestCulture' does not exist...`, přestože `using Microsoft.AspNetCore.Localization;` byl přítomen.
-*   **Řešení:** Zjistili jsme, že metoda `MakeCookieValue` není na třídě `CookieRequestCulture`, ale je to statická metoda na třídě `CookieRequestCultureProvider`. Opravili jsme volání na `CookieRequestCultureProvider.MakeCookieValue(...)`.
-*   **Poučení:** Pokud kompilátor hlásí neexistující typ/metodu i přes správný `using`, ověřte si v dokumentaci nebo pomocí IntelliSense, zda voláte metodu na správné třídě (např. statická metoda vs. instanční metoda, správná třída v rámci namespace).
-
-### Problém: Chyba při vytváření API klíče - "The Value field is required"
-
-*   **Kontext:** Při pokusu o vytvoření nového API klíče v administračním rozhraní se zobrazila chyba "The Value field is required", přestože hodnota se měla generovat automaticky.
-*   **Řešení:**
-    1. Odstranili jsme atribut `[Required]` z vlastnosti `Value` v modelu `ApiKey`.
-    2. Upravili jsme metodu `AddApiKey()` v `ApiKeys.razor` tak, aby vytvářela novou instanci klíče místo aktualizace existující.
-    3. Přidali jsme atribut `@rendermode InteractiveServer` pro správné fungování interaktivních prvků ve formuláři.
-*   **Poučení:** Při automatické validaci formulářů je potřeba dát pozor na povinná pole, která mají být generována až po validaci. V takových případech je lepší buď odstranit atribut `[Required]` nebo implementovat vlastní validační logiku.
-
-## Systém globálních nastavení (GlobalSettings)
-
-### Architektura a implementace globálních nastavení
-
-1. **Model globálního nastavení:**
-   * `GlobalSetting` - Entita reprezentující globální nastavení (`Data/GlobalSetting.cs`)
-     * `Id` - Identifikátor
-     * `Key` - Klíč nastavení (např. "AiNews.DuplicateCheckDays")
-     * `Value` - Hodnota nastavení (uložená jako string)
-     * `DataType` - Typ dat (string, int, bool, decimal, datetime, json)
-     * `Description` - Volitelný popis nastavení
-     * `CreatedAt`, `UpdatedAt` - Časové značky
-
-2. **Služba pro správu globálních nastavení:**
-   * `IGlobalSettingsService` a `GlobalSettingsService` - Hlavní služba pro práci s globálními nastaveními
-     * Implementována jako `IHostedService` pro načtení všech nastavení při startu aplikace
-     * Udržuje cache nastavení v paměti pro rychlý přístup
-     * Poskytuje typově bezpečné metody pro získání hodnot (`GetString`, `GetInt`, `GetBool`, `GetValue<T>`)
-     * Metody pro správu nastavení (`GetAllSettingsAsync`, `AddSettingAsync`, `UpdateSettingAsync`, `DeleteSettingAsync`)
-
-3. **Administrační rozhraní:**
-   * `Components/Pages/Admin/GlobalSettingsAdmin.razor` - Stránka pro správu globálních nastavení
-     * Tabulka s podporou stránkování, vyhledávání a řazení
-     * Formulář pro přidání a úpravu nastavení
-     * Konfirmace pro mazání nastavení
-     * Zabezpečeno atributem `[Authorize(Roles = "Admin")]`
-
-4. **Inicializace výchozích nastavení:**
-   * `GlobalSettingsDataSeeder` - Třída pro inicializaci výchozích nastavení při prvním spuštění aplikace
-   * Kontroluje existenci nastavení podle klíče a nepřepisuje již existující hodnoty
-   * Volá se při startu aplikace v `Program.cs`
-
-### Použití GlobalSettings v kódu
-
-1. **Injektování služby:**
-   ```csharp
-   private readonly IGlobalSettingsService _globalSettings;
-
-   public MyService(IGlobalSettingsService globalSettings)
-   {
-       _globalSettings = globalSettings;
-   }
-   ```
-
-2. **Získání hodnot:**
-   ```csharp
-   // String hodnota (s výchozí hodnotou)
-   string siteName = _globalSettings.GetString("General.SiteName", "Default Site Name");
-   
-   // Integer hodnota
-   int pageSize = _globalSettings.GetInt("Admin.PageSize", 10);
-   
-   // Boolean hodnota
-   bool enableComments = _globalSettings.GetBool("Blog.EnableComments", true);
-   ```
-
-3. **Přidání nové hodnoty přes GlobalSettingsDataSeeder:**
-   ```csharp
-   AddSetting("Kategorie.NazevNastaveni", "VychoziHodnota", "int", "Popis nastavení");
-   ```
-
-### Příklad implementace dynamické konfigurace pomocí GlobalSettings
-
-V rámci úprav byla implementována dynamická konfigurace pro kontrolu duplicitních AI novinek při importu:
-
-1. **Původní hardcoded implementace:**
-   ```csharp
-   // Kontrola posledních 10 dní pro duplicity
-   var recentDate = now.AddDays(-10);
-   
-   // Získáme titulky existujících článků za posledních 10 dní
-   var existingTitles = await context.AiNewsItems
-       .Where(n => n.ImportedDate >= recentDate)
-       .Select(n => n.TitleEn.ToLower())
-       .ToListAsync();
-   ```
-
-2. **Nová dynamická implementace s GlobalSettings:**
-   ```csharp
-   // Získat počet dní pro kontrolu duplicit z nastavení (výchozí hodnota 10)
-   int daysToCheck = _globalSettings.GetInt("AiNews.DuplicateCheckDays", 10);
-   
-   // Kontrola posledních X dní pro duplicity
-   var recentDate = now.AddDays(-daysToCheck);
-   
-   // Získáme titulky existujících článků za posledních X dní
-   var existingTitles = await context.AiNewsItems
-       .Where(n => n.ImportedDate >= recentDate)
-       .Select(n => n.TitleEn.ToLower())
-       .ToListAsync();
-   ```
-
-3. **Přidání nastavení do seederu:**
-   ```csharp
-   // Nastavení pro AI News
-   AddSetting("AiNews.DuplicateCheckDays", "10", "int", "Počet dní pro kontrolu duplicit při importu AI novinek");
-   ```
-
-### Výhody použití GlobalSettings
-
-1. **Centralizovaná správa nastavení:** Všechna globální nastavení aplikace jsou na jednom místě v databázi
-2. **Možnost změn za běhu:** Nastavení lze měnit bez nutnosti restartovat aplikaci nebo nasazovat novou verzi
-3. **Typová bezpečnost:** Služba poskytuje typově bezpečné metody pro získání hodnot
-4. **Cachování v paměti:** Rychlý přístup k nastavením díky cachování
-5. **Admin rozhraní:** Jednoduché rozhraní pro správu nastavení přímo v aplikaci
-6. **Výchozí hodnoty:** Podpora výchozích hodnot v případě, že nastavení neexistuje
-
-## Úpravy administračního rozhraní GlobalSettings
-
-V rámci implementace byla provedena restrukturalizace komponenty GlobalSettingsAdmin pro lepší údržbu kódu:
-
-1. **Oddělení UI a logiky pomocí code-behind vzoru:**
-   * `GlobalSettingsAdmin.razor` - Obsahuje pouze UI (markup)
-   * `GlobalSettingsAdmin.razor.cs` - Obsahuje aplikační logiku
-
-2. **Struktura code-behind souboru:**
-   * Třída `GlobalSettingsAdminBase` dědící z `ComponentBase`
-   * Injektování závislostí pomocí atributu `[Inject]`
-   * Implementace metod volaných z UI
-   * Definice stavových proměnných a datových modelů
-
-3. **Zabránění chybám při překladu lambda výrazů:**
-   * Implementace jednoúčelových metod pro události (např. `SortTableByKey`, `SortTableByValue`)
-   * Zjednodušení volání v UI bez nutnosti použití lambda výrazů
-
-4. **Reaktivní změna počtu záznamů na stránku:**
-   * Implementace metody `PageSizeChanged` pro okamžité přenačtení dat při změně počtu záznamů
-   * Nastavení `@bind:event="oninput"` pro okamžitou aktualizaci hodnoty
-   * Resetování stránkování na první stránku při změně počtu záznamů
-
-### Příklad řešení problémů s lambda výrazy v Blazoru
-
-Pro řešení chyb překladu lambda výrazů v Blazoru:
-
-1. **Původní problematický kód:**
-   ```html
-   <th @onclick="() => SortTable("key")">...</th>
-   ```
-
-2. **Nové elegantní řešení:**
-   ```csharp
-   // V code-behind souboru
-   protected async Task SortTableByKey()
-   {
-       await SortTable("key");
-   }
-   ```
-   ```html
-   <!-- V Razor souboru -->
-   <th @onclick="SortTableByKey">...</th>
-   ```
-
-Tento přístup eliminuje problémy s parsováním lambda výrazů během kompilace Blazor komponent a poskytuje čistší, typově bezpečný kód.
-
 ## Twitter Integration
 
 ### Overview
@@ -768,3 +380,155 @@ await _twitterService.PostTweetWithImageAsync("Hello with image!", "path/to/imag
 // Post about new AI news
 await _twitterService.PostAiNewsAsync("Exciting new AI development", "Title of news");
 ```
+
+## Systém meteorologické stanice
+
+### Přehled funkcionality
+Aplikace obsahuje modul pro správu historie údajů z meteorologické stanice, který umožňuje zobrazovat, importovat a stahovat data o počasí. Systém podporuje dva zdroje dat:
+
+1. **CSV import** - Manuální nahrání dat vyexportovaných z meteorologické stanice ve formátu CSV
+2. **Ecowitt API** - Automatické stahování dat přímo z meteorologické stanice prostřednictvím API
+
+### Datový model
+
+**WeatherHistory** - Hlavní entita pro uchování meteorologických údajů:
+- `Date` (DateTime) - Datum a čas měření (uloženo jako UTC)
+- Teplotní údaje - `TemperatureIn`, `TemperatureOut`, `Chill`, `Heat`, `HeatIn`, `DewIn`, `DewOut`
+- Vlhkostní údaje - `HumidityIn`, `HumidityOut`
+- Větrné údaje - `WindSpeedHi`, `WindSpeedAvg`, `WindDirection`
+- Srážkové údaje - `Rain`, `RainRate`
+- Barometrický tlak - `Bar`
+- Sluneční záření - `SolarRad`, `Uvi`
+
+### Implementované služby
+
+1. **WeatherHistoryService**
+   - `GetLastRecordDateAsync` - Zjištění posledního záznamu v databázi
+   - `GetHistoryAsync` - Získání záznamů v daném časovém rozmezí
+   - `ImportCsvDataAsync` - Import dat z CSV souboru
+   - `FetchAndStoreEcowittDataAsync` - Stažení a uložení dat z Ecowitt API
+   - `FetchAndStoreEcowittDataForPeriodAsync` - Stažení a uložení dat z API pro konkrétní období
+
+2. **BackgroundTaskService**
+   - Implementuje `IHostedService` spouštěný při startu aplikace
+   - Obsahuje `Timer` pro pravidelné spouštění úloh na pozadí
+   - Volá `FetchAndStoreEcowittDataAsync` v pravidelných intervalech (konfigurovatelné)
+
+### Správa časových zón a formátů dat
+
+1. **Sjednocení časových zón**
+   - Data z CSV importu jsou ve formátu místního času (Local) - konvertují se na UTC před uložením do databáze
+   - Data z Ecowitt API jsou již v UTC formátu
+   - Všechna data jsou v databázi uložena v UTC pro konzistenci
+   - Při zobrazení jsou data konvertována zpět do místního času
+
+2. **Datumový parser**
+   - `CsvHistoryModel.ParseDateTime` - Konverze textového data z CSV do DateTime objektu
+   - Podporuje různé formáty data pro zajištění kompatibility
+   - Konverze na UTC pomocí `TimeZoneInfo.ConvertTimeToUtc`
+
+### Administrační rozhraní
+
+Administrační stránka `Admin/WeatherHistory.razor`:
+1. **CSV Import**
+   - Formulář pro nahrání CSV souboru
+   - Validace souboru a notifikace o průběhu importu
+   - Zobrazení počtu importovaných záznamů
+
+2. **Stahování dat z Ecowitt API**
+   - Možnost manuálně spustit stahování
+   - Konfigurace API stahování (povolení/zakázání automatického stahování)
+   - Zobrazení stavu posledního stažení
+
+3. **Nastavení**
+   - Povolení/zakázání automatického stahování (`GlobalSettings` "Weather.IsEcowittApiEnabled")
+   - Konfigurace intervalu automatického stahování
+
+### Datová optimalizace
+
+Pro zlepšení výkonu při importu velkých CSV souborů:
+1. **Dávkové zpracování** - Import po skupinách (1000 záznamů)
+2. **Deduplikace** - Kontrola duplicitních datumů pomocí `HashSet` v paměti místo opakovaných dotazů do databáze
+3. **Logování** - Průběžné logování stavu importu
+4. **Validace** - Kontrola formátu dat a zachycení chyb při parsování
+
+### Řešení problémů
+
+1. **Životní cyklus služeb**
+   - **Problém**: `BackgroundTaskService` (singleton) nemohl přímo používat `IGlobalSettingsService` (scoped)
+   - **Řešení**: Úprava kódu pro vytváření dočasného scope pomocí `IServiceProvider`
+   - **Ukázka implementace**:
+   ```csharp
+   using (var scope = _serviceProvider.CreateScope())
+   {
+       var settingsService = scope.ServiceProvider.GetRequiredService<IGlobalSettingsService>();
+       var isEnabled = settingsService.GetBool("Weather.IsEcowittApiEnabled", false);
+   }
+   ```
+
+2. **Konzistence datumových formátů**
+   - **Problém**: Metoda `ParseDateTime` vracela aktuální datum místo vyhození výjimky při neplatném formátu
+   - **Řešení**: Úprava metody pro vyhození validační chyby při neplatném formátu
+
+3. **Registrace GlobalSettingsService**
+   - **Problém**: Hodnota nastavení "Weather.IsEcowittApiEnabled" byla vždy načítána jako false
+   - **Řešení**: Změna registrace GlobalSettingsService na singleton a správné volání ReloadCacheAsync()
+
+4. **UI problémy**
+   - **Problém**: Nefunkční checkbox pro povolení/zakázání Ecowitt API
+   - **Řešení**: Oprava kombinace Blazor direktiv @bind-value a @onchange
+
+### Zabezpečení přístupu k Ecowitt API
+
+Pro zajištění bezpečnosti citlivých údajů byly přístupové klíče k Ecowitt API přesunuty z kódu do user secrets:
+
+1. **Vytvoření konfigurační třídy**:
+   ```csharp
+   public class EcowittApiSettings
+   {
+       public string ApiUrl { get; set; } = "https://api.ecowitt.net/api/v3/device/history";
+       public string ApplicationKey { get; set; } = string.Empty;
+       public string ApiKey { get; set; } = string.Empty;
+       public string MacAddress { get; set; } = string.Empty;
+   }
+   ```
+
+2. **Registrace konfigurace v Program.cs**:
+   ```csharp
+   builder.Services.Configure<EcowittApiSettings>(builder.Configuration.GetSection("EcowittApiSettings"));
+   ```
+
+3. **Uložení citlivých údajů do user secrets**:
+   ```bash
+   dotnet user-secrets set "EcowittApiSettings:ApplicationKey" "your-application-key"
+   dotnet user-secrets set "EcowittApiSettings:ApiKey" "your-api-key"
+   dotnet user-secrets set "EcowittApiSettings:MacAddress" "your-mac-address"
+   dotnet user-secrets set "EcowittApiSettings:ApiUrl" "https://api.ecowitt.net/api/v3/device/history"
+   ```
+
+4. **Injektování konfigurace do služby**:
+   ```csharp
+   public WeatherHistoryService(
+       IDbContextFactory<ApplicationDbContext> contextFactory,
+       IHttpClientFactory httpClientFactory,
+       ILogger<WeatherHistoryService> logger,
+       IGlobalSettingsService globalSettingsService,
+       IOptions<EcowittApiSettings> ecowittSettings)
+   {
+       _contextFactory = contextFactory;
+       _httpClientFactory = httpClientFactory;
+       _logger = logger;
+       _globalSettingsService = globalSettingsService;
+       _ecowittSettings = ecowittSettings.Value;
+   }
+   ```
+
+5. **Použití konfiguračních hodnot v kódu**:
+   ```csharp
+   var urlBuilder = new StringBuilder(_ecowittSettings.ApiUrl);
+   urlBuilder.Append($"?application_key={_ecowittSettings.ApplicationKey}");
+   urlBuilder.Append($"&api_key={_ecowittSettings.ApiKey}");
+   urlBuilder.Append($"&mac={_ecowittSettings.MacAddress}");
+   ```
+
+Tato implementace zajišťuje, že citlivé údaje nejsou uloženy přímo v kódu, což zvyšuje bezpečnost aplikace. V produkčním prostředí mohou být hodnoty nakonfigurovány pomocí proměnných prostředí nebo jiných bezpečných úložišť konfigurace.

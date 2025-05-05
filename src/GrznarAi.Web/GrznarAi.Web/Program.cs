@@ -121,7 +121,7 @@ builder.Services.AddScoped<GoogleAnalyticsService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IWeatherHistoryService, WeatherHistoryService>();
 
-// Registrujeme IMeteoHistoryService
+// Registrujeme IMeteoHistoryService - upraveno pro podporu kešování
 builder.Services.AddScoped<IMeteoHistoryService, MeteoHistoryService>();
 
 // Registrujeme BackgroundTaskService jako singleton i jako HostedService

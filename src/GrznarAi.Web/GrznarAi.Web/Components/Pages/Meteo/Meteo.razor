@@ -982,9 +982,19 @@
     private async Task RefreshDataAsync()
     {
         IsLoading = true;
+        IsLoadingHistoricalData = true;
         try
         {
+            // Refresh weather data
             WeatherData = await WeatherService.RefreshWeatherDataAsync();
+            
+            // Refresh historical data as well
+            var today = DateTime.Today;
+            DailyStatistics = await MeteoHistoryService.RefreshDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
+            
+            int currentYear = DateTime.Today.Year;
+            int startYear = currentYear - HISTORICAL_YEARS + 1;
+            YearlyStatistics = await MeteoHistoryService.RefreshYearlyStatisticsAsync(startYear, currentYear);
         }
         catch (Exception)
         {
@@ -993,6 +1003,7 @@
         finally
         {
             IsLoading = false;
+            IsLoadingHistoricalData = false;
         }
     }
     

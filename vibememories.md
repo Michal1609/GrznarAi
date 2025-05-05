@@ -532,3 +532,59 @@ Pro zajištění bezpečnosti citlivých údajů byly přístupové klíče k Ec
    ```
 
 Tato implementace zajišťuje, že citlivé údaje nejsou uloženy přímo v kódu, což zvyšuje bezpečnost aplikace. V produkčním prostředí mohou být hodnoty nakonfigurovány pomocí proměnných prostředí nebo jiných bezpečných úložišť konfigurace.
+
+## Meteostanice - Historická data
+
+V rámci stránky Meteo byla přidána nová sekce s historickými meteo daty. Tato funkce zobrazuje:
+
+1. **Statistiky pro stejný den v historii** - tabulka zobrazující statistiky pro aktuální den napříč posledními 10 lety:
+   - Minimální teplota
+   - Průměrná teplota
+   - Maximální teplota
+   - Celkové srážky
+   - Průměrná vlhkost
+
+2. **Roční statistiky** - tabulka zobrazující roční statistiky pro posledních 10 let:
+   - Poslední den mrazu v první polovině roku
+   - První den mrazu v druhé polovině roku
+   - Počet mrazivých dnů
+   - První a poslední den s teplotou nad 30°C
+   - Počet dnů s teplotou nad 30°C
+   - Minimální, maximální a průměrná roční teplota
+   - Celkový úhrn srážek za rok
+
+### Technické detaily implementace
+
+1. **Služba MeteoHistoryService** - Byla vytvořena nová služba, která získává historická meteo data z databáze WeatherHistory. Služba poskytuje čtyři hlavní metody:
+   - `GetDailyStatisticsForLastYearsAsync` - získává statistiky pro stejný den v různých letech (z keše nebo databáze)
+   - `RefreshDailyStatisticsForLastYearsAsync` - vynutí obnovení denních statistik z databáze a aktualizaci keše
+   - `GetYearlyStatisticsAsync` - získává roční statistiky pro zadané roky (z keše nebo databáze)
+   - `RefreshYearlyStatisticsAsync` - vynutí obnovení ročních statistik z databáze a aktualizaci keše
+
+2. **Kešování historických dat** - Byla implementována podpora kešování pro historická data:
+   - Využívá existující `ICacheService` pro ukládání a získávání dat
+   - Klíče keše: 
+     - Denní statistiky: `DailyStats_{datum}_{počet_let}` (např. `DailyStats_2023-05-21_10`)
+     - Roční statistiky: `YearlyStats_{počáteční_rok}_{koncový_rok}` (např. `YearlyStats_2013_2023`)
+   - Doba platnosti keše: 1 hodina (historická data se nemění často)
+   - Data jsou automaticky načtena z databáze, pokud nejsou v keši nebo pokud vypršela jejich platnost
+   - Pro obnovení dat je potřeba explicitně volat metody s předponou `Refresh`
+
+3. **Registrace služby** - Služba je registrována v Program.cs jako scoped služba s injekcí ICacheService
+
+4. **UI komponenty** - Do stránky Meteo.razor byla přidána sekce s tabulkami, které zobrazují získaná historická data:
+   - Tlačítko pro obnovení dat nyní aktualizuje jak aktuální, tak historická data
+   - Během načítání historických dat se zobrazuje malý spinner
+   - Po načtení dat jsou zobrazeny tabulky s formátovanými hodnotami
+
+5. **Responzivní design** - Tabulky jsou responzivní a dobře vypadají na všech zařízeních:
+   - První tabulka (Tento den v historii) má hodnoty zarovnané na střed
+   - Druhá tabulka (Roční statistiky) má hodnoty zarovnané doprava
+   - Pro zmenšení horizontálního posuvníku byly přidány pevné šířky sloupců
+   - Pro malé obrazovky byla zmenšena velikost textu
+
+6. **Optimalizace výkonu** - Pro lepší výkon jsou statistiky kešovány a přepočítávány pouze při vypršení platnosti keše nebo při explicitním obnovení dat
+
+7. **Lokalizace** - Všechny texty jsou lokalizovány a podporují český i anglický jazyk
+
+Záměrem bylo vytvořit přehlednou a snadno srozumitelnou sekci s historickými daty, která doplňuje aktuální meteo data a poskytuje větší kontext o klimatických podmínkách v dané lokalitě pro konečného uživatele.

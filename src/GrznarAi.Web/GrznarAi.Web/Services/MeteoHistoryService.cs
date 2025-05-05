@@ -12,28 +12,105 @@ namespace GrznarAi.Web.Services
     {
         Task<List<DailyStatisticsForDate>> GetDailyStatisticsForLastYearsAsync(DateTime date, int years);
         Task<List<YearlyStatistics>> GetYearlyStatisticsAsync(int startYear, int endYear);
+        Task<List<DailyStatisticsForDate>> RefreshDailyStatisticsForLastYearsAsync(DateTime date, int years);
+        Task<List<YearlyStatistics>> RefreshYearlyStatisticsAsync(int startYear, int endYear);
     }
 
     public class MeteoHistoryService : IMeteoHistoryService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly ILogger<MeteoHistoryService> _logger;
+        private readonly ICacheService _cacheService;
+        
+        // Cache key templates
+        private const string DAILY_STATS_CACHE_KEY = "DailyStats_{0}_{1}"; // format: DailyStats_yyyy-MM-dd_years
+        private const string YEARLY_STATS_CACHE_KEY = "YearlyStats_{0}_{1}"; // format: YearlyStats_startYear_endYear
+        
+        // Cache expiration (1 hour for historical data as it doesn't change often)
+        private readonly TimeSpan _cacheExpiration = TimeSpan.FromHours(1);
 
         public MeteoHistoryService(
             IDbContextFactory<ApplicationDbContext> contextFactory,
-            ILogger<MeteoHistoryService> logger)
+            ILogger<MeteoHistoryService> logger,
+            ICacheService cacheService)
         {
             _contextFactory = contextFactory;
             _logger = logger;
+            _cacheService = cacheService;
         }
 
         /// <summary>
-        /// Získá denní statistiky pro zadané datum napříč posledními roky
+        /// Získá denní statistiky pro zadané datum napříč posledními roky (z cache nebo databáze)
         /// </summary>
         /// <param name="date">Aktuální datum</param>
         /// <param name="years">Počet let zpětně</param>
         /// <returns>Seznam denních statistik pro každý rok pro stejný den a měsíc</returns>
         public async Task<List<DailyStatisticsForDate>> GetDailyStatisticsForLastYearsAsync(DateTime date, int years)
+        {
+            string cacheKey = string.Format(DAILY_STATS_CACHE_KEY, date.ToString("yyyy-MM-dd"), years);
+            
+            return await _cacheService.GetOrCreateAsync(cacheKey, 
+                () => FetchDailyStatisticsForLastYearsAsync(date, years), 
+                _cacheExpiration);
+        }
+
+        /// <summary>
+        /// Vynutí obnovení denních statistik z databáze a aktualizuje cache
+        /// </summary>
+        public async Task<List<DailyStatisticsForDate>> RefreshDailyStatisticsForLastYearsAsync(DateTime date, int years)
+        {
+            string cacheKey = string.Format(DAILY_STATS_CACHE_KEY, date.ToString("yyyy-MM-dd"), years);
+            
+            // Fetch fresh data from database
+            var statistics = await FetchDailyStatisticsForLastYearsAsync(date, years);
+            
+            // Update cache
+            if (statistics != null)
+            {
+                await _cacheService.SetAsync(cacheKey, statistics, _cacheExpiration);
+            }
+            
+            return statistics;
+        }
+
+        /// <summary>
+        /// Získá roční statistiky pro zadané roky (z cache nebo databáze)
+        /// </summary>
+        /// <param name="startYear">Počáteční rok</param>
+        /// <param name="endYear">Koncový rok</param>
+        /// <returns>Seznam ročních statistik pro každý rok</returns>
+        public async Task<List<YearlyStatistics>> GetYearlyStatisticsAsync(int startYear, int endYear)
+        {
+            string cacheKey = string.Format(YEARLY_STATS_CACHE_KEY, startYear, endYear);
+            
+            return await _cacheService.GetOrCreateAsync(cacheKey, 
+                () => FetchYearlyStatisticsAsync(startYear, endYear), 
+                _cacheExpiration);
+        }
+
+        /// <summary>
+        /// Vynutí obnovení ročních statistik z databáze a aktualizuje cache
+        /// </summary>
+        public async Task<List<YearlyStatistics>> RefreshYearlyStatisticsAsync(int startYear, int endYear)
+        {
+            string cacheKey = string.Format(YEARLY_STATS_CACHE_KEY, startYear, endYear);
+            
+            // Fetch fresh data from database
+            var statistics = await FetchYearlyStatisticsAsync(startYear, endYear);
+            
+            // Update cache
+            if (statistics != null)
+            {
+                await _cacheService.SetAsync(cacheKey, statistics, _cacheExpiration);
+            }
+            
+            return statistics;
+        }
+
+        /// <summary>
+        /// Načte denní statistiky přímo z databáze
+        /// </summary>
+        private async Task<List<DailyStatisticsForDate>> FetchDailyStatisticsForLastYearsAsync(DateTime date, int years)
         {
             var result = new List<DailyStatisticsForDate>();
             
@@ -87,12 +164,9 @@ namespace GrznarAi.Web.Services
         }
 
         /// <summary>
-        /// Získá roční statistiky pro zadané roky
+        /// Načte roční statistiky přímo z databáze
         /// </summary>
-        /// <param name="startYear">Počáteční rok</param>
-        /// <param name="endYear">Koncový rok</param>
-        /// <returns>Seznam ročních statistik pro každý rok</returns>
-        public async Task<List<YearlyStatistics>> GetYearlyStatisticsAsync(int startYear, int endYear)
+        private async Task<List<YearlyStatistics>> FetchYearlyStatisticsAsync(int startYear, int endYear)
         {
             var result = new List<YearlyStatistics>();
             

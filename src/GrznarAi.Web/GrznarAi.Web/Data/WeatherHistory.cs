@@ -46,5 +46,15 @@ namespace GrznarAi.Web.Data
         public float? SolarRad { get; set; }
 
         public int? Uvi { get; set; }
+        
+        // Dodatečné vlastnosti pro analýzu trendů
+        [NotMapped]
+        public float? AvgTemperature { get; set; }
+        
+        [NotMapped]
+        public float? MaxTemperature { get; set; }
+        
+        [NotMapped]
+        public string DisplayLabel { get; set; }
     }
 } 

@@ -248,7 +248,6 @@ namespace GrznarAi.Web.Data
             AddEntry("Meteo.RainfallMonthly", "Měsíční srážky", "Monthly Rainfall", "Monthly rainfall label");
             AddEntry("Meteo.SolarRadiation", "Sluneční záření", "Solar Radiation", "Solar radiation label");
             AddEntry("Meteo.UVIndex", "UV index", "UV Index", "UV Index label");
-            AddEntry("Meteo.IndexUnit", "index", "index", "Index unit");
             AddEntry("Meteo.DewPoint", "Rosný bod", "Dew Point", "Dew point label");
             AddEntry("Meteo.WindGust", "Poryvy větru", "Wind Gust", "Wind gust label");
             AddEntry("Meteo.RefreshData", "Aktualizovat data", "Refresh Data", "Refresh data button");
@@ -520,6 +519,35 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.WeatherHistory.DataDeletedSuccess", "Všechna historická data byla úspěšně smazána", "All historical data was successfully deleted", "Success message after deleting all history");
             AddEntry("Administration.WeatherHistory.DataDeletedError", "Chyba při mazání historických dat", "Error deleting historical data", "Error message when deleting history fails");
             AddEntry("Administration.WeatherHistory.ErrorLoadingStats", "Chyba při načítání statistik historie počasí", "Error loading weather history statistics", "Error message when loading statistics fails");
+
+            // --- Meteo Trends Page ---
+            AddEntry("Meteo.Trends", "Vývoj", "Trends", "Button for weather trends page");
+            AddEntry("Meteo.Trends.Title", "Vývoj počasí", "Weather Trends", "Weather trends page title");
+            AddEntry("Meteo.Trends.SelectPeriod", "Vyberte období", "Select Period", "Period selector title");
+            AddEntry("Meteo.Trends.Day", "Den", "Day", "Day option for period selection");
+            AddEntry("Meteo.Trends.Week", "Týden", "Week", "Week option for period selection");
+            AddEntry("Meteo.Trends.Month", "Měsíc", "Month", "Month option for period selection");
+            AddEntry("Meteo.Trends.Year", "Rok", "Year", "Year option for period selection");
+            AddEntry("Meteo.Trends.Temperature", "Teplota", "Temperature", "Temperature chart title");
+            AddEntry("Meteo.Trends.MinTemperature", "Min. teplota", "Min. Temperature", "Min temperature label");
+            AddEntry("Meteo.Trends.AvgTemperature", "Prům. teplota", "Avg. Temperature", "Avg temperature label");
+            AddEntry("Meteo.Trends.MaxTemperature", "Max. teplota", "Max. Temperature", "Max temperature label");
+            AddEntry("Meteo.Trends.Humidity", "Vlhkost", "Humidity", "Humidity chart title");
+            AddEntry("Meteo.Trends.Pressure", "Atmosférický tlak", "Atmospheric Pressure", "Pressure chart title");
+            AddEntry("Meteo.Trends.WindSpeed", "Rychlost větru", "Wind Speed", "Wind speed chart title");
+            AddEntry("Meteo.Trends.Rainfall", "Srážky", "Rainfall", "Rainfall chart title");
+            AddEntry("Meteo.Trends.SolarRadiation", "Sluneční záření", "Solar Radiation", "Solar radiation chart title");
+            AddEntry("Meteo.Trends.UVIndex", "UV index", "UV Index", "UV index chart title");
+            AddEntry("Meteo.Trends.DateTime", "Datum a čas", "Date & Time", "DateTime axis label");
+            AddEntry("Meteo.Trends.NoData", "Pro vybrané období nejsou k dispozici žádná data", "No data available for the selected period", "No data message");
+            
+            // Přidané lokalizační řetězce pro časové intervaly grafů
+            AddEntry("Meteo.Trends.Hours", "Hodiny", "Hours", "Hours axis label");
+            AddEntry("Meteo.Trends.FourHourInterval", "Čtyřhodinové intervaly", "4-hour Intervals", "4-hour intervals axis label");
+            AddEntry("Meteo.Trends.Days", "Dny", "Days", "Days axis label");
+            AddEntry("Meteo.Trends.Weeks", "Týdny", "Weeks", "Weeks axis label");
+            
+            // --- Historical Data Section ---
 
             // --- End Seed Data --- 
 

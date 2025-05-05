@@ -15,6 +15,7 @@ using System.Text.Json;
 using GrznarAi.Web.Models;
 using Serilog;
 using GrznarAi.Web.Core.Options;
+using Radzen;
 
 var log = new LoggerConfiguration()
     .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
@@ -127,6 +128,12 @@ builder.Services.AddScoped<IMeteoHistoryService, MeteoHistoryService>();
 // Registrujeme BackgroundTaskService jako singleton i jako HostedService
 builder.Services.AddSingleton<BackgroundTaskService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<BackgroundTaskService>());
+
+// Přidání služeb Radzen
+builder.Services.AddScoped<DialogService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<TooltipService>();
+builder.Services.AddScoped<ContextMenuService>();
 
 // Configure Localization
 log.Information("Configure...");

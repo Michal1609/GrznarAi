@@ -588,3 +588,191 @@ V rámci stránky Meteo byla přidána nová sekce s historickými meteo daty. T
 7. **Lokalizace** - Všechny texty jsou lokalizovány a podporují český i anglický jazyk
 
 Záměrem bylo vytvořit přehlednou a snadno srozumitelnou sekci s historickými daty, která doplňuje aktuální meteo data a poskytuje větší kontext o klimatických podmínkách v dané lokalitě pro konečného uživatele.
+
+## Implementace stránky vývoje počasí (Meteo Trends)
+
+V projektu byla přidána nová stránka pro zobrazení vývoje meteorologických dat pomocí grafů. Implementace obsahuje následující komponenty:
+
+### 1. Základní struktura
+
+- **Stránka MeteoTrends.razor**
+  - Cesta: `/meteo/trends`
+  - Renderovací mód: `InteractiveServer`
+  - Zobrazuje grafy teploty a dalších meteorologických veličin
+
+- **Tlačítko pro přístup**
+  - Přidáno na stránce Meteo ("/meteo")
+  - Tlačítko "Vývoj" s ikonou grafu
+
+### 2. Použité knihovny
+
+- **Radzen.Blazor** (v6.6.4)
+  - Poskytuje pokročilé grafy a UI komponenty
+  - RadzenChart pro zobrazení grafů
+  - RadzenDatePicker a RadzenDropDown pro výběr období
+
+### 3. Implementované funkce
+
+- **Výběr časového období**
+  - Den: Detailní zobrazení pro 24 hodin
+  - Týden: Denní agregace pro 7 dnů
+  - Měsíc: Denní agregace za měsíc
+  - Rok: Měsíční agregace za rok
+
+- **Zobrazení dat**
+  - Teplota: min, avg, max hodnoty pomocí křivek
+  - Připravená struktura pro další grafy (vlhkost, tlak, vítr, srážky, sluneční záření a UV index)
+
+### 4. Datový model
+
+- **WeatherHistory**
+  - Obohacen o nové vlastnosti `AvgTemperature` a `MaxTemperature` s atributem `[NotMapped]`
+  - Tyto vlastnosti slouží pro analýzu trendů, ale nejsou ukládány do databáze
+
+- **WeatherTrendModels.cs**
+  - Definuje model `WeatherTrendData` pro agregovaná data
+  - Obsahuje výčtový typ `TrendPeriodType` pro typové označení období (Den, Týden, Měsíc, Rok)
+
+### 5. Lokalizace
+
+- **Přidané lokalizační klíče**
+  - Přidáno 20+ nových lokalizačních klíčů v sekci "Meteo Trends Page"
+  - Obsahují české i anglické texty pro všechny části UI
+
+### 6. Styly CSS
+
+- **Přidané styly**
+  - `.meteo-trends-container`: Základní kontejner stránky
+  - `.chart-container`: Stylování grafu
+  - `.period-selector`: Stylování výběru období
+  - Responzivní úpravy pro mobilní zařízení
+
+### 7. Agregace dat
+
+- Pro zajištění optimálního výkonu grafu jsou data agregována podle zvoleného období:
+  - V denním pohledu jsou data zobrazena přímo
+  - V týdenním, měsíčním a ročním pohledu jsou data agregována do denních/měsíčních průměrů a extrémů
+
+### Budoucí rozšíření
+
+Plánovaná rozšíření zahrnují:
+1. Implementace zbývajících grafů (vlhkost, tlak, vítr, srážky, sluneční záření, UV index)
+2. Export dat ve formátu CSV/Excel
+3. Porovnání dat mezi různými obdobími (např. stejný měsíc v různých letech)
+4. Přidání statistických ukazatelů a analýzy trendů
+
+### Konfigurace aplikace
+
+- Služby Radzen byly registrovány v `Program.cs`
+- CSS a JS soubory Radzen byly přidány do `App.razor`
+- Komponenty Radzen byly importovány v `_Imports.razor`
+
+## Aktualizace zobrazení trendů počasí
+
+Stránka pro zobrazení vývoje meteorologických dat byla aktualizována s optimalizovanými časovými intervaly pro různá období:
+
+### 1. Upravené intervaly v grafech
+
+- **Den**: Data zobrazena po hodinách (každá hodina jako samostatný bod)
+- **Týden**: Data agregována po 4 hodinách pro lepší přehlednost
+- **Měsíc**: Data agregována po dnech 
+- **Rok**: Data agregována po týdnech (každých 7 dní)
+
+### 2. Technické detaily implementace
+
+- **Aggregace dat**: Metoda `CalculateAverages()` byla přepracována pomocí switch-case struktury pro zpracování dat podle vybraného období:
+  ```csharp
+  case PeriodType.Day:
+      // Agregace po hodinách
+      var hourlyData = WeatherData
+          .GroupBy(d => new DateTime(d.Date.Year, d.Date.Month, d.Date.Day, d.Date.Hour, 0, 0))
+          // ...
+  case PeriodType.Week:
+      // Agregace po 4 hodinách
+      var fourHourData = WeatherData
+          .GroupBy(d => new DateTime(d.Date.Year, d.Date.Month, d.Date.Day, (d.Date.Hour / 4) * 4, 0, 0))
+          // ...
+  ```
+
+- **Formátování datumů**: Přidána nová metoda `GetDateFormatString()` pro optimalizované zobrazení datumů podle zvoleného období:
+  ```csharp
+  private string GetDateFormatString()
+  {
+      switch (SelectedPeriod)
+      {
+          case PeriodType.Day:
+              return "HH:mm"; // Jen hodiny a minuty pro denní pohled
+          case PeriodType.Week:
+              return "dd.MM. HH:mm"; // Den, měsíc a hodiny pro týdenní pohled
+          // ...
+      }
+  }
+  ```
+
+- **Popisky os**: Přizpůsobené popisky os podle zvoleného období:
+  ```csharp
+  private string GetDateAxisTitle()
+  {
+      switch (SelectedPeriod)
+      {
+          case PeriodType.Day:
+              return Localizer.GetString("Meteo.Trends.Hours");
+          case PeriodType.Week:
+              return Localizer.GetString("Meteo.Trends.FourHourInterval");
+          // ...
+      }
+  }
+  ```
+
+### 3. Vizuální vylepšení
+
+- Přidány mřížky grafu pro lepší čitelnost
+- Přidány značky (markers) pro body v grafu s různými tvary pro různé typy dat
+- Optimalizované popisky časové osy podle typu dat
+
+### 4. Podpora lokalizace
+
+Přidány nové lokalizační klíče pro intervaly:
+- `Meteo.Trends.Hours`: "Hodiny" / "Hours"
+- `Meteo.Trends.FourHourInterval`: "Čtyřhodinové intervaly" / "4-hour Intervals"
+- `Meteo.Trends.Days`: "Dny" / "Days"
+- `Meteo.Trends.Weeks`: "Týdny" / "Weeks"
+
+Tyto úpravy zlepšují přehlednost a použitelnost grafů trendů počasí poskytnutím optimálního detailu dat pro každý typ časového období.
+
+## Řešení problému s popisky osy X v grafech trendů počasí
+
+Při implementaci grafů trendů počasí byl zjištěn problém s popisky osy X, které místo skutečných hodnot času zobrazovaly pouze formátovací řetězec (např. "HH:mm" místo skutečných časových hodnot jako "14:00"). Toto způsobovalo nečitelnost grafu a ztížilo interpretaci dat.
+
+### Analýza problému:
+
+1. Komponenta RadzenCategoryAxis nesprávně interpretovala standardní formátovací řetězec (např. "HH:mm") a zobrazovala ho jako text
+2. Místo správného formátování datumů/časů došlo k zobrazení samotného formátu jako popisku
+3. Pokus o použití lambda výrazu v FormatString selhal, protože vlastnost očekává pouze řetězec, ne funkci nebo delegát
+
+### Implementované řešení:
+
+1. Do třídy WeatherHistory byla přidána nová vlastnost s atributem NotMapped:
+   ```csharp
+   [NotMapped]
+   public string DisplayLabel { get; set; }
+   ```
+
+2. V metodě CalculateAverages() je tato vlastnost nastavena s formátovanou hodnotou podle typu období:
+   ```csharp
+   var dateTime = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
+   first.Date = dateTime;
+   first.DisplayLabel = dateTime.ToString("HH:mm"); // Formát závisí na typu období
+   ```
+
+3. V RadzenLineSeries byla změněna vlastnost CategoryProperty z "Date" na "DisplayLabel":
+   ```csharp
+   <RadzenLineSeries ... CategoryProperty="DisplayLabel" ... >
+   ```
+
+4. Z RadzenCategoryAxis byla odstraněna vlastnost FormatString, protože již používáme předformátované řetězce:
+   ```csharp
+   <RadzenCategoryAxis Step="@GetDateAxisStep()">
+   ```
+
+Toto řešení zajišťuje, že na ose X grafu se budou zobrazovat správně formátované hodnoty času a data, čímž se zlepší čitelnost a srozumitelnost grafů trendů počasí.

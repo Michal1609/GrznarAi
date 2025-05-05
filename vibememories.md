@@ -772,3 +772,443 @@ Při implementaci zobrazení popisků osy X v grafech trendů počasí byl zjiš
 4. Z modelu `WeatherHistory` byla odstraněna vlastnost `DisplayLabel`, která již není potřeba, protože formátování je řešeno přímo v komponentě grafu.
 
 Toto řešení zajišťuje, že body v grafu jsou nyní správně rozmístěny podle skutečných časových intervalů mezi měřeními, což poskytuje přesné a nezkreslené zobrazení trendů v datech. Zároveň jsou popisky na ose X stále dobře čitelné a formátované podle zvoleného období (den, týden, měsíc, rok).
+
+## Implementace grafů v aplikaci
+
+Aplikace používá pro vizualizaci dat komponentu RadzenChart z knihovny Radzen Blazor. Následující dokumentace popisuje podrobně celý proces implementace grafů od přípravy dat po vizualizaci.
+
+### Datový model a služby
+
+#### Třída modelu WeatherHistory
+
+Pro meteorologická data je použita třída `WeatherHistory` s následující strukturou:
+
+```csharp
+public class WeatherHistory
+{
+    [Key]
+    public int HistoryId { get; set; }
+
+    public DateTime Date { get; set; }
+
+    public float? TemperatureIn { get; set; }
+
+    public float? TemperatureOut { get; set; }
+
+    public float? Chill { get; set; }
+
+    public float? DewIn { get; set; }
+
+    public float? DewOut { get; set; }
+
+    public float? HeatIn { get; set; }
+
+    public float? Heat { get; set; }
+
+    public float? HumidityIn { get; set; }
+
+    public float? HumidityOut { get; set; }
+    
+    // Další vlastnosti pro meteorologická data...
+
+    // Vlastnosti pro výpočtené hodnoty v grafech
+    [NotMapped]
+    public float? AvgTemperature { get; set; }
+
+    [NotMapped]
+    public float? MaxTemperature { get; set; }
+}
+```
+
+Vlastnosti `AvgTemperature` a `MaxTemperature` jsou označeny atributem `[NotMapped]` a slouží pouze pro výpočty v grafech, nejsou ukládány do databáze.
+
+#### Služba WeatherHistoryService
+
+Pro získání dat je implementována služba `IWeatherHistoryService` s metodami:
+
+```csharp
+public interface IWeatherHistoryService
+{
+    Task<List<WeatherHistory>> GetHistoryAsync(DateTime startDate, DateTime endDate);
+    // Další metody...
+}
+```
+
+Implementace služby v `WeatherHistoryService` zajišťuje načtení dat z databáze a jejich přípravu pro zobrazení v grafech:
+
+```csharp
+public async Task<List<WeatherHistory>> GetHistoryAsync(DateTime startDate, DateTime endDate)
+{
+    using var context = await _contextFactory.CreateDbContextAsync();
+    
+    var data = await context.WeatherHistory
+        .Where(h => h.Date >= startDate && h.Date <= endDate)
+        .OrderBy(h => h.Date)
+        .ToListAsync();
+    
+    return data;
+}
+```
+
+### Implementace komponent grafů
+
+#### Příprava komponenty MeteoTrends.razor
+
+Komponenta `MeteoTrends.razor` implementuje uživatelské rozhraní pro zobrazení dat v grafech. Implementace zahrnuje:
+
+1. **Definice závislostí a injekcí služeb:**
+```csharp
+@page "/meteo/trends"
+@inject IWeatherHistoryService WeatherHistoryService
+@inject ILocalizationService Localizer
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using System.Globalization
+@using Radzen
+@using Radzen.Blazor
+@rendermode InteractiveServer
+
+<PageTitle>@Localizer.GetString("Meteo.Trends.Title") - GrznarAI</PageTitle>
+```
+
+2. **Struktura HTML pro zobrazení grafů:**
+```html
+<div class="meteo-trends-container">
+    <h1>@Localizer.GetString("Meteo.Trends.Title")</h1>
+    
+    <!-- Výběr období -->
+    <div class="period-selector mb-4">
+        <!-- ... kód pro výběr období ... -->
+    </div>
+    
+    <!-- Graf -->
+    <div class="trend-charts">
+        <div class="chart-container">
+            <h2>@Localizer.GetString("Meteo.Trends.Temperature")</h2>
+            <RadzenChart>
+                <!-- ... konfigurace grafu ... -->
+            </RadzenChart>
+            
+            <!-- Zobrazení min, avg, max hodnot -->
+            @if (WeatherData != null && WeatherData.Any())
+            {
+                <div class="temperature-summary-container">
+                    <div class="temperature-summary">
+                        <span class="temp-min">Min @GetMinTemperature() °C</span>
+                        <span class="temp-avg">Prům @GetAvgTemperature() °C</span>
+                        <span class="temp-max">Max @GetMaxTemperature() °C</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+```
+
+3. **C# kód pro obsluhu komponenty:**
+```csharp
+@code {
+    // Definice a inicializace proměnných
+    private enum PeriodType { Day, Week, Month, Year }
+    private PeriodType SelectedPeriod { get; set; } = PeriodType.Day;
+    private DateTime SelectedDate { get; set; } = DateTime.Today;
+    private List<WeatherHistory> WeatherData { get; set; }
+    
+    // Inicializace komponenty
+    protected override async Task OnInitializedAsync()
+    {
+        // Inicializace, nastavení výchozích hodnot
+        await LoadData();
+    }
+    
+    // Metoda pro načtení dat
+    private async Task LoadData()
+    {
+        // Nastavení období, získání dat, výpočet průměrů
+    }
+    
+    // Metoda pro výpočet průměrů
+    private void CalculateAverages()
+    {
+        // Výpočet průměrů, min, max hodnot podle vybraného období
+    }
+    
+    // Metody pro formátování a zobrazení dat
+    private string GetDateAxisTitle() { /* ... */ }
+    private string GetDateFormatString() { /* ... */ }
+    private int GetDateAxisStep() { /* ... */ }
+    private double GetAxisLabelRotation() { /* ... */ }
+    private string GetAxisLabelFormat() { /* ... */ }
+    
+    // Metody pro získání teplotních extrémů
+    private string GetMinTemperature()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        return WeatherData.Min(d => d.TemperatureOut)?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+    
+    private string GetAvgTemperature()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        var avgValues = WeatherData.Select(d => d.AvgTemperature).Where(t => t.HasValue);
+        if (!avgValues.Any())
+            return "N/A";
+            
+        return avgValues.Average()?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+    
+    private string GetMaxTemperature()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        return WeatherData.Max(d => d.MaxTemperature)?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+}
+```
+
+### Důležité aspekty implementace grafů
+
+1. **Konfigurace dat pro graf:**
+
+Pro správné zobrazení grafů je klíčové nastavení zdrojových dat a jejich mapování na osy:
+
+```csharp
+<RadzenLineSeries Smooth="true" 
+                  Data="@WeatherData" 
+                  CategoryProperty="Date" 
+                  Title="@Localizer.GetString("Meteo.Trends.MinTemperature")" 
+                  ValueProperty="TemperatureOut">
+    <RadzenSeriesDataLabels Visible="false" />
+    <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
+</RadzenLineSeries>
+```
+
+- `Data="@WeatherData"` - zdroj dat (List<WeatherHistory>)
+- `CategoryProperty="Date"` - vlastnost objektu použitá pro osu X (časová osa)
+- `ValueProperty="TemperatureOut"` - vlastnost objektu použitá pro osu Y (hodnota grafu)
+- `Title="..."` - popisek série v legendě
+
+2. **Konfigurace os grafu:**
+
+```csharp
+<RadzenCategoryAxis Step="@GetDateAxisStep()">
+    <RadzenAxisTitle Text="@GetDateAxisTitle()" />
+    <RadzenGridLines Visible="true" />
+    <RadzenAxisTicks Visible="true" />
+    <RadzenAxisOptions Padding="20" />
+    <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+</RadzenCategoryAxis>
+```
+
+- `Step="@GetDateAxisStep()"` - určuje kolik popisků vynechat (např. Step=3 = zobrazí se každý 3. popisek)
+- `FormatString="@GetAxisLabelFormat()"` - formátovací řetězec pro zobrazení popisků osy (např. "{0:HH:mm}" pro čas)
+- `Rotation="@GetAxisLabelRotation()"` - rotace popisků pro lepší čitelnost při mnoha popisku (např. 45 stupňů)
+
+3. **Příprava dat pro zobrazení v grafech:**
+
+Pro různá časová období jsou data agregována s různou granularitou:
+
+```csharp
+// Pro denní pohled použijeme hodinové intervaly
+var hourlyData = WeatherData
+    .GroupBy(d => new DateTime(d.Date.Year, d.Date.Month, d.Date.Day, d.Date.Hour, 0, 0))
+    .Select(g => {
+        var first = g.First();
+        // Explicitně nastavíme datum s přesnou hodinou (zaokrouhleno na celé hodiny)
+        first.Date = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
+        first.AvgTemperature = g.Average(x => x.TemperatureOut);
+        first.MaxTemperature = g.Max(x => x.TemperatureOut);
+        return first;
+    })
+    .OrderBy(d => d.Date)
+    .ToList();
+```
+
+4. **Zobrazení souhrnných teplotních hodnot:**
+
+```html
+<div class="temperature-summary-container">
+    <div class="temperature-summary">
+        <span class="temp-min">Min @GetMinTemperature() °C</span>
+        <span class="temp-avg">Prům @GetAvgTemperature() °C</span>
+        <span class="temp-max">Max @GetMaxTemperature() °C</span>
+    </div>
+</div>
+```
+
+Tyto souhrnné hodnoty jsou zobrazovány pod grafem a poskytují rychlý přehled o teplotních extrémech bez nutnosti zkoumat graf detailně.
+
+5. **CSS styly pro komponenty grafů:**
+
+```css
+.temperature-summary-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.temperature-summary {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    align-items: center;
+}
+
+.temp-min {
+    background-color: #dc3545;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.temp-avg {
+    background-color: #0d6efd;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.temp-max {
+    background-color: #8B0000;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+```
+
+### Postup přidání nového grafu
+
+Pro přidání nového grafu je nutné provést následující kroky:
+
+1. **Definujte datový model:**
+   - Ujistěte se, že vaše datová třída obsahuje všechny potřebné vlastnosti (v případě potřeby přidejte nové)
+   - Implementujte výpočtové vlastnosti s atributem [NotMapped]
+
+2. **Upravte nebo vytvořte službu pro získání dat:**
+   - Implementujte metody pro načítání dat z databáze
+   - Přidejte metody pro filtrování podle požadovaných kritérií (např. datum)
+
+3. **Vytvořte Razor komponentu pro zobrazení grafu:**
+   - Injectujte potřebné služby (`IWeatherHistoryService`, `ILocalizationService`, ...)
+   - Definujte proměnné pro uložení stavu (vybrané období, data, ...)
+   - Implementujte metody pro načtení a zpracování dat
+
+4. **Definujte strukturu grafu s RadzenChart:**
+   ```html
+   <RadzenChart>
+       <RadzenLegend Position="LegendPosition.Bottom" />
+       
+       <RadzenCategoryAxis>
+           <!-- konfigurace osy X -->
+       </RadzenCategoryAxis>
+       
+       <RadzenValueAxis>
+           <!-- konfigurace osy Y -->
+       </RadzenValueAxis>
+       
+       <RadzenLineSeries Data="@MyData" 
+                         CategoryProperty="PropertyForXAxis" 
+                         ValueProperty="PropertyForYAxis">
+           <!-- konfigurace série grafu -->
+       </RadzenLineSeries>
+       
+       <!-- další série grafu -->
+       
+       <RadzenChartTooltipOptions Visible="true" />
+   </RadzenChart>
+   ```
+
+5. **Implementujte zpracování dat pro různá časová období:**
+   - Pro denní pohled agregujte data po hodinách
+   - Pro týdenní pohled agregujte data po 4 hodinách nebo dnech
+   - Pro měsíční pohled agregujte data po dnech
+   - Pro roční pohled agregujte data po týdnech nebo měsících
+
+6. **Přidejte souhrn statistických hodnot:**
+   ```html
+   <div class="temperature-summary-container">
+       <div class="temperature-summary">
+           <span class="temp-min">Min @GetMinValue() jednotky</span>
+           <span class="temp-avg">Prům @GetAvgValue() jednotky</span>
+           <span class="temp-max">Max @GetMaxValue() jednotky</span>
+       </div>
+   </div>
+   ```
+
+7. **Implementujte pomocné metody pro formátování popisků os:**
+   - Nastavte správný formát datumu/času podle vybraného období
+   - Implementujte logiku pro určení kroku popisků (Step) podle množství dat
+   - Nastavte vhodnou rotaci popisků pro lepší čitelnost
+
+8. **Definujte CSS styly pro vizuální formátování grafu:**
+   - Vytvořte nebo upravte CSS třídy v souboru site.css
+   - Nastavte styly pro kontejner grafu, nadpis, a souhrn hodnot
+   - Zajistěte responzivní chování pro různé velikosti obrazovek
+
+9. **Zajistěte lokalizaci textů:**
+   - Přidejte nové texty do lokalizační tabulky
+   - Použijte `Localizer.GetString("Key")` pro zobrazení textů v UI
+
+Příklad implementace nového grafu:
+```html
+<!-- Graf vlhkosti -->
+<div class="chart-container">
+    <h2>@Localizer.GetString("Meteo.Trends.Humidity")</h2>
+    <RadzenChart>
+        <RadzenLegend Position="LegendPosition.Bottom" />
+        
+        <RadzenCategoryAxis Step="@GetDateAxisStep()">
+            <RadzenAxisTitle Text="@GetDateAxisTitle()" />
+            <RadzenGridLines Visible="true" />
+            <RadzenAxisTicks Visible="true" />
+            <RadzenAxisOptions Padding="20" />
+            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+        </RadzenCategoryAxis>
+        
+        <RadzenValueAxis>
+            <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Humidity")" />
+            <RadzenGridLines Visible="true" />
+            <RadzenAxisTicks Visible="true" />
+            <RadzenAxisOptions Padding="20" />
+        </RadzenValueAxis>
+        
+        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" 
+                         Title="@Localizer.GetString("Meteo.Trends.IndoorHumidity")" 
+                         ValueProperty="HumidityIn">
+            <RadzenSeriesDataLabels Visible="false" />
+            <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
+        </RadzenLineSeries>
+        
+        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" 
+                         Title="@Localizer.GetString("Meteo.Trends.OutdoorHumidity")" 
+                         ValueProperty="HumidityOut">
+            <RadzenSeriesDataLabels Visible="false" />
+            <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
+        </RadzenLineSeries>
+
+        <RadzenChartTooltipOptions Visible="true" />
+    </RadzenChart>
+    
+    <!-- Zobrazení min, avg, max hodnot -->
+    @if (WeatherData != null && WeatherData.Any())
+    {
+        <div class="temperature-summary-container">
+            <div class="temperature-summary">
+                <span class="temp-min">Min @GetMinHumidity() %</span>
+                <span class="temp-avg">Prům @GetAvgHumidity() %</span>
+                <span class="temp-max">Max @GetMaxHumidity() %</span>
+            </div>
+        </div>
+    }
+</div>
+```
+
+Při implementaci je důležité zajistit, aby data byla správně formátována, grafy byly responzivní a uživatelské rozhraní bylo intuitivní.

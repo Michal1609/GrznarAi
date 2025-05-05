@@ -271,6 +271,28 @@ namespace GrznarAi.Web.Data
             AddEntry("Meteo.WindDirection.W", "Západ", "West", "West wind direction");
             AddEntry("Meteo.WindDirection.NW", "Severozápad", "Northwest", "Northwest wind direction");
 
+            // Historical data
+            AddEntry("Meteo.HistoricalData", "Historická data", "Historical Data", "Historical data section title");
+            AddEntry("Meteo.HistoricalData.SameDay", "Tento den v historii", "This Day in History", "Same day statistics title");
+            AddEntry("Meteo.HistoricalData.YearlyStats", "Roční statistiky", "Yearly Statistics", "Yearly statistics title");
+            AddEntry("Meteo.HistoricalData.NoData", "Žádná data nejsou k dispozici", "No data available", "No data available message");
+            AddEntry("Meteo.HistoricalData.Year", "Rok", "Year", "Year column");
+            AddEntry("Meteo.HistoricalData.MinTemp", "Min. teplota", "Min. Temp", "Minimum temperature column");
+            AddEntry("Meteo.HistoricalData.AvgTemp", "Průměr. teplota", "Avg. Temp", "Average temperature column");
+            AddEntry("Meteo.HistoricalData.MaxTemp", "Max. teplota", "Max. Temp", "Maximum temperature column");
+            AddEntry("Meteo.HistoricalData.Rainfall", "Srážky", "Rainfall", "Rainfall column");
+            AddEntry("Meteo.HistoricalData.AvgHumidity", "Průměr. vlhkost", "Avg. Humidity", "Average humidity column");
+            AddEntry("Meteo.HistoricalData.LastFrostDay", "Poslední mráz", "Last Frost", "Last frost day in first half of year column");
+            AddEntry("Meteo.HistoricalData.FirstFrostDay", "První mráz", "First Frost", "First frost day in second half of year column");
+            AddEntry("Meteo.HistoricalData.FrostDays", "Mrazivé dny", "Frost Days", "Number of frost days column");
+            AddEntry("Meteo.HistoricalData.FirstHotDay", "První tropický den", "First Tropical Day", "First hot day column");
+            AddEntry("Meteo.HistoricalData.LastHotDay", "Poslední tropický den", "Last Tropical Day", "Last hot day column");
+            AddEntry("Meteo.HistoricalData.HotDays", "Tropické dny", "Tropical Days", "Number of hot days column");
+            AddEntry("Meteo.HistoricalData.MinYearTemp", "Min. teplota", "Min. Temp", "Minimum yearly temperature column");
+            AddEntry("Meteo.HistoricalData.MaxYearTemp", "Max. teplota", "Max. Temp", "Maximum yearly temperature column");
+            AddEntry("Meteo.HistoricalData.AvgYearTemp", "Průměr. teplota", "Avg. Temp", "Average yearly temperature column");
+            AddEntry("Meteo.HistoricalData.YearlyRainfall", "Roční srážky", "Yearly Rainfall", "Yearly rainfall column");
+
             // --- AI News Localization ---
             AddEntry("AiNews.Title", "AI Novinky", "AI News", "AI News page title");
             AddEntry("AiNews.Description", "Nejnovější zprávy ze světa umělé inteligence", "Latest news from the world of artificial intelligence", "AI News page description");

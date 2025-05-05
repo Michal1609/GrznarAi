@@ -746,6 +746,20 @@
         vertical-align: middle;
     }
     
+    /* Zarovnání dat v buňkách s datumy doprava */
+    .table-dark td:nth-child(2),
+    .table-dark td:nth-child(3),
+    .table-dark td:nth-child(4),
+    .table-dark td:nth-child(5),
+    .table-dark td:nth-child(6),
+    .table-dark td:nth-child(7),
+    .table-dark td:nth-child(8),
+    .table-dark td:nth-child(9),
+    .table-dark td:nth-child(10),
+    .table-dark td:nth-child(11) {
+        text-align: right;
+    }
+    
     .table-dark tbody tr:hover {
         background-color: rgba(255, 255, 255, 0.1);
     }
@@ -1127,8 +1141,8 @@
     
     private string FormatDate(DateTime? date)
     {
-        if (!date.HasValue)
-            return "—";
+        if (!date.HasValue || date.Value.Year == 1)
+            return "";
             
         return date.Value.ToString("d. M. yyyy");
     }

@@ -24,6 +24,43 @@
     color: var(--bs-dark);
 }
 
+.temperature-summary-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.temperature-summary {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    align-items: center;
+}
+
+.temp-min {
+    background-color: #dc3545;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.temp-avg {
+    background-color: #0d6efd;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.temp-max {
+    background-color: #8B0000;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
 /* Nové styly pro period-selector */
 .period-selector {
     background-color: #fff;
@@ -87,6 +124,18 @@
     to { transform: rotate(360deg); }
 }
 
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.chart-header h2 {
+    margin-bottom: 0;
+    flex: 1;
+}
+
 /* Responsivní úpravy pro mobilní zařízení */
 @media (max-width: 768px) {
     .meteo-trends-container {
@@ -119,6 +168,21 @@
     .date-range {
         text-align: center;
         margin-top: 5px;
+    }
+    
+    .chart-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .temperature-summary-container {
+        justify-content: center;
+    }
+    
+    .temperature-summary {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 } 
 

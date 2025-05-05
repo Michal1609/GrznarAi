@@ -13,63 +13,57 @@
 <div class="meteo-trends-container">
     <h1>@Localizer.GetString("Meteo.Trends.Title")</h1>
     
-    <div class="period-selector">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">@Localizer.GetString("Meteo.Trends.SelectPeriod")</h5>
-                <div class="d-flex gap-3 flex-wrap">
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="periodOption" id="dayOption" 
-                               checked="@(SelectedPeriod == PeriodType.Day)" 
-                               @onchange="@(() => ChangePeriod(PeriodType.Day))" />
-                        <label class="form-check-label" for="dayOption">@Localizer.GetString("Meteo.Trends.Day")</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="periodOption" id="weekOption" 
-                               checked="@(SelectedPeriod == PeriodType.Week)" 
-                               @onchange="@(() => ChangePeriod(PeriodType.Week))" />
-                        <label class="form-check-label" for="weekOption">@Localizer.GetString("Meteo.Trends.Week")</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="periodOption" id="monthOption" 
-                               checked="@(SelectedPeriod == PeriodType.Month)" 
-                               @onchange="@(() => ChangePeriod(PeriodType.Month))" />
-                        <label class="form-check-label" for="monthOption">@Localizer.GetString("Meteo.Trends.Month")</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="periodOption" id="yearOption" 
-                               checked="@(SelectedPeriod == PeriodType.Year)" 
-                               @onchange="@(() => ChangePeriod(PeriodType.Year))" />
-                        <label class="form-check-label" for="yearOption">@Localizer.GetString("Meteo.Trends.Year")</label>
-                    </div>
+    <div class="period-selector mb-4">
+        <div class="period-controls">
+            <div class="period-types mb-2">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="periodOption" id="dayOption" autocomplete="off"
+                           checked="@(SelectedPeriod == PeriodType.Day)" 
+                           @onchange="@(() => ChangePeriod(PeriodType.Day))" />
+                    <label class="btn btn-outline-primary" for="dayOption">@Localizer.GetString("Meteo.Trends.Day")</label>
+
+                    <input type="radio" class="btn-check" name="periodOption" id="weekOption" autocomplete="off"
+                           checked="@(SelectedPeriod == PeriodType.Week)" 
+                           @onchange="@(() => ChangePeriod(PeriodType.Week))" />
+                    <label class="btn btn-outline-primary" for="weekOption">@Localizer.GetString("Meteo.Trends.Week")</label>
+
+                    <input type="radio" class="btn-check" name="periodOption" id="monthOption" autocomplete="off"
+                           checked="@(SelectedPeriod == PeriodType.Month)" 
+                           @onchange="@(() => ChangePeriod(PeriodType.Month))" />
+                    <label class="btn btn-outline-primary" for="monthOption">@Localizer.GetString("Meteo.Trends.Month")</label>
+
+                    <input type="radio" class="btn-check" name="periodOption" id="yearOption" autocomplete="off"
+                           checked="@(SelectedPeriod == PeriodType.Year)" 
+                           @onchange="@(() => ChangePeriod(PeriodType.Year))" />
+                    <label class="btn btn-outline-primary" for="yearOption">@Localizer.GetString("Meteo.Trends.Year")</label>
                 </div>
+            </div>
                 
-                <div class="mt-3">
-                    @switch (SelectedPeriod)
-                    {
-                        case PeriodType.Day:
-                            <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(() => LoadData())" Class="w-100" />
-                            break;
-                        case PeriodType.Week:
-                            <div class="d-flex align-items-center gap-2">
-                                <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(() => LoadWeekData())" Class="w-100" />
-                                <span class="text-muted">@FirstDayOfWeek.ToString("d") - @LastDayOfWeek.ToString("d")</span>
-                            </div>
-                            break;
-                        case PeriodType.Month:
-                            <div class="d-flex align-items-center gap-2">
-                                <RadzenDropDown @bind-Value="SelectedMonth" Data="@Months" TextProperty="Text" ValueProperty="Value" 
-                                               Change="@(() => LoadMonthData())" Class="w-50" />
-                                <RadzenDropDown @bind-Value="SelectedYear" Data="@Years" TextProperty="Text" ValueProperty="Value" 
-                                               Change="@(() => LoadMonthData())" Class="w-50" />
-                            </div>
-                            break;
-                        case PeriodType.Year:
+            <div class="date-selector">
+                @switch (SelectedPeriod)
+                {
+                    case PeriodType.Day:
+                        <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(() => LoadData())" Class="date-picker" />
+                        break;
+                    case PeriodType.Week:
+                        <div class="d-flex align-items-center">
+                            <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(() => LoadWeekData())" Class="date-picker" />
+                            <span class="date-range mx-2">@FirstDayOfWeek.ToString("d") &ndash; @LastDayOfWeek.ToString("d")</span>
+                        </div>
+                        break;
+                    case PeriodType.Month:
+                        <div class="d-flex align-items-center gap-2 month-year-selector">
+                            <RadzenDropDown @bind-Value="SelectedMonth" Data="@Months" TextProperty="Text" ValueProperty="Value" 
+                                          Change="@(() => LoadMonthData())" Class="month-dropdown" />
                             <RadzenDropDown @bind-Value="SelectedYear" Data="@Years" TextProperty="Text" ValueProperty="Value" 
-                                           Change="@(() => LoadData())" Class="w-100" />
-                            break;
-                    }
-                </div>
+                                          Change="@(() => LoadMonthData())" Class="year-dropdown" />
+                        </div>
+                        break;
+                    case PeriodType.Year:
+                        <RadzenDropDown @bind-Value="SelectedYear" Data="@Years" TextProperty="Text" ValueProperty="Value" 
+                                      Change="@(() => LoadData())" Class="year-dropdown" />
+                        break;
+                }
             </div>
         </div>
     </div>

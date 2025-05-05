@@ -1,5 +1,6 @@
 @page "/meteo"
 @inject IWeatherService WeatherService
+@inject IMeteoHistoryService MeteoHistoryService
 @inject ILocalizationService Localizer
 @using GrznarAi.Web.Models
 @using GrznarAi.Web.Services
@@ -138,6 +139,116 @@
                 </div>
             </div>
             
+            <!-- Historická data -->
+            <div class="historical-data-section">
+                <h3 class="section-title">@Localizer.GetString("Meteo.HistoricalData")</h3>
+                
+                @if (IsLoadingHistoricalData)
+                {
+                    <div class="loading-spinner-small">
+                        <div class="spinner">
+                            <span class="visually-hidden">@Localizer.GetString("Meteo.Loading")</span>
+                        </div>
+                    </div>
+                }
+                else 
+                {
+                    <div class="historical-data-tables">
+                        <!-- Tabulka 1: Statistiky za stejný den v posledních letech -->
+                        <div class="data-table-container">
+                            <h4>@Localizer.GetString("Meteo.HistoricalData.SameDay")</h4>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.Year")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.MinTemp")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.AvgTemp")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.MaxTemp")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.Rainfall")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.AvgHumidity")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (DailyStatistics != null && DailyStatistics.Any())
+                                        {
+                                            @foreach (var stat in DailyStatistics)
+                                            {
+                                                <tr>
+                                                    <td>@stat.Year</td>
+                                                    <td>@FormatTemperature(stat.MinTemperature)°C</td>
+                                                    <td>@FormatTemperature(stat.AvgTemperature)°C</td>
+                                                    <td>@FormatTemperature(stat.MaxTemperature)°C</td>
+                                                    <td>@FormatRainfall(stat.TotalRainfall) mm</td>
+                                                    <td>@FormatHumidity(stat.AvgHumidity)%</td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="6" class="text-center">@Localizer.GetString("Meteo.HistoricalData.NoData")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabulka 2: Roční statistiky za posledních několik let -->
+                        <div class="data-table-container">
+                            <h4>@Localizer.GetString("Meteo.HistoricalData.YearlyStats")</h4>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.Year")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.LastFrostDay")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.FirstFrostDay")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.FrostDays")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.FirstHotDay")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.LastHotDay")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.HotDays")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.MinYearTemp")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.MaxYearTemp")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.AvgYearTemp")</th>
+                                            <th>@Localizer.GetString("Meteo.HistoricalData.YearlyRainfall")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (YearlyStatistics != null && YearlyStatistics.Any())
+                                        {
+                                            @foreach (var stat in YearlyStatistics)
+                                            {
+                                                <tr>
+                                                    <td>@stat.Year</td>
+                                                    <td>@FormatDate(stat.LastFrostDayFirstHalf)</td>
+                                                    <td>@FormatDate(stat.FirstFrostDaySecondHalf)</td>
+                                                    <td>@stat.FrostDaysCount</td>
+                                                    <td>@FormatDate(stat.FirstHotDay)</td>
+                                                    <td>@FormatDate(stat.LastHotDay)</td>
+                                                    <td>@stat.HotDaysCount</td>
+                                                    <td>@FormatTemperature(stat.MinTemperature)°C</td>
+                                                    <td>@FormatTemperature(stat.MaxTemperature)°C</td>
+                                                    <td>@FormatTemperature(stat.AvgTemperature)°C</td>
+                                                    <td>@FormatRainfall(stat.TotalRainfall) mm</td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="11" class="text-center">@Localizer.GetString("Meteo.HistoricalData.NoData")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
             <!-- Tlačítko pro obnovu dat -->
             <button class="refresh-button" @onclick="RefreshDataAsync" disabled="@IsLoading">
                 <i class="bi bi-arrow-clockwise"></i>
@@ -157,7 +268,7 @@
         color: white;
         padding: 2rem;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
     }
     
@@ -573,6 +684,85 @@
         color: #dc3545;
     }
     
+    /* Stylování pro sekci historických dat */
+    .historical-data-section {
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .section-title {
+        color: white;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 600;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .historical-data-tables {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .data-table-container {
+        width: 100%;
+    }
+    
+    .data-table-container h4 {
+        color: white;
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+    
+    /* Přizpůsobení tabulky pro tmavé pozadí */
+    .table-dark {
+        color: white;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .table-dark th {
+        background-color: rgba(0, 0, 0, 0.4);
+        font-weight: 600;
+        border-color: rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+    }
+    
+    .table-dark td {
+        border-color: rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+    
+    .table-dark tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Menší spinner pro načítání dat v sekcích */
+    .loading-spinner-small {
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
+    }
+    
+    .loading-spinner-small .spinner {
+        width: 30px;
+        height: 30px;
+        border-width: 3px;
+    }
+    
     /* Responzivní design */
     @@media (max-width: 768px) {
         .meteo-dashboard {
@@ -590,11 +780,23 @@
         .additional-indicators {
             grid-template-columns: 1fr 1fr;
         }
+        
+        .section-title {
+            font-size: 1.5rem;
+        }
+        
+        .data-table-container h4 {
+            font-size: 1.2rem;
+        }
     }
     
     @@media (max-width: 576px) {
         .additional-indicators {
             grid-template-columns: 1fr;
+        }
+        
+        .historical-data-section {
+            padding: 1rem;
         }
     }
 </style>
@@ -602,10 +804,15 @@
 @code {
     private WeatherData WeatherData { get; set; }
     private bool IsLoading { get; set; } = true;
+    private bool IsLoadingHistoricalData { get; set; } = true;
+    private List<DailyStatisticsForDate> DailyStatistics { get; set; }
+    private List<YearlyStatistics> YearlyStatistics { get; set; }
+    private const int HISTORICAL_YEARS = 10; // Počet let zpětně pro historická data
 
     protected override async Task OnInitializedAsync()
     {
         await LoadWeatherDataAsync();
+        await LoadHistoricalDataAsync();
     }
     
     private async Task LoadWeatherDataAsync()
@@ -622,6 +829,30 @@
         finally
         {
             IsLoading = false;
+        }
+    }
+    
+    private async Task LoadHistoricalDataAsync()
+    {
+        IsLoadingHistoricalData = true;
+        try
+        {
+            // Načtení denních statistik pro aktuální datum napříč lety
+            var today = DateTime.Today;
+            DailyStatistics = await MeteoHistoryService.GetDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
+            
+            // Načtení ročních statistik pro posledních několik let
+            int currentYear = DateTime.Today.Year;
+            int startYear = currentYear - HISTORICAL_YEARS + 1;
+            YearlyStatistics = await MeteoHistoryService.GetYearlyStatisticsAsync(startYear, currentYear);
+        }
+        catch (Exception)
+        {
+            // Logování chyby
+        }
+        finally
+        {
+            IsLoadingHistoricalData = false;
         }
     }
     
@@ -867,5 +1098,38 @@
             return Localizer.GetString("Meteo.WindDirection.W");
         else
             return Localizer.GetString("Meteo.WindDirection.NW");
+    }
+    
+    // Metody pro formátování dat v tabulkách
+    private string FormatTemperature(float? temperature)
+    {
+        if (!temperature.HasValue)
+            return "N/A";
+            
+        return temperature.Value.ToString("F1", CultureInfo.InvariantCulture);
+    }
+    
+    private string FormatRainfall(float? rainfall)
+    {
+        if (!rainfall.HasValue)
+            return "0.0";
+            
+        return rainfall.Value.ToString("F1", CultureInfo.InvariantCulture);
+    }
+    
+    private string FormatHumidity(float? humidity)
+    {
+        if (!humidity.HasValue)
+            return "N/A";
+            
+        return humidity.Value.ToString("F0", CultureInfo.InvariantCulture);
+    }
+    
+    private string FormatDate(DateTime? date)
+    {
+        if (!date.HasValue)
+            return "—";
+            
+        return date.Value.ToString("d. M. yyyy");
     }
 }

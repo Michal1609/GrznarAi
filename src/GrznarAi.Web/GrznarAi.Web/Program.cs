@@ -121,6 +121,9 @@ builder.Services.AddScoped<GoogleAnalyticsService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IWeatherHistoryService, WeatherHistoryService>();
 
+// Registrujeme IMeteoHistoryService
+builder.Services.AddScoped<IMeteoHistoryService, MeteoHistoryService>();
+
 // Registrujeme BackgroundTaskService jako singleton i jako HostedService
 builder.Services.AddSingleton<BackgroundTaskService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<BackgroundTaskService>());

@@ -1,0 +1,319 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using GrznarAi.Web.Data;
+
+namespace GrznarAi.Web.Services
+{
+    public interface IMeteoHistoryService
+    {
+        Task<List<DailyStatisticsForDate>> GetDailyStatisticsForLastYearsAsync(DateTime date, int years);
+        Task<List<YearlyStatistics>> GetYearlyStatisticsAsync(int startYear, int endYear);
+    }
+
+    public class MeteoHistoryService : IMeteoHistoryService
+    {
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly ILogger<MeteoHistoryService> _logger;
+
+        public MeteoHistoryService(
+            IDbContextFactory<ApplicationDbContext> contextFactory,
+            ILogger<MeteoHistoryService> logger)
+        {
+            _contextFactory = contextFactory;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Získá denní statistiky pro zadané datum napříč posledními roky
+        /// </summary>
+        /// <param name="date">Aktuální datum</param>
+        /// <param name="years">Počet let zpětně</param>
+        /// <returns>Seznam denních statistik pro každý rok pro stejný den a měsíc</returns>
+        public async Task<List<DailyStatisticsForDate>> GetDailyStatisticsForLastYearsAsync(DateTime date, int years)
+        {
+            var result = new List<DailyStatisticsForDate>();
+            
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                
+                // Určíme roky, pro které chceme získat data
+                var currentYear = DateTime.Now.Year;
+                var startYear = currentYear - years + 1; // +1 protože počítáme i aktuální rok
+                
+                // Získáme den a měsíc z aktuálního data
+                var day = date.Day;
+                var month = date.Month;
+                
+                // Pro každý rok získáme data
+                for (int year = startYear; year <= currentYear; year++)
+                {
+                    // Vytvoříme datum pro daný rok
+                    var targetDate = new DateTime(year, month, day);
+                    
+                    // Získáme data pro tento den
+                    var dayRecords = await context.WeatherHistory
+                        .Where(h => h.Date.Year == year && h.Date.Month == month && h.Date.Day == day)
+                        .ToListAsync();
+                    
+                    if (dayRecords.Any())
+                    {
+                        // Vypočítáme denní statistiky
+                        var stats = new DailyStatisticsForDate
+                        {
+                            Date = targetDate,
+                            Year = year,
+                            MinTemperature = dayRecords.Min(r => r.TemperatureOut),
+                            MaxTemperature = dayRecords.Max(r => r.TemperatureOut),
+                            AvgTemperature = dayRecords.Average(r => r.TemperatureOut),
+                            TotalRainfall = dayRecords.Sum(r => r.Rain),
+                            AvgHumidity = dayRecords.Average(r => r.HumidityOut)
+                        };
+                        
+                        result.Add(stats);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Chyba při získávání denních statistik pro datum {Date}", date);
+            }
+            
+            return result.OrderByDescending(r => r.Year).ToList();
+        }
+
+        /// <summary>
+        /// Získá roční statistiky pro zadané roky
+        /// </summary>
+        /// <param name="startYear">Počáteční rok</param>
+        /// <param name="endYear">Koncový rok</param>
+        /// <returns>Seznam ročních statistik pro každý rok</returns>
+        public async Task<List<YearlyStatistics>> GetYearlyStatisticsAsync(int startYear, int endYear)
+        {
+            var result = new List<YearlyStatistics>();
+            
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                
+                // Pro každý rok získáme statistiky
+                for (int year = startYear; year <= endYear; year++)
+                {
+                    var yearStart = new DateTime(year, 1, 1);
+                    var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
+                    
+                    // Získáme data pro tento rok
+                    var yearRecords = await context.WeatherHistory
+                        .Where(h => h.Date >= yearStart && h.Date <= yearEnd)
+                        .ToListAsync();
+                    
+                    if (yearRecords.Any())
+                    {
+                        // Vytvoříme statistiky pro daný rok
+                        var stats = new YearlyStatistics
+                        {
+                            Year = year,
+                            MinTemperature = yearRecords.Min(r => r.TemperatureOut),
+                            MaxTemperature = yearRecords.Max(r => r.TemperatureOut),
+                            AvgTemperature = yearRecords.Average(r => r.TemperatureOut),
+                            TotalRainfall = await CalculateTotalYearlyRainfallAsync(year, context),
+                            
+                            // Analyzujeme specifické dny v roce
+                            LastFrostDayFirstHalf = await GetLastFrostDayInFirstHalfAsync(year, context),
+                            FirstFrostDaySecondHalf = await GetFirstFrostDayInSecondHalfAsync(year, context),
+                            FrostDaysCount = await GetNumberOfFrostDaysAsync(year, context),
+                            
+                            FirstHotDay = await GetFirstHotDayAsync(year, context),
+                            LastHotDay = await GetLastHotDayAsync(year, context),
+                            HotDaysCount = await GetNumberOfHotDaysAsync(year, context)
+                        };
+                        
+                        result.Add(stats);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Chyba při získávání ročních statistik pro roky {StartYear} až {EndYear}", startYear, endYear);
+            }
+            
+            return result.OrderByDescending(r => r.Year).ToList();
+        }
+
+        /// <summary>
+        /// Vypočítá celkové srážky za rok podle vzoru ze zadání
+        /// </summary>
+        private async Task<float?> CalculateTotalYearlyRainfallAsync(int year, ApplicationDbContext context)
+        {
+            // Nejprve získáme denní maxima srážek
+            var yearStart = new DateTime(year, 1, 1);
+            var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
+            
+            // Pomocí SQL query vytvoříme ekvivalent zadaného SQL požadavku
+            var dailyMaxRainfall = await context.WeatherHistory
+                .Where(h => h.Date >= yearStart && h.Date <= yearEnd && h.Rain > 0)
+                .GroupBy(h => new { h.Date.Year, h.Date.Month, h.Date.Day })
+                .Select(g => new { Day = g.Key, MaxRain = g.Max(h => h.Rain) })
+                .ToListAsync();
+            
+            // Sečteme denní maxima pro získání celkového ročního úhrnu
+            return dailyMaxRainfall.Sum(d => d.MaxRain);
+        }
+
+        /// <summary>
+        /// Získá poslední den mrazu v první polovině roku
+        /// </summary>
+        private async Task<DateTime?> GetLastFrostDayInFirstHalfAsync(int year, ApplicationDbContext context)
+        {
+            var firstHalfStart = new DateTime(year, 1, 1);
+            var firstHalfEnd = new DateTime(year, 6, 30, 23, 59, 59);
+            
+            // Získáme poslední den, kdy teplota klesla pod 0°C v první polovině roku
+            return await context.WeatherHistory
+                .Where(h => h.Date >= firstHalfStart && h.Date <= firstHalfEnd && h.TemperatureOut <= 0)
+                .OrderByDescending(h => h.Date)
+                .Select(h => h.Date)
+                .FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// Získá první den mrazu v druhé polovině roku
+        /// </summary>
+        private async Task<DateTime?> GetFirstFrostDayInSecondHalfAsync(int year, ApplicationDbContext context)
+        {
+            var secondHalfStart = new DateTime(year, 7, 1);
+            var secondHalfEnd = new DateTime(year, 12, 31, 23, 59, 59);
+            
+            // Získáme první den, kdy teplota klesla pod 0°C v druhé polovině roku
+            return await context.WeatherHistory
+                .Where(h => h.Date >= secondHalfStart && h.Date <= secondHalfEnd && h.TemperatureOut <= 0)
+                .OrderBy(h => h.Date)
+                .Select(h => h.Date)
+                .FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// Získá počet mrazivých dnů v roce
+        /// </summary>
+        private async Task<int> GetNumberOfFrostDaysAsync(int year, ApplicationDbContext context)
+        {
+            var yearStart = new DateTime(year, 1, 1);
+            var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
+            
+            // Zjistíme počet dní, kdy teplota klesla pod 0°C
+            var frostDays = await context.WeatherHistory
+                .Where(h => h.Date >= yearStart && h.Date <= yearEnd && h.TemperatureOut <= 0)
+                .Select(h => new { h.Date.Year, h.Date.Month, h.Date.Day })
+                .Distinct()
+                .CountAsync();
+            
+            return frostDays;
+        }
+
+        /// <summary>
+        /// Získá první horký den v roce (teplota >= 30°C)
+        /// </summary>
+        private async Task<DateTime?> GetFirstHotDayAsync(int year, ApplicationDbContext context)
+        {
+            var yearStart = new DateTime(year, 1, 1);
+            var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
+            
+            // Získáme první den, kdy teplota dosáhla nebo překročila 30°C
+            return await context.WeatherHistory
+                .Where(h => h.Date >= yearStart && h.Date <= yearEnd && h.TemperatureOut >= 30)
+                .OrderBy(h => h.Date)
+                .Select(h => h.Date)
+                .FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// Získá poslední horký den v roce (teplota >= 30°C)
+        /// </summary>
+        private async Task<DateTime?> GetLastHotDayAsync(int year, ApplicationDbContext context)
+        {
+            var yearStart = new DateTime(year, 1, 1);
+            var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
+            
+            // Získáme poslední den, kdy teplota dosáhla nebo překročila 30°C
+            return await context.WeatherHistory
+                .Where(h => h.Date >= yearStart && h.Date <= yearEnd && h.TemperatureOut >= 30)
+                .OrderByDescending(h => h.Date)
+                .Select(h => h.Date)
+                .FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// Získá počet horkých dnů v roce (teplota >= 30°C)
+        /// </summary>
+        private async Task<int> GetNumberOfHotDaysAsync(int year, ApplicationDbContext context)
+        {
+            var yearStart = new DateTime(year, 1, 1);
+            var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
+            
+            // Zjistíme počet dní, kdy teplota dosáhla nebo překročila 30°C
+            var hotDays = await context.WeatherHistory
+                .Where(h => h.Date >= yearStart && h.Date <= yearEnd && h.TemperatureOut >= 30)
+                .Select(h => new { h.Date.Year, h.Date.Month, h.Date.Day })
+                .Distinct()
+                .CountAsync();
+            
+            return hotDays;
+        }
+    }
+
+    /// <summary>
+    /// Model pro denní statistiky pro stejné datum v různých letech
+    /// </summary>
+    public class DailyStatisticsForDate
+    {
+        public DateTime Date { get; set; }
+        public int Year { get; set; }
+        public float? MinTemperature { get; set; }
+        public float? AvgTemperature { get; set; }
+        public float? MaxTemperature { get; set; }
+        public float? TotalRainfall { get; set; }
+        public float? AvgHumidity { get; set; }
+    }
+
+    /// <summary>
+    /// Model pro roční statistiky
+    /// </summary>
+    public class YearlyStatistics
+    {
+        public int Year { get; set; }
+        
+        // Poslední den kdy mrzlo na začátku roku (poslední den kdy teplota < 0 a den < 30.6)
+        public DateTime? LastFrostDayFirstHalf { get; set; }
+        
+        // První den kdy začalo mrznout v druhé polovině roku
+        public DateTime? FirstFrostDaySecondHalf { get; set; }
+        
+        // Počet dní kdy bylo 0 stupňů a méně
+        public int FrostDaysCount { get; set; }
+        
+        // První den v roce kdy bylo 30 stupňů
+        public DateTime? FirstHotDay { get; set; }
+        
+        // Poslední den kdy bylo 30 stupňů v celém roce
+        public DateTime? LastHotDay { get; set; }
+        
+        // Počet dní kdy bylo 30 stupňů a více
+        public int HotDaysCount { get; set; }
+        
+        // Minimální teplota za celý rok
+        public float? MinTemperature { get; set; }
+        
+        // Maximální teplota za celý rok
+        public float? MaxTemperature { get; set; }
+        
+        // Průměrná roční teplota
+        public float? AvgTemperature { get; set; }
+        
+        // Celkový úhrn srážek za celý rok
+        public float? TotalRainfall { get; set; }
+    }
+} 

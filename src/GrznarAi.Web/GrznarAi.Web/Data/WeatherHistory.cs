@@ -53,5 +53,25 @@ namespace GrznarAi.Web.Data
         
         [NotMapped]
         public float? MaxTemperature { get; set; }
+        
+        // Dodatečné vlastnosti pro analýzu vlhkosti
+        [NotMapped]
+        public float? MinHumidity { get; set; }
+        
+        [NotMapped]
+        public float? AvgHumidity { get; set; }
+        
+        [NotMapped]
+        public float? MaxHumidity { get; set; }
+        
+        // Dodatečné vlastnosti pro analýzu tlaku
+        [NotMapped]
+        public float? MinBar { get; set; }
+        
+        [NotMapped]
+        public float? AvgBar { get; set; }
+        
+        [NotMapped]
+        public float? MaxBar { get; set; }
     }
 } 

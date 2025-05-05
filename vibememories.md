@@ -1211,4 +1211,50 @@ Příklad implementace nového grafu:
 </div>
 ```
 
-Při implementaci je důležité zajistit, aby data byla správně formátována, grafy byly responzivní a uživatelské rozhraní bylo intuitivní.
+Při implementaci je důležité zajistit, že data byla správně formátována, grafy byly responzivní a uživatelské rozhraní bylo intuitivní.
+
+## Meteorological Data Features
+
+### Weather Trends Visualization
+The application includes a comprehensive weather trends visualization feature with:
+
+1. **Temperature Graph**:
+   - Displays min, average, and max temperature values
+   - Supports different time periods (day, week, month, year)
+   - Includes summary statistics below the graph
+
+2. **Humidity Graph**:
+   - Displays min, average, and max humidity values
+   - Uses the same time period controls as the temperature graph
+   - Shows humidity percentage with proper formatting
+   - Includes summary statistics below the graph
+   - Implemented using Radzen charting components
+
+3. **Atmospheric Pressure Graph**:
+   - Displays min, average, and max pressure values in hPa
+   - Uses smooth line splines for better data visualization
+   - Shows barometric pressure trends over selected time periods
+   - Includes summary statistics with min/avg/max values
+   - Uses consistent styling with other meteorological graphs
+
+### Data Aggregation
+The application performs automatic data aggregation based on the selected time period:
+- Day view: hourly intervals
+- Week view: 4-hour intervals
+- Month view: daily intervals
+- Year view: weekly intervals
+
+All calculations maintain consistency between temperature and humidity measurements.
+
+### Technical Implementation Details
+- Uses [NotMapped] attributes for calculated properties that don't need to be stored in the database
+- Leverages LINQ for efficient data grouping and aggregation
+- Ensures proper formatting of decimal values with culture-specific formatting
+- Implements responsive layout for optimal viewing on different devices
+
+## Development Notes
+The application follows a consistent pattern for implementing new meteorological measurements:
+1. Add new [NotMapped] properties to the WeatherHistory model
+2. Implement calculation logic in the CalculateAverages() method
+3. Create display components using the Radzen chart library
+4. Add helper methods for data formatting and retrieval

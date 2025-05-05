@@ -140,6 +140,118 @@
                     </div>
                 }
             </div>
+            
+            <!-- Graf vlhkosti -->
+            <div class="chart-container">
+                <h2>@Localizer.GetString("Meteo.Trends.Humidity")</h2>
+                <RadzenChart>
+                    <RadzenLegend Position="LegendPosition.Bottom" />
+                    
+                    <RadzenCategoryAxis Step="@GetDateAxisStep()">
+                        <RadzenAxisTitle Text="@GetDateAxisTitle()" />
+                        <RadzenGridLines Visible="true" />
+                        <RadzenAxisTicks Visible="true" />
+                        <RadzenAxisOptions Padding="20" />
+                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                    </RadzenCategoryAxis>
+                    
+                    <RadzenValueAxis>
+                        <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Humidity")" />
+                        <RadzenGridLines Visible="true" />
+                        <RadzenAxisTicks Visible="true" />
+                        <RadzenAxisOptions Padding="20" />
+                    </RadzenValueAxis>
+                    
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinHumidity")" 
+                                     ValueProperty="MinHumidity">
+                        <RadzenSeriesDataLabels Visible="false" />
+                        <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
+                        <RadzenCategoryAxisTitle Text="@GetDateAxisTitle()" />
+                        <RadzenValueAxisTitle Text="%" />
+                    </RadzenLineSeries>
+                    
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgHumidity")" 
+                                     ValueProperty="AvgHumidity" LineType="LineType.Dashed">
+                        <RadzenSeriesDataLabels Visible="false" />
+                        <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
+                    </RadzenLineSeries>
+                    
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxHumidity")" 
+                                     ValueProperty="MaxHumidity">
+                        <RadzenSeriesDataLabels Visible="false" />
+                        <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
+                    </RadzenLineSeries>
+
+                    <RadzenChartTooltipOptions Visible="true" />
+                </RadzenChart>
+                
+                @if (WeatherData != null && WeatherData.Any())
+                {
+                    <div class="temperature-summary-container">
+                        <div class="temperature-summary">
+                            <span class="humidity-min">Min @GetMinHumidity() %</span>
+                            <span class="humidity-avg">Prům @GetAvgHumidity() %</span>
+                            <span class="humidity-max">Max @GetMaxHumidity() %</span>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- Graf tlaku -->
+            <div class="chart-container">
+                <h2>@Localizer.GetString("Meteo.Trends.Pressure")</h2>
+                <RadzenChart>
+                    <RadzenLegend Position="LegendPosition.Bottom" />
+                    
+                    <RadzenCategoryAxis Step="@GetDateAxisStep()">
+                        <RadzenAxisTitle Text="@GetDateAxisTitle()" />
+                        <RadzenGridLines Visible="true" />
+                        <RadzenAxisTicks Visible="true" />
+                        <RadzenAxisOptions Padding="20" />
+                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                    </RadzenCategoryAxis>
+                    
+                    <RadzenValueAxis>
+                        <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Pressure")" />
+                        <RadzenGridLines Visible="true" />
+                        <RadzenAxisTicks Visible="true" />
+                        <RadzenAxisOptions Padding="20" />
+                    </RadzenValueAxis>
+                    
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinPressure")" 
+                                     ValueProperty="MinBar">
+                        <RadzenSeriesDataLabels Visible="false" />
+                        <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
+                        <RadzenCategoryAxisTitle Text="@GetDateAxisTitle()" />
+                        <RadzenValueAxisTitle Text="hPa" />
+                    </RadzenLineSeries>
+                    
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgPressure")" 
+                                     ValueProperty="AvgBar" LineType="LineType.Dashed">
+                        <RadzenSeriesDataLabels Visible="false" />
+                        <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
+                    </RadzenLineSeries>
+                    
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxPressure")" 
+                                     ValueProperty="MaxBar">
+                        <RadzenSeriesDataLabels Visible="false" />
+                        <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
+                    </RadzenLineSeries>
+
+                    <RadzenChartTooltipOptions Visible="true" />
+                </RadzenChart>
+                
+                @if (WeatherData != null && WeatherData.Any())
+                {
+                    <div class="temperature-summary-container">
+                        <div class="temperature-summary">
+                            <span class="pressure-min">Min @GetMinPressure() hPa</span>
+                            <span class="pressure-avg">Prům @GetAvgPressure() hPa</span>
+                            <span class="pressure-max">Max @GetMaxPressure() hPa</span>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
     }
 </div>
@@ -320,6 +432,17 @@
                         first.Date = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
+                        
+                        // Výpočet vlhkosti
+                        first.MinHumidity = g.Min(x => x.HumidityOut);
+                        first.AvgHumidity = g.Average(x => x.HumidityOut);
+                        first.MaxHumidity = g.Max(x => x.HumidityOut);
+                        
+                        // Výpočet tlaku
+                        first.MinBar = g.Min(x => x.Bar);
+                        first.AvgBar = g.Average(x => x.Bar);
+                        first.MaxBar = g.Max(x => x.Bar);
+                        
                         return first;
                     })
                     .OrderBy(d => d.Date)
@@ -339,6 +462,17 @@
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
                         first.TemperatureOut = g.Min(x => x.TemperatureOut); // Min hodnota jako TemperatureOut
+                        
+                        // Výpočet vlhkosti
+                        first.MinHumidity = g.Min(x => x.HumidityOut);
+                        first.AvgHumidity = g.Average(x => x.HumidityOut);
+                        first.MaxHumidity = g.Max(x => x.HumidityOut);
+                        
+                        // Výpočet tlaku
+                        first.MinBar = g.Min(x => x.Bar);
+                        first.AvgBar = g.Average(x => x.Bar);
+                        first.MaxBar = g.Max(x => x.Bar);
+                        
                         return first;
                     })
                     .OrderBy(d => d.Date)
@@ -358,6 +492,17 @@
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
                         first.TemperatureOut = g.Min(x => x.TemperatureOut); // Min hodnota jako TemperatureOut
+                        
+                        // Výpočet vlhkosti
+                        first.MinHumidity = g.Min(x => x.HumidityOut);
+                        first.AvgHumidity = g.Average(x => x.HumidityOut);
+                        first.MaxHumidity = g.Max(x => x.HumidityOut);
+                        
+                        // Výpočet tlaku
+                        first.MinBar = g.Min(x => x.Bar);
+                        first.AvgBar = g.Average(x => x.Bar);
+                        first.MaxBar = g.Max(x => x.Bar);
+                        
                         return first;
                     })
                     .OrderBy(d => d.Date)
@@ -385,6 +530,17 @@
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
                         first.TemperatureOut = g.Min(x => x.TemperatureOut); // Min hodnota jako TemperatureOut
+                        
+                        // Výpočet vlhkosti
+                        first.MinHumidity = g.Min(x => x.HumidityOut);
+                        first.AvgHumidity = g.Average(x => x.HumidityOut);
+                        first.MaxHumidity = g.Max(x => x.HumidityOut);
+                        
+                        // Výpočet tlaku
+                        first.MinBar = g.Min(x => x.Bar);
+                        first.AvgBar = g.Average(x => x.Bar);
+                        first.MaxBar = g.Max(x => x.Bar);
+                        
                         return first;
                     })
                     .OrderBy(d => d.Date)
@@ -511,5 +667,63 @@
             return "N/A";
             
         return WeatherData.Max(d => d.MaxTemperature)?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+
+    // Metody pro získání údajů o vlhkosti
+    private string GetMinHumidity()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        return WeatherData.Min(d => d.MinHumidity)?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+    
+    private string GetAvgHumidity()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        var avgValues = WeatherData.Select(d => d.AvgHumidity).Where(h => h.HasValue);
+        if (!avgValues.Any())
+            return "N/A";
+            
+        return avgValues.Average()?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+    
+    private string GetMaxHumidity()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        return WeatherData.Max(d => d.MaxHumidity)?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+
+    // Metody pro získání údajů o tlaku
+    private string GetMinPressure()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        return WeatherData.Min(d => d.MinBar)?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+    
+    private string GetAvgPressure()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        var avgValues = WeatherData.Select(d => d.AvgBar).Where(p => p.HasValue);
+        if (!avgValues.Any())
+            return "N/A";
+            
+        return avgValues.Average()?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
+    }
+    
+    private string GetMaxPressure()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return "N/A";
+            
+        return WeatherData.Max(d => d.MaxBar)?.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') ?? "N/A";
     }
 } 

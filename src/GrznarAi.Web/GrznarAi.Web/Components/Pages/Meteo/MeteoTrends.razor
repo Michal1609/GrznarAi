@@ -102,7 +102,7 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" />
+                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -112,7 +112,7 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayLabel" Title="@Localizer.GetString("Meteo.Trends.MinTemperature")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinTemperature")" 
                                      ValueProperty="TemperatureOut">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
@@ -120,13 +120,13 @@
                         <RadzenValueAxisTitle Text="°C" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayLabel" Title="@Localizer.GetString("Meteo.Trends.AvgTemperature")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgTemperature")" 
                                      ValueProperty="AvgTemperature" LineType="LineType.Dashed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayLabel" Title="@Localizer.GetString("Meteo.Trends.MaxTemperature")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxTemperature")" 
                                      ValueProperty="MaxTemperature">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
@@ -311,10 +311,8 @@
                     .GroupBy(d => new DateTime(d.Date.Year, d.Date.Month, d.Date.Day, d.Date.Hour, 0, 0))
                     .Select(g => {
                         var first = g.First();
-                        // Explicitně nastavíme datum s přesným formátem (hodina:00)
-                        var dateTime = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
-                        first.Date = dateTime;
-                        first.DisplayLabel = dateTime.ToString("HH:mm");
+                        // Explicitně nastavíme datum s přesnou hodinou (zaokrouhleno na celé hodiny)
+                        first.Date = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
                         return first;
@@ -331,9 +329,8 @@
                     .GroupBy(d => new DateTime(d.Date.Year, d.Date.Month, d.Date.Day, (d.Date.Hour / 4) * 4, 0, 0))
                     .Select(g => {
                         var first = g.First();
-                        var dateTime = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, (first.Date.Hour / 4) * 4, 0, 0);
-                        first.Date = dateTime;
-                        first.DisplayLabel = dateTime.ToString("d.M. HH:mm");
+                        // Explicitně nastavíme datum s 4hodinovým zaokrouhlením
+                        first.Date = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, (first.Date.Hour / 4) * 4, 0, 0);
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
                         first.TemperatureOut = g.Min(x => x.TemperatureOut); // Min hodnota jako TemperatureOut
@@ -352,9 +349,7 @@
                     .Select(g => {
                         var first = g.First();
                         // Ujistíme se, že datum má jen den bez času
-                        var dateTime = first.Date.Date;
-                        first.Date = dateTime;
-                        first.DisplayLabel = dateTime.ToString("d.M.");
+                        first.Date = first.Date.Date;
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
                         first.TemperatureOut = g.Min(x => x.TemperatureOut); // Min hodnota jako TemperatureOut
@@ -380,9 +375,7 @@
                         // Nastavíme datum na začátek týdne
                         int dayOfYear = first.Date.DayOfYear;
                         int weekOfYear = (dayOfYear - 1) / 7;
-                        var dateTime = startOfYear.AddDays(weekOfYear * 7);
-                        first.Date = dateTime;
-                        first.DisplayLabel = dateTime.ToString("d.M.");
+                        first.Date = startOfYear.AddDays(weekOfYear * 7);
                         
                         first.AvgTemperature = g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
@@ -396,7 +389,6 @@
                 break;
         }
         
-        // Aplikujeme formátování a další vylepšení pro RadzenChart
         StateHasChanged();
     }
 
@@ -450,7 +442,7 @@
                 // Pro denní pohled zobrazíme max. 12 popisků
                 return Math.Max(1, dataCount / 12);
             case PeriodType.Week:
-                // Pro týdenní pohled zobrazíme max. 12 popisků
+                // Pro týdenní pohled zobrazujeme max. 12 popisků (obvykle každých 6 hodin)
                 return Math.Max(1, dataCount / 12);
             case PeriodType.Month:
                 // Pro měsíční pohled zobrazíme max. 10 popisků
@@ -480,22 +472,10 @@
                 return 0;
         }
     }
-    
-    // Pomocná metoda pro formátování datum/čas na ose X
-    private string FormatDateTimeForAxis(DateTime dateTime)
+
+    // Funkce pro formátování osy X podle vybraného období
+    private string GetAxisLabelFormat()
     {
-        switch (SelectedPeriod)
-        {
-            case PeriodType.Day:
-                return dateTime.ToString("HH:mm");
-            case PeriodType.Week:
-                return dateTime.ToString("d.M. HH:mm");
-            case PeriodType.Month:
-                return dateTime.ToString("d.M.");
-            case PeriodType.Year:
-                return dateTime.ToString("d.M.");
-            default:
-                return dateTime.ToString("g");
-        }
+        return "{0:" + GetDateFormatString() + "}";
     }
 } 

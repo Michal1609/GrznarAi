@@ -53,8 +53,5 @@ namespace GrznarAi.Web.Data
         
         [NotMapped]
         public float? MaxTemperature { get; set; }
-        
-        [NotMapped]
-        public string DisplayLabel { get; set; }
     }
 } 

@@ -740,39 +740,35 @@ Přidány nové lokalizační klíče pro intervaly:
 
 Tyto úpravy zlepšují přehlednost a použitelnost grafů trendů počasí poskytnutím optimálního detailu dat pro každý typ časového období.
 
-## Řešení problému s popisky osy X v grafech trendů počasí
+## Oprava zobrazení datových bodů v grafech trendů počasí
 
-Při implementaci grafů trendů počasí byl zjištěn problém s popisky osy X, které místo skutečných hodnot času zobrazovaly pouze formátovací řetězec (např. "HH:mm" místo skutečných časových hodnot jako "14:00"). Toto způsobovalo nečitelnost grafu a ztížilo interpretaci dat.
+Při implementaci zobrazení popisků osy X v grafech trendů počasí byl zjištěn problém s rozmístěním datových bodů. V předchozí implementaci se pro umístění bodů v grafu používala vlastnost `DisplayLabel` místo skutečného datumu, což způsobovalo, že datové body byly rozmístěny v rovnoměrných intervalech bez ohledu na skutečné časové odstupy mezi nimi.
 
-### Analýza problému:
-
-1. Komponenta RadzenCategoryAxis nesprávně interpretovala standardní formátovací řetězec (např. "HH:mm") a zobrazovala ho jako text
-2. Místo správného formátování datumů/časů došlo k zobrazení samotného formátu jako popisku
-3. Pokus o použití lambda výrazu v FormatString selhal, protože vlastnost očekává pouze řetězec, ne funkci nebo delegát
+### Popis problému:
+- Popisky na ose X byly správné (zobrazovaly datum ve formátu "d.M." nebo čas ve formátu "HH:mm")
+- Body v grafu však nerespektovaly skutečné časové intervaly mezi měřeními, protože byly umístěny podle textové hodnoty `DisplayLabel`, nikoliv podle hodnoty `Date`
+- To způsobovalo vizuální zkreslení trendu, protože body byly od sebe stejně vzdálené bez ohledu na skutečné časové odstupy
 
 ### Implementované řešení:
-
-1. Do třídy WeatherHistory byla přidána nová vlastnost s atributem NotMapped:
+1. Pro umístění bodů v grafech se nyní používá skutečný datum (`Date`) místo textové hodnoty:
    ```csharp
-   [NotMapped]
-   public string DisplayLabel { get; set; }
+   <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinTemperature")" 
+                     ValueProperty="TemperatureOut">
    ```
 
-2. V metodě CalculateAverages() je tato vlastnost nastavena s formátovanou hodnotou podle typu období:
+2. Formátování popisků na ose X je řešeno pomocí vlastnosti `FormatString` v komponentě `RadzenAxisLabels`:
    ```csharp
-   var dateTime = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
-   first.Date = dateTime;
-   first.DisplayLabel = dateTime.ToString("HH:mm"); // Formát závisí na typu období
+   <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
    ```
 
-3. V RadzenLineSeries byla změněna vlastnost CategoryProperty z "Date" na "DisplayLabel":
+3. Formát popisků je dynamicky měněn podle zvoleného období:
    ```csharp
-   <RadzenLineSeries ... CategoryProperty="DisplayLabel" ... >
+   private string GetAxisLabelFormat()
+   {
+       return "{0:" + GetDateFormatString() + "}";
+   }
    ```
 
-4. Z RadzenCategoryAxis byla odstraněna vlastnost FormatString, protože již používáme předformátované řetězce:
-   ```csharp
-   <RadzenCategoryAxis Step="@GetDateAxisStep()">
-   ```
+4. Z modelu `WeatherHistory` byla odstraněna vlastnost `DisplayLabel`, která již není potřeba, protože formátování je řešeno přímo v komponentě grafu.
 
-Toto řešení zajišťuje, že na ose X grafu se budou zobrazovat správně formátované hodnoty času a data, čímž se zlepší čitelnost a srozumitelnost grafů trendů počasí.
+Toto řešení zajišťuje, že body v grafu jsou nyní správně rozmístěny podle skutečných časových intervalů mezi měřeními, což poskytuje přesné a nezkreslené zobrazení trendů v datech. Zároveň jsou popisky na ose X stále dobře čitelné a formátované podle zvoleného období (den, týden, měsíc, rok).

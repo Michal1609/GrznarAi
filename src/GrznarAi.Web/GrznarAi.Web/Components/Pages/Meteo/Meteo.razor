@@ -746,17 +746,23 @@
         vertical-align: middle;
     }
     
-    /* Zarovnání dat v buňkách s datumy doprava */
-    .table-dark td:nth-child(2),
-    .table-dark td:nth-child(3),
-    .table-dark td:nth-child(4),
-    .table-dark td:nth-child(5),
-    .table-dark td:nth-child(6),
-    .table-dark td:nth-child(7),
-    .table-dark td:nth-child(8),
-    .table-dark td:nth-child(9),
-    .table-dark td:nth-child(10),
-    .table-dark td:nth-child(11) {
+    /* Zarovnání dat v první tabulce (Tento den v historii) na střed */
+    .data-table-container:first-child .table-dark th,
+    .data-table-container:first-child .table-dark td {
+        text-align: center;
+    }
+    
+    /* Zarovnání dat v druhé tabulce (Roční statistiky) doprava */
+    .data-table-container:last-child .table-dark td:nth-child(2),
+    .data-table-container:last-child .table-dark td:nth-child(3),
+    .data-table-container:last-child .table-dark td:nth-child(4),
+    .data-table-container:last-child .table-dark td:nth-child(5),
+    .data-table-container:last-child .table-dark td:nth-child(6),
+    .data-table-container:last-child .table-dark td:nth-child(7),
+    .data-table-container:last-child .table-dark td:nth-child(8),
+    .data-table-container:last-child .table-dark td:nth-child(9),
+    .data-table-container:last-child .table-dark td:nth-child(10),
+    .data-table-container:last-child .table-dark td:nth-child(11) {
         text-align: right;
     }
     

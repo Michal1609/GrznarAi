@@ -1237,6 +1237,28 @@ The application includes a comprehensive weather trends visualization feature wi
    - Includes summary statistics with min/avg/max values
    - Uses consistent styling with other meteorological graphs
 
+4. **Wind Speed Graph**:
+   - Displays four distinct measurements: min speed, average speed, max speed, and wind gusts
+   - Uses different line styles and markers to differentiate between measurements
+   - Shows speed values in meters per second (m/s)
+   - Includes comprehensive summary with all four metrics
+   - Features special dotted line for wind gusts with triangle markers
+
+5. **Rainfall Graph**:
+   - Visualizes precipitation amounts using a column/bar chart
+   - Shows rainfall in millimeters (mm) for each time period
+   - Displays data labels directly on each column for easy reading
+   - Includes total rainfall amount for the selected period
+   - Aggregates data appropriately based on selected time frame (hourly, daily, weekly, etc.)
+
+6. **Solar Radiation Graph**:
+   - Features a dual-visualization approach:
+     - First chart shows min, avg, and max solar radiation values (W/m²) as line series
+     - Second chart displays sunshine hours as column/bar chart
+   - Calculates sunshine hours based on threshold of 120 W/m² solar radiation
+   - Provides summary statistics with min/avg/max radiation values and total sunshine hours
+   - Helps visualize daily solar patterns and seasonal variations
+
 ### Data Aggregation
 The application performs automatic data aggregation based on the selected time period:
 - Day view: hourly intervals
@@ -1258,3 +1280,97 @@ The application follows a consistent pattern for implementing new meteorological
 2. Implement calculation logic in the CalculateAverages() method
 3. Create display components using the Radzen chart library
 4. Add helper methods for data formatting and retrieval
+
+## Implementace rozšíření grafů meteorologických dat
+
+V rámci vylepšení stránky MeteoTrends byly implementovány následující nové grafy pro zobrazení meteorologických dat:
+
+### 1. Graf atmosférického tlaku
+
+- **Datový model**: 
+  - Přidány vlastnosti `MinBar`, `AvgBar`, `MaxBar` do modelu `WeatherHistory` s atributem `[NotMapped]`
+  - Tyto vlastnosti reprezentují minimální, průměrný a maximální atmosférický tlak v hPa
+
+- **Implementace grafu**:
+  - Použití `RadzenLineSeries` s třemi křivkami pro minimální, průměrné a maximální hodnoty
+  - Každá křivka má odlišný typ značek (circle, square, diamond) pro lepší rozlišení
+  - Průměrná hodnota je zobrazena čárkovanou čarou pro vizuální odlišení
+  - Pod grafem je zobrazeno shrnutí s minimální, průměrnou a maximální hodnotou tlaku
+
+- **Výpočet hodnot**:
+  - V metodě `CalculateAverages()` jsou vypočítávány hodnoty pro různá časová období
+  - Pro každé období (den, týden, měsíc, rok) jsou data agregována s vhodnou granularitou
+  - Výpočet zahrnuje min/avg/max hodnoty z agregovaných dat
+
+### 2. Graf rychlosti větru
+
+- **Datový model**:
+  - Přidány vlastnosti `MinWindSpeed`, `MaxWindSpeed`, `WindGust` do modelu `WeatherHistory`
+  - Existující vlastnost `WindSpeedAvg` je použita pro průměrnou rychlost
+
+- **Implementace grafu**:
+  - Použití čtyř `RadzenLineSeries` pro zobrazení min, avg, max a nárazů větru
+  - Hodnoty nárazů větru jsou zobrazeny tečkovanou čarou s trojúhelníkovými značkami
+  - Všechny hodnoty jsou zobrazeny v m/s s jednotnou stupnicí
+
+- **Shrnutí hodnot**:
+  - Pod grafem se zobrazuje přehled s min, avg, max rychlostí a nárazem větru
+  - Přidána pomocná metoda `GetWindGust()` pro formátování hodnoty nárazů větru
+
+### 3. Graf srážek (sloupcový)
+
+- **Datový model**:
+  - Přidána vlastnost `TotalRain` pro ukládání celkových srážek v období
+  - Implementace agregační funkce pro výpočet úhrnu srážek podle období
+
+- **Implementace grafu**:
+  - Použití `RadzenColumnSeries` pro sloupcové zobrazení srážkových úhrnů
+  - Zobrazení hodnot přímo na sloupcích pomocí `RadzenSeriesDataLabels`
+  - Opravena chyba s vlastností `Position` u `RadzenSeriesDataLabels`, která způsobovala pád aplikace
+
+- **Shrnutí hodnot**:
+  - Pod grafem se zobrazuje celkový úhrn srážek za vybrané období
+  - Přidána pomocná metoda `GetTotalRainfall()` pro formátování celkového úhrnu
+
+### 4. Graf slunečního záření
+
+- **Datový model**:
+  - Přidány vlastnosti `MinSolarRad`, `AvgSolarRad`, `MaxSolarRad` a `SunshineHours`
+  - Hodnoty reprezentují minimální, průměrné a maximální sluneční záření (W/m²) a dobu slunečního svitu (hodiny)
+
+- **Implementace grafu**:
+  - Dva samostatné grafy:
+    1. **Křivkový graf** pro hodnoty záření s třemi křivkami (min, avg, max)
+    2. **Sloupcový graf** pro dobu slunečního svitu v hodinách
+  - Oba grafy sdílejí stejné časové období a formátování osy X
+
+- **Výpočet doby slunečního svitu**:
+  - Implementována metoda `CalculateSunshineHours` pro odhad doby slunečního svitu
+  - Za slunečno se považuje období, kdy sluneční záření přesáhne 120 W/m²
+  - Doba je počítána v intervalu 15 minut (0.25h) na každý záznam nad prahovou hodnotou
+
+### 5. Graf UV indexu
+
+- **Datový model**:
+  - Přidány vlastnosti `AvgUvi` a `MaxUvi` pro průměrný a maximální UV index
+  - Hodnoty jsou vypočítány z existující vlastnosti `Uvi`
+
+- **Implementace grafu**:
+  - Kombinovaný graf s `RadzenColumnSeries` pro maximální UV index a `RadzenLineSeries` pro průměrný UV index
+  - Nastavení pevného rozsahu osy Y (0-12) pro konzistentní zobrazení kategorií UV indexu
+  - Implementace metody `GetUvIndexCategory()` pro textové zobrazení kategorie UV indexu (nízký, střední, vysoký, ...)
+  - Přidání barevného rozlišení kategorií pomocí CSS tříd (`uv-low`, `uv-moderate`, ...)
+
+Všechny implementované grafy využívají stejný systém pro výběr časového období, dynamické formátování popisků os a responzivní design. Data jsou správně agregována podle zvoleného časového období a zobrazena s vhodnou granularitou a formátováním.
+
+## Oprava přetypování v MeteoTrends.razor
+
+V souboru MeteoTrends.razor byly opraveny problémy s přetypováním v metodě CalculateAverages(), kde bylo potřeba explicitně přetypovat hodnoty z double? na float?. To zahrnovalo následující vlastnosti:
+
+- AvgTemperature
+- AvgHumidity  
+- AvgBar
+- AvgSolarRad
+- AvgUvi
+
+Přidání explicitního přetypování (float?) před volání metody Average() vyřešilo tyto chyby kompilace a projekt nyní správně builduje.

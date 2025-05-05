@@ -73,5 +73,39 @@ namespace GrznarAi.Web.Data
         
         [NotMapped]
         public float? MaxBar { get; set; }
+        
+        // Dodatečné vlastnosti pro analýzu větru
+        [NotMapped]
+        public float? MinWindSpeed { get; set; }
+        
+        [NotMapped]
+        public float? MaxWindSpeed { get; set; }
+        
+        [NotMapped]
+        public float? WindGust { get; set; }
+        
+        // Dodatečné vlastnosti pro analýzu srážek
+        [NotMapped]
+        public float? TotalRain { get; set; }
+        
+        // Dodatečné vlastnosti pro analýzu slunečního záření
+        [NotMapped]
+        public float? MinSolarRad { get; set; }
+        
+        [NotMapped]
+        public float? AvgSolarRad { get; set; }
+        
+        [NotMapped]
+        public float? MaxSolarRad { get; set; }
+        
+        [NotMapped]
+        public float? SunshineHours { get; set; }
+        
+        // Dodatečné vlastnosti pro analýzu UV indexu
+        [NotMapped]
+        public float? AvgUvi { get; set; }
+        
+        [NotMapped]
+        public float? MaxUvi { get; set; }
     }
 } 

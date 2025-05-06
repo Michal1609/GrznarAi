@@ -6,6 +6,7 @@
 @using System.Globalization
 @using Radzen
 @using Radzen.Blazor
+@using Radzen.Blazor.Rendering
 @rendermode InteractiveServer
 
 <PageTitle>@Localizer.GetString("Meteo.Trends.Title") - GrznarAI</PageTitle>
@@ -117,7 +118,7 @@
                 </div>
             </div>
             
-            <RadzenChart>
+            <RadzenChart @ref="chart">
                 <RadzenLegend Position="LegendPosition.Bottom" />
                 
                 <RadzenCategoryAxis Step="@GetDateAxisStep()" LabelAutoRotation="-45">
@@ -142,6 +143,22 @@
                 <RadzenValueAxis>
                     <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Temperature")" />
                     <RadzenGridLines Visible="true" />
+                    @if (CurrentPeriod == PeriodType.Day)
+                    {
+                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinDay()" Max="@GetTemperatureAxisMaxDay()" />
+                    }
+                    else if (CurrentPeriod == PeriodType.Week)
+                    {
+                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinWeek()" Max="@GetTemperatureAxisMaxWeek()" />
+                    }
+                    else if (CurrentPeriod == PeriodType.Month)
+                    {
+                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinMonth()" Max="@GetTemperatureAxisMaxMonth()" />
+                    }
+                    else
+                    {
+                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinYear()" Max="@GetTemperatureAxisMaxYear()" />
+                    }
                 </RadzenValueAxis>
                 
                 <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayTime" 
@@ -162,7 +179,7 @@
                     <RadzenMarkers MarkerType="MarkerType.Diamond" Size="4" />
                 </RadzenLineSeries>
                 
-                <RadzenChartTooltipOptions Visible="true" />
+                <RadzenChartTooltipOptions Visible="true" Shared="true" />
             </RadzenChart>
         </div>
     }
@@ -186,6 +203,7 @@
         public float? MaxTemperature { get; set; }
     }
     
+    private RadzenChart chart;
     private PeriodType CurrentPeriod { get; set; } = PeriodType.Day;
     private DateTime SelectedDate { get; set; } = DateTime.Now.Date;
     private DateTime StartDate { get; set; }
@@ -196,6 +214,41 @@
     private float? TemperatureMinValue { get; set; }
     private float? TemperatureAvgValue { get; set; }
     private float? TemperatureMaxValue { get; set; }
+    
+    private string FormatTooltipDate(object dateValue)
+    {
+        if (CurrentPeriod == PeriodType.Day)
+        {
+            if (dateValue is TimeSpan timeSpan)
+            {
+                return $"{SelectedDate.ToShortDateString()} {timeSpan.ToString("hh\\:mm")}";
+            }
+        }
+        else if (dateValue is DateTime dateTime)
+        {
+            return dateTime.ToString("yyyy-MM-dd");
+        }
+        else if (dateValue is string dateString)
+        {
+            return dateString;
+        }
+        
+        return dateValue?.ToString() ?? "";
+    }
+    
+    private string FormatTemperature(object value)
+    {
+        if (value is double doubleValue)
+        {
+            return $"{doubleValue:F1} °C";
+        }
+        else if (value is float floatValue)
+        {
+            return $"{floatValue:F1} °C";
+        }
+        
+        return $"{value} °C";
+    }
     
     protected override async Task OnInitializedAsync()
     {
@@ -436,6 +489,146 @@
             .Where(d => d.MaxTemperature.HasValue)
             .Max(d => d.MaxTemperature);
     }
+    
+    private float GetTemperatureAxisMinDay()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return 0;
+            
+        var minTemp = WeatherData
+            .Where(d => d.MinTemperature.HasValue)
+            .Min(d => d.MinTemperature) ?? 10;
+            
+        var maxTemp = WeatherData
+            .Where(d => d.MaxTemperature.HasValue)
+            .Max(d => d.MaxTemperature) ?? 20;
+            
+        // Pro denní pohled chceme aby rozpětí bylo ~10-15 stupňů
+        float lowerBound = (float)Math.Floor((double)minTemp - 2);
+        
+        // Pokud je rozpětí menší než 8 stupňů, rozšíříme ho
+        if (maxTemp - lowerBound < 8)
+            lowerBound = (float)maxTemp - 8;
+            
+        return lowerBound;
+    }
+    
+    private float GetTemperatureAxisMaxDay()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return 30;
+            
+        var maxTemp = WeatherData
+            .Where(d => d.MaxTemperature.HasValue)
+            .Max(d => d.MaxTemperature) ?? 20;
+            
+        // Pro denní pohled nastavíme maximum o 2-3 stupně vyšší
+        return (float)Math.Ceiling((double)maxTemp + 2);
+    }
+    
+    private float GetTemperatureAxisMinWeek()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return -5;
+            
+        var minTemp = WeatherData
+            .Where(d => d.MinTemperature.HasValue)
+            .Min(d => d.MinTemperature) ?? 0;
+            
+        // Pro týdenní pohled ponecháme více prostoru, ale stále reálné teploty
+        float lowerBound = (float)Math.Floor((double)minTemp - 3);
+        
+        // Nejnižší možné minimum pro ČR
+        if (lowerBound < -15) lowerBound = -15;
+            
+        return lowerBound;
+    }
+    
+    private float GetTemperatureAxisMaxWeek()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return 30;
+            
+        var maxTemp = WeatherData
+            .Where(d => d.MaxTemperature.HasValue)
+            .Max(d => d.MaxTemperature) ?? 25;
+            
+        // Pro týdenní pohled nastavíme maximum o 3 stupně vyšší
+        float upperBound = (float)Math.Ceiling((double)maxTemp + 3);
+        
+        // Nejvyšší reálné teploty pro ČR (rekord je ~40.4°C)
+        if (upperBound > 40) upperBound = 40;
+            
+        return upperBound;
+    }
+    
+    private float GetTemperatureAxisMinMonth()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return -10;
+            
+        var minTemp = WeatherData
+            .Where(d => d.MinTemperature.HasValue)
+            .Min(d => d.MinTemperature) ?? -5;
+            
+        // Pro měsíční pohled
+        float lowerBound = (float)Math.Floor((double)minTemp - 3);
+        
+        // Nejnižší možné minimum pro ČR
+        if (lowerBound < -20) lowerBound = -20;
+            
+        return lowerBound;
+    }
+    
+    private float GetTemperatureAxisMaxMonth()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return 35;
+            
+        var maxTemp = WeatherData
+            .Where(d => d.MaxTemperature.HasValue)
+            .Max(d => d.MaxTemperature) ?? 25;
+            
+        float upperBound = (float)Math.Ceiling((double)maxTemp + 3);
+        
+        if (upperBound > 40) upperBound = 40;
+            
+        return upperBound;
+    }
+    
+    private float GetTemperatureAxisMinYear()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return -15;
+            
+        var minTemp = WeatherData
+            .Where(d => d.MinTemperature.HasValue)
+            .Min(d => d.MinTemperature) ?? -10;
+            
+        // Pro roční pohled
+        float lowerBound = (float)Math.Floor((double)minTemp - 2);
+        
+        // Nejnižší možné minimum pro ČR
+        if (lowerBound < -25) lowerBound = -25;
+            
+        return lowerBound;
+    }
+    
+    private float GetTemperatureAxisMaxYear()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+            return 35;
+            
+        var maxTemp = WeatherData
+            .Where(d => d.MaxTemperature.HasValue)
+            .Max(d => d.MaxTemperature) ?? 30;
+            
+        float upperBound = (float)Math.Ceiling((double)maxTemp + 2);
+        
+        if (upperBound > 40) upperBound = 40;
+            
+        return upperBound;
+    }
 }
 
 <style>
@@ -474,6 +667,18 @@
     
     .date-picker {
         width: 150px;
+    }
+    
+    /* Custom styles for the chart tooltip */
+    :deep(.rz-tooltip) {
+        background: rgba(0, 0, 0, 0.8) !important;
+        color: white !important;
+        padding: 8px 12px !important;
+        border-radius: 4px !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        font-size: 0.9rem !important;
+        white-space: nowrap !important;
+        border: none !important;
     }
     
     @@media (max-width: 768px) {

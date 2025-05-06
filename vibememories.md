@@ -1406,3 +1406,146 @@ Problém byl vyřešen přidáním vlastnosti `TimeOnly` typu `TimeSpan` do tř�
 Provedené změny:
 
 1. Přidána vlastnost `TimeOnly` typu `TimeSpan` do modelu `WeatherHistory`:\n   ```csharp\n   [NotMapped]\n   public TimeSpan TimeOnly { get; set; }\n   ```\n\n2. V metodě `CalculateAverages()` v sekci pro denní režim bylo přidáno nastavení této vlastnosti:\n   ```csharp\n   var dateTime = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);\n   first.Date = dateTime;\n   // Přidáme TimeOnly pro zobrazení jen času v denním režimu\n   first.TimeOnly = dateTime.TimeOfDay;\n   ```\n\n3. Existující implementace již používá správný formát a podmíněné renderování RadzenAxisLabels:\n   ```csharp\n   @if (SelectedPeriod == PeriodType.Day)\n   {\n       <RadzenAxisLabels Rotation=\"@GetAxisLabelRotation()\" FormatString=\"{0:HH:mm}\" />\n   }\n   else\n   {\n       <RadzenAxisLabels Rotation=\"@GetAxisLabelRotation()\" FormatString=\"@GetAxisLabelFormat()\" />\n   }\n   ```\n\n4. Podmíněné použití správné vlastnosti pro CategoryProperty v RadzenLineSeries:\n   ```csharp\n   <RadzenLineSeries ... CategoryProperty=\"TimeOnly\" ... />\n   ```\n   pro denní režim a\n   ```csharp\n   <RadzenLineSeries ... CategoryProperty=\"Date\" ... />\n   ```\n   pro ostatní režimy.\n\nTato úprava zajišťuje, že v denním režimu se na ose X zobrazují pouze hodiny a minuty, zatímco v ostatních režimech se zobrazuje datum podle daného formátu.
+
+## MeteoTrends Page - Tooltip Implementation
+
+Implemented tooltips in the MeteoTrends page chart using the following approach:
+
+1. Used `RadzenChartTooltipOptions` with `Visible="true"` and `Shared="true"`:
+   ```csharp
+   <RadzenChartTooltipOptions Visible="true" Shared="true" />
+   ```
+   
+   This configuration:
+   - Makes tooltips visible when hovering over data points
+   - Uses a shared tooltip that shows values from all series at once (Min, Avg, Max temperatures)
+   
+2. Applied custom styling for tooltips using CSS:
+   ```css
+   :deep(.rz-tooltip) {
+       background: rgba(0, 0, 0, 0.8) !important;
+       color: white !important;
+       padding: 8px 12px !important;
+       border-radius: 4px !important;
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+       font-size: 0.9rem !important;
+       white-space: nowrap !important;
+       border: none !important;
+   }
+   ```
+   
+   The `:deep()` selector is needed to target elements within component's shadow DOM.
+
+3. Added chart reference to control chart programmatically if needed:
+   ```csharp
+   private RadzenChart chart;
+   ```
+   ```html
+   <RadzenChart @ref="chart">
+   ```
+
+Alternative approaches tested:
+- Individual `TooltipTemplate` for each series - more complex but allows fully custom HTML
+- Using `FormatString` property - simpler but limited formatting options
+- Event handler `@ontooltiprender` - allows programmatic handling but more complex
+
+For most scenarios, the shared tooltip approach offers the best balance of functionality and simplicity.
+
+## MeteoTrends Page - Y-Axis Optimization
+
+Implemented dynamic Y-axis scaling in temperature charts to better visualize trends and fully utilize vertical space:
+
+1. Added custom methods to calculate optimal Y-axis min/max values based on actual data:
+   ```csharp
+   private float? GetTemperatureAxisMin()
+   {
+       if (WeatherData == null || !WeatherData.Any())
+           return null;
+           
+       var minTemp = WeatherData
+           .Where(d => d.MinTemperature.HasValue)
+           .Min(d => d.MinTemperature);
+           
+       // Set 1-2 degrees lower than minimum for better display
+       return minTemp.HasValue ? (float)Math.Floor((double)minTemp - 1) : null;
+   }
+   
+   private float? GetTemperatureAxisMax()
+   {
+       if (WeatherData == null || !WeatherData.Any())
+           return null;
+           
+       var maxTemp = WeatherData
+           .Where(d => d.MaxTemperature.HasValue)
+           .Max(d => d.MaxTemperature);
+           
+       // Set 1-2 degrees higher than maximum for better display
+       return maxTemp.HasValue ? (float)Math.Ceiling((double)maxTemp + 1) : null;
+   }
+   ```
+
+2. Applied these methods to the temperature chart's Y-axis:
+   ```csharp
+   <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMin()" Max="@GetTemperatureAxisMax()" />
+   ```
+
+Benefits of this approach:
+- Chart data fills the entire vertical space rather than being compressed in the middle
+- Temperature trends are more visible and easier to analyze
+- Small variations in temperature are now clearly visible
+- The approach can be applied to other chart types (humidity, pressure, etc.)
+
+The implementation adds a small buffer (1-2 units) to prevent data points from being rendered directly on the chart edges.
+
+## MeteoTrends Page - Y-Axis Optimization Improved
+
+Implemented enhanced Y-axis scaling in temperature charts to better visualize trends and fully utilize vertical space:
+
+1. Created separate methods for each time period to calculate optimal Y-axis ranges:
+   ```csharp
+   private float GetTemperatureAxisMinDay() { ... }
+   private float GetTemperatureAxisMaxDay() { ... }
+   private float GetTemperatureAxisMinWeek() { ... }
+   private float GetTemperatureAxisMaxWeek() { ... }
+   private float GetTemperatureAxisMinMonth() { ... }
+   private float GetTemperatureAxisMaxMonth() { ... }
+   private float GetTemperatureAxisMinYear() { ... }
+   private float GetTemperatureAxisMaxYear() { ... }
+   ```
+
+2. Used conditional rendering to apply different Y-axis settings based on the selected period:
+   ```csharp
+   @if (CurrentPeriod == PeriodType.Day)
+   {
+       <RadzenAxisOptions Formatter="@FormatTemperature" 
+                         Min="@GetTemperatureAxisMinDay()" 
+                         Max="@GetTemperatureAxisMaxDay()" />
+   }
+   else if (CurrentPeriod == PeriodType.Week)
+   {
+       <RadzenAxisOptions Formatter="@FormatTemperature" 
+                         Min="@GetTemperatureAxisMinWeek()" 
+                         Max="@GetTemperatureAxisMaxWeek()" />
+   }
+   // etc.
+   ```
+
+3. Setting realistic temperature ranges for Czech Republic:
+   - Day: Tighter range with ~8-10 degree spread for better visibility of daily fluctuations
+   - Week: Range extended to show greater temperature variations (-15°C to 40°C at most)
+   - Month: Wider range to accommodate seasonal changes (-20°C to 40°C at most)
+   - Year: Full annual range (-25°C to 40°C at most)
+
+4. Null-coalescing operators used to handle empty datasets:
+   ```csharp
+   var minTemp = WeatherData
+       .Where(d => d.MinTemperature.HasValue)
+       .Min(d => d.MinTemperature) ?? 10; // Default to 10 if no data
+   ```
+
+5. Buffering added to prevent data points from displaying at the chart edges:
+   ```csharp
+   float lowerBound = (float)Math.Floor((double)minTemp - 2);
+   ```
+
+This implementation provides much better visualization as the temperature trends now utilize the full chart height rather than being compressed in a small portion of the available space. Each time period has optimized ranges that match realistic temperature values for the geographic location.

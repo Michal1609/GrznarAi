@@ -140,25 +140,10 @@
                     <RadzenGridLines Visible="true" />
                 </RadzenCategoryAxis>
                 
-                <RadzenValueAxis>
+                <RadzenValueAxis Min="@GetTemperatureAxisMin()" Max="@GetTemperatureAxisMax()">
                     <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Temperature")" />
                     <RadzenGridLines Visible="true" />
-                    @if (CurrentPeriod == PeriodType.Day)
-                    {
-                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinDay()" Max="@GetTemperatureAxisMaxDay()" />
-                    }
-                    else if (CurrentPeriod == PeriodType.Week)
-                    {
-                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinWeek()" Max="@GetTemperatureAxisMaxWeek()" />
-                    }
-                    else if (CurrentPeriod == PeriodType.Month)
-                    {
-                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinMonth()" Max="@GetTemperatureAxisMaxMonth()" />
-                    }
-                    else
-                    {
-                        <RadzenAxisOptions Formatter="@FormatTemperature" Min="@GetTemperatureAxisMinYear()" Max="@GetTemperatureAxisMaxYear()" />
-                    }
+                    <RadzenAxisOptions Formatter="@FormatTemperatureAxis" />
                 </RadzenValueAxis>
                 
                 <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayTime" 
@@ -490,7 +475,61 @@
             .Max(d => d.MaxTemperature);
     }
     
-    private float GetTemperatureAxisMinDay()
+    private string FormatTemperatureAxis(object value)
+    {
+        if (value is double doubleValue)
+        {
+            // Zaokrouhlíme na 1 desetinné místo
+            return $"{Math.Round(doubleValue, 1)} °C";
+        }
+        else if (value is float floatValue)
+        {
+            // Zaokrouhlíme na 1 desetinné místo
+            return $"{Math.Round(floatValue, 1)} °C";
+        }
+        else if (value is int intValue)
+        {
+            return $"{intValue} °C";
+        }
+        
+        return $"{value} °C";
+    }
+    
+    private int GetTemperatureAxisMin()
+    {
+        switch (CurrentPeriod)
+        {
+            case PeriodType.Day:
+                return GetTemperatureAxisMinDay();
+            case PeriodType.Week:
+                return GetTemperatureAxisMinWeek();
+            case PeriodType.Month:
+                return GetTemperatureAxisMinMonth();
+            case PeriodType.Year:
+                return GetTemperatureAxisMinYear();
+            default:
+                return 0;
+        }
+    }
+    
+    private int GetTemperatureAxisMax()
+    {
+        switch (CurrentPeriod)
+        {
+            case PeriodType.Day:
+                return GetTemperatureAxisMaxDay();
+            case PeriodType.Week:
+                return GetTemperatureAxisMaxWeek();
+            case PeriodType.Month:
+                return GetTemperatureAxisMaxMonth();
+            case PeriodType.Year:
+                return GetTemperatureAxisMaxYear();
+            default:
+                return 40;
+        }
+    }
+    
+    private int GetTemperatureAxisMinDay()
     {
         if (WeatherData == null || !WeatherData.Any())
             return 0;
@@ -503,17 +542,18 @@
             .Where(d => d.MaxTemperature.HasValue)
             .Max(d => d.MaxTemperature) ?? 20;
             
-        // Pro denní pohled chceme aby rozpětí bylo ~10-15 stupňů
-        float lowerBound = (float)Math.Floor((double)minTemp - 2);
+        // Pro denní pohled chceme aby rozpětí bylo rozumné
+        int lowerBound = (int)Math.Floor((double)minTemp - 2);
         
         // Pokud je rozpětí menší než 8 stupňů, rozšíříme ho
         if (maxTemp - lowerBound < 8)
-            lowerBound = (float)maxTemp - 8;
+            lowerBound = (int)maxTemp - 8;
             
+        // Zaokrouhlíme na celá čísla dolů
         return lowerBound;
     }
     
-    private float GetTemperatureAxisMaxDay()
+    private int GetTemperatureAxisMaxDay()
     {
         if (WeatherData == null || !WeatherData.Any())
             return 30;
@@ -523,10 +563,13 @@
             .Max(d => d.MaxTemperature) ?? 20;
             
         // Pro denní pohled nastavíme maximum o 2-3 stupně vyšší
-        return (float)Math.Ceiling((double)maxTemp + 2);
+        int upperBound = (int)Math.Ceiling((double)maxTemp + 2);
+        
+        // Zaokrouhlíme na celá čísla nahoru
+        return upperBound;
     }
     
-    private float GetTemperatureAxisMinWeek()
+    private int GetTemperatureAxisMinWeek()
     {
         if (WeatherData == null || !WeatherData.Any())
             return -5;
@@ -536,7 +579,7 @@
             .Min(d => d.MinTemperature) ?? 0;
             
         // Pro týdenní pohled ponecháme více prostoru, ale stále reálné teploty
-        float lowerBound = (float)Math.Floor((double)minTemp - 3);
+        int lowerBound = (int)Math.Floor((double)minTemp - 3);
         
         // Nejnižší možné minimum pro ČR
         if (lowerBound < -15) lowerBound = -15;
@@ -544,7 +587,7 @@
         return lowerBound;
     }
     
-    private float GetTemperatureAxisMaxWeek()
+    private int GetTemperatureAxisMaxWeek()
     {
         if (WeatherData == null || !WeatherData.Any())
             return 30;
@@ -554,15 +597,15 @@
             .Max(d => d.MaxTemperature) ?? 25;
             
         // Pro týdenní pohled nastavíme maximum o 3 stupně vyšší
-        float upperBound = (float)Math.Ceiling((double)maxTemp + 3);
+        int upperBound = (int)Math.Ceiling((double)maxTemp + 3);
         
-        // Nejvyšší reálné teploty pro ČR (rekord je ~40.4°C)
+        // Nejvyšší reálné teploty pro ČR
         if (upperBound > 40) upperBound = 40;
             
         return upperBound;
     }
     
-    private float GetTemperatureAxisMinMonth()
+    private int GetTemperatureAxisMinMonth()
     {
         if (WeatherData == null || !WeatherData.Any())
             return -10;
@@ -572,7 +615,7 @@
             .Min(d => d.MinTemperature) ?? -5;
             
         // Pro měsíční pohled
-        float lowerBound = (float)Math.Floor((double)minTemp - 3);
+        int lowerBound = (int)Math.Floor((double)minTemp - 3);
         
         // Nejnižší možné minimum pro ČR
         if (lowerBound < -20) lowerBound = -20;
@@ -580,7 +623,7 @@
         return lowerBound;
     }
     
-    private float GetTemperatureAxisMaxMonth()
+    private int GetTemperatureAxisMaxMonth()
     {
         if (WeatherData == null || !WeatherData.Any())
             return 35;
@@ -589,14 +632,14 @@
             .Where(d => d.MaxTemperature.HasValue)
             .Max(d => d.MaxTemperature) ?? 25;
             
-        float upperBound = (float)Math.Ceiling((double)maxTemp + 3);
+        int upperBound = (int)Math.Ceiling((double)maxTemp + 3);
         
         if (upperBound > 40) upperBound = 40;
             
         return upperBound;
     }
     
-    private float GetTemperatureAxisMinYear()
+    private int GetTemperatureAxisMinYear()
     {
         if (WeatherData == null || !WeatherData.Any())
             return -15;
@@ -606,7 +649,7 @@
             .Min(d => d.MinTemperature) ?? -10;
             
         // Pro roční pohled
-        float lowerBound = (float)Math.Floor((double)minTemp - 2);
+        int lowerBound = (int)Math.Floor((double)minTemp - 2);
         
         // Nejnižší možné minimum pro ČR
         if (lowerBound < -25) lowerBound = -25;
@@ -614,7 +657,7 @@
         return lowerBound;
     }
     
-    private float GetTemperatureAxisMaxYear()
+    private int GetTemperatureAxisMaxYear()
     {
         if (WeatherData == null || !WeatherData.Any())
             return 35;
@@ -623,7 +666,7 @@
             .Where(d => d.MaxTemperature.HasValue)
             .Max(d => d.MaxTemperature) ?? 30;
             
-        float upperBound = (float)Math.Ceiling((double)maxTemp + 2);
+        int upperBound = (int)Math.Ceiling((double)maxTemp + 2);
         
         if (upperBound > 40) upperBound = 40;
             

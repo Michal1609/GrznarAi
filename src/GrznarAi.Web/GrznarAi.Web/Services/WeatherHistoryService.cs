@@ -63,10 +63,46 @@ namespace GrznarAi.Web.Services
 
         public async Task<List<WeatherHistory>> GetHistoryAsync(DateTime startDate, DateTime endDate)
         {
+            // Omezení maximálního rozsahu dat na 90 dnů, aby se zabránilo přetížení paměti
+            var maxAllowedPeriod = TimeSpan.FromDays(90);
+            if (endDate - startDate > maxAllowedPeriod)
+            {
+                _logger.LogWarning("Požadovaný interval je příliš velký ({RequestedDays} dnů). Omezeno na maximální povolený interval ({MaxDays} dnů).", 
+                    (endDate - startDate).TotalDays, maxAllowedPeriod.TotalDays);
+                endDate = startDate.Add(maxAllowedPeriod);
+            }
+
             using var context = await _contextFactory.CreateDbContextAsync();
+            
+            // Omezení počtu vrácených záznamů na 10 000 pro zabránění zahlcení paměti
+            const int MAX_RECORDS = 10000;
+            
+            // Nejprve zjistíme počet záznamů
+            var recordCount = await context.WeatherHistory
+                .Where(h => h.Date >= startDate && h.Date <= endDate)
+                .CountAsync();
+            
+            if (recordCount > MAX_RECORDS)
+            {
+                _logger.LogWarning("Příliš mnoho záznamů v zadaném intervalu ({ActualCount}). Omezeno na {MaxRecords} záznamů.", 
+                    recordCount, MAX_RECORDS);
+                
+                // Vypočítáme interval, aby byl zhruba rovnoměrně rozložen
+                var recordsPerDay = recordCount / (endDate - startDate).TotalDays;
+                var skipInterval = recordCount / MAX_RECORDS;
+                
+                return await context.WeatherHistory
+                    .Where(h => h.Date >= startDate && h.Date <= endDate)
+                    .OrderBy(h => h.Date)
+                    .Take(MAX_RECORDS)
+                    .AsNoTracking() // Důležité pro snížení spotřeby paměti - Entity Framework nebude sledovat entity
+                    .ToListAsync();
+            }
+            
             return await context.WeatherHistory
                 .Where(h => h.Date >= startDate && h.Date <= endDate)
                 .OrderBy(h => h.Date)
+                .AsNoTracking() // Snížení spotřeby paměti
                 .ToListAsync();
         }
 

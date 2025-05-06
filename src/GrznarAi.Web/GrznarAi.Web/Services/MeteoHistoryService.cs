@@ -116,39 +116,57 @@ namespace GrznarAi.Web.Services
             
             try
             {
+                // Omezení maximálního počtu let na 20
+                if (years > 20)
+                {
+                    _logger.LogWarning("Požadovaný počet let ({RequestedYears}) překračuje povolený limit. Omezeno na 20 let.", years);
+                    years = 20;
+                }
+
                 using var context = await _contextFactory.CreateDbContextAsync();
                 
                 // Určíme roky, pro které chceme získat data
                 var currentYear = DateTime.Now.Year;
-                var startYear = currentYear - years + 1; // +1 protože počítáme i aktuální rok
+                var startYear = Math.Max(currentYear - years + 1, 2000); // +1 protože počítáme i aktuální rok
                 
                 // Získáme den a měsíc z aktuálního data
                 var day = date.Day;
                 var month = date.Month;
                 
-                // Pro každý rok získáme data
+                // Pro každý rok získáme data, ale optimalizovaným způsobem
                 for (int year = startYear; year <= currentYear; year++)
                 {
                     // Vytvoříme datum pro daný rok
                     var targetDate = new DateTime(year, month, day);
                     
-                    // Získáme data pro tento den
-                    var dayRecords = await context.WeatherHistory
+                    // SQL optimalizace: použijeme AsNoTracking() pro snížení paměťových nároků
+                    // a efektivnější výpočet agregací přímo v SQL dotazu
+                    var dayStats = await context.WeatherHistory
                         .Where(h => h.Date.Year == year && h.Date.Month == month && h.Date.Day == day)
-                        .ToListAsync();
+                        .GroupBy(h => 1) // Seskupit všechny záznamy do jedné skupiny pro agregaci
+                        .Select(g => new 
+                        {
+                            MinTemperature = g.Min(r => r.TemperatureOut),
+                            MaxTemperature = g.Max(r => r.TemperatureOut),
+                            AvgTemperature = g.Average(r => r.TemperatureOut),
+                            TotalRainfall = g.Sum(r => r.Rain),
+                            AvgHumidity = g.Average(r => r.HumidityOut)
+                        })
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync();
                     
-                    if (dayRecords.Any())
+                    if (dayStats != null)
                     {
                         // Vypočítáme denní statistiky
                         var stats = new DailyStatisticsForDate
                         {
                             Date = targetDate,
                             Year = year,
-                            MinTemperature = dayRecords.Min(r => r.TemperatureOut),
-                            MaxTemperature = dayRecords.Max(r => r.TemperatureOut),
-                            AvgTemperature = dayRecords.Average(r => r.TemperatureOut),
-                            TotalRainfall = dayRecords.Sum(r => r.Rain),
-                            AvgHumidity = dayRecords.Average(r => r.HumidityOut)
+                            MinTemperature = dayStats.MinTemperature,
+                            MaxTemperature = dayStats.MaxTemperature,
+                            AvgTemperature = dayStats.AvgTemperature,
+                            TotalRainfall = dayStats.TotalRainfall,
+                            AvgHumidity = dayStats.AvgHumidity
                         };
                         
                         result.Add(stats);
@@ -172,39 +190,61 @@ namespace GrznarAi.Web.Services
             
             try
             {
+                // Omezení rozsahu let pro zabránění přetížení paměti
+                int maxYearRange = 20;
+                if (endYear - startYear > maxYearRange)
+                {
+                    _logger.LogWarning("Požadovaný rozsah let ({RequestedRange}) překračuje povolený limit. Omezeno na {MaxRange} let.", 
+                        endYear - startYear, maxYearRange);
+                    endYear = startYear + maxYearRange;
+                }
+
                 using var context = await _contextFactory.CreateDbContextAsync();
                 
-                // Pro každý rok získáme statistiky
+                // Pro každý rok získáme statistiky, ale efektivnějším způsobem
                 for (int year = startYear; year <= endYear; year++)
                 {
                     var yearStart = new DateTime(year, 1, 1);
                     var yearEnd = new DateTime(year, 12, 31, 23, 59, 59);
                     
-                    // Získáme data pro tento rok
-                    var yearRecords = await context.WeatherHistory
+                    // Získáme základní statistiky pro tento rok (efektivně přímo v SQL)
+                    var yearStats = await context.WeatherHistory
                         .Where(h => h.Date >= yearStart && h.Date <= yearEnd)
-                        .ToListAsync();
+                        .GroupBy(h => 1) // Seskupit všechny záznamy do jedné skupiny pro agregaci
+                        .Select(g => new 
+                        {
+                            MinTemperature = g.Min(r => r.TemperatureOut),
+                            MaxTemperature = g.Max(r => r.TemperatureOut),
+                            AvgTemperature = g.Average(r => r.TemperatureOut)
+                        })
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync();
                     
-                    if (yearRecords.Any())
+                    if (yearStats != null)
                     {
                         // Vytvoříme statistiky pro daný rok
                         var stats = new YearlyStatistics
                         {
                             Year = year,
-                            MinTemperature = yearRecords.Min(r => r.TemperatureOut),
-                            MaxTemperature = yearRecords.Max(r => r.TemperatureOut),
-                            AvgTemperature = yearRecords.Average(r => r.TemperatureOut),
-                            TotalRainfall = await CalculateTotalYearlyRainfallAsync(year, context),
-                            
-                            // Analyzujeme specifické dny v roce
-                            LastFrostDayFirstHalf = await GetLastFrostDayInFirstHalfAsync(year, context),
-                            FirstFrostDaySecondHalf = await GetFirstFrostDayInSecondHalfAsync(year, context),
-                            FrostDaysCount = await GetNumberOfFrostDaysAsync(year, context),
-                            
-                            FirstHotDay = await GetFirstHotDayAsync(year, context),
-                            LastHotDay = await GetLastHotDayAsync(year, context),
-                            HotDaysCount = await GetNumberOfHotDaysAsync(year, context)
+                            MinTemperature = yearStats.MinTemperature,
+                            MaxTemperature = yearStats.MaxTemperature,
+                            AvgTemperature = yearStats.AvgTemperature
                         };
+                        
+                        // Tyto údaje potřebují separátní výpočty, které nelze snadno sloučit do jednoho SQL dotazu
+                        // Provádíme je jedna po druhé, abychom minimalizovali zátěž na databázi
+                        
+                        // Získáme celkové srážky - tento výpočet jsme optimalizovali
+                        stats.TotalRainfall = await CalculateTotalYearlyRainfallAsync(year, context);
+                        
+                        // Tyto hodnoty získáváme efektivnějšími metodami
+                        stats.LastFrostDayFirstHalf = await GetLastFrostDayInFirstHalfAsync(year, context);
+                        stats.FirstFrostDaySecondHalf = await GetFirstFrostDayInSecondHalfAsync(year, context);
+                        stats.FrostDaysCount = await GetNumberOfFrostDaysAsync(year, context);
+                        
+                        stats.FirstHotDay = await GetFirstHotDayAsync(year, context);
+                        stats.LastHotDay = await GetLastHotDayAsync(year, context);
+                        stats.HotDaysCount = await GetNumberOfHotDaysAsync(year, context);
                         
                         result.Add(stats);
                     }

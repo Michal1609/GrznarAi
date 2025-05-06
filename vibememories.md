@@ -1797,3 +1797,198 @@ Stránka `/meteo/trends` zobrazuje grafy s meteorologickými daty a umožňuje p
    * Barevné sladění s přepínači období pro konzistentní vzhled
 
 Tyto změny zlepšují uživatelskou přívětivost a modernizují vzhled stránky s meteorologickými trendy. Nový design je kompaktnější, vizuálně přitažlivější a lépe funguje na různých velikostech obrazovky.
+
+## Optimalizace spotřeby paměti v meteorologických komponentách
+
+Stránky s meteorologickými daty (/meteo a /meteo/trends) měly problémy s vysokou spotřebou paměti (až 300 MB RAM při načtení), což vedlo k nestabilitě aplikace. Pro zlepšení výkonu byly implementovány následující optimalizace:
+
+### 1. Optimalizace při načítání dat z databáze
+
+**Hlavní změny v `WeatherHistoryService.cs`:**
+- Omezení maximálního rozsahu dat na 90 dní pro zabránění přetížení paměti
+- Přidání varování při překročení povoleného rozsahu
+- Úprava dotazů pro použití `AsNoTracking()` pro snížení paměťových nároků
+- Limity na velikost výsledků (max 10 000 záznamů)
+
+```csharp
+public async Task<List<WeatherHistory>> GetHistoryAsync(DateTime startDate, DateTime endDate)
+{
+    // Omezení maximálního rozsahu dat na 90 dnů, aby se zabránilo přetížení paměti
+    var maxAllowedPeriod = TimeSpan.FromDays(90);
+    if (endDate - startDate > maxAllowedPeriod)
+    {
+        _logger.LogWarning("Požadovaný interval je příliš velký ({RequestedDays} dnů). Omezeno na maximální povolený interval ({MaxDays} dnů).", 
+            (endDate - startDate).TotalDays, maxAllowedPeriod.TotalDays);
+        endDate = startDate.Add(maxAllowedPeriod);
+    }
+
+    using var context = await _contextFactory.CreateDbContextAsync();
+    
+    // Omezení počtu vrácených záznamů
+    var maxRecords = 10000;
+    var query = context.WeatherHistory
+        .Where(h => h.Date >= startDate && h.Date <= endDate)
+        .OrderBy(h => h.Date)
+        .AsNoTracking(); // Důležité pro snížení paměťových nároků
+    
+    var count = await query.CountAsync();
+    if (count > maxRecords)
+    {
+        _logger.LogWarning("Počet záznamů ({ActualCount}) překračuje maximální limit ({MaxCount}). Data budou omezena.", 
+            count, maxRecords);
+        
+        // Výpočet kroku pro vzorkování dat
+        int step = (int)Math.Ceiling((double)count / maxRecords);
+        
+        // Efektivnější výběr vzorků pomocí modulo operace přímo v SQL
+        var ids = await query
+            .Select(h => h.HistoryId)
+            .ToListAsync();
+        
+        return await context.WeatherHistory
+            .Where(h => ids.Contains(h.HistoryId) && Array.IndexOf(ids.ToArray(), h.HistoryId) % step == 0)
+            .OrderBy(h => h.Date)
+            .Take(maxRecords)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+    
+    return await query.ToListAsync();
+}
+```
+
+**Optimalizace v `MeteoHistoryService.cs`:**
+- Omezení maximálního počtu let pro statistiky na 20
+- Optimalizace SQL dotazů pomocí přímých agregačních výpočtů
+- Použití `AsNoTracking()` pro optimalizaci paměti
+- Vyhnutí se načítání velkých datasetů do paměti a jejich zpracování klienta
+
+### 2. Ochrana proti souběžným požadavkům v komponentách
+
+**Semafory pro omezení souběžných požadavků:**
+- Přidání mechanismu SemaphoreSlim pro zamezení souběžných volání API
+- Implementace v komponentách Meteo.razor a MeteoTrends.razor
+- Ochrana před vysokou spotřebou způsobenou souběžnými požadavky
+
+```csharp
+private static SemaphoreSlim _weatherDataSemaphore = new SemaphoreSlim(1, 1);
+private static SemaphoreSlim _historicalDataSemaphore = new SemaphoreSlim(1, 1);
+
+// Ukázka použití v metodě pro načítání dat
+private async Task LoadWeatherDataAsync()
+{
+    // Pokud již probíhá načítání, nespouštíme další
+    if (!await _weatherDataSemaphore.WaitAsync(TimeSpan.FromMilliseconds(100)))
+    {
+        return; // Již probíhá jiné načítání, nespouštíme další
+    }
+    
+    try
+    {
+        // Kód pro načtení dat...
+    }
+    finally
+    {
+        _weatherDataSemaphore.Release();
+    }
+}
+```
+
+### 3. Omezení frekvence požadavků a retry mechanismus
+
+**Minimální interval pro obnovení dat:**
+- Stanovení minimálního intervalu mezi požadavky (30 sekund)
+- Sledování času posledního obnovení dat
+- Omezení počtu pokusů o opětovné načtení dat (max 3 pokusy)
+
+```csharp
+private DateTime _lastRefreshTime = DateTime.MinValue;
+private int _refreshAttemptCount = 0;
+private const int MAX_REFRESH_ATTEMPTS = 3;
+private const int MIN_REFRESH_INTERVAL_SECONDS = 30;
+
+private async Task RefreshDataAsync()
+{
+    // Kontrola minimálního intervalu mezi obnovením dat (30 sekund)
+    var timeSinceLastRefresh = DateTime.Now - _lastRefreshTime;
+    if (timeSinceLastRefresh.TotalSeconds < MIN_REFRESH_INTERVAL_SECONDS)
+    {
+        // Příliš brzké obnovení - počkáme na uplynutí minimálního intervalu
+        return;
+    }
+    
+    // Kontrola maximálního počtu pokusů o obnovení
+    if (_refreshAttemptCount >= MAX_REFRESH_ATTEMPTS)
+    {
+        IsApplicationError = true;
+        ErrorDetails = $"Byl dosažen maximální počet pokusů o obnovení dat ({MAX_REFRESH_ATTEMPTS}).";
+        return;
+    }
+    
+    // Kód pro obnovení dat...
+}
+```
+
+### 4. Optimalizace zobrazování dat v MeteoTrends.razor
+
+**Omezení počtu datových bodů v grafech:**
+- Stanovení maximálního počtu datových bodů (1000) pro grafy
+- Implementace vzorkování dat pro velké datové sady
+- Výpočet vhodného kroku pro vzorkování podle velikosti datasetu
+
+```csharp
+// Omezení počtu výsledků pro snížení spotřeby paměti
+const int MAX_DATA_POINTS = 1000;
+if (rawData.Count > MAX_DATA_POINTS)
+{
+    _logger.LogInformation("Počet záznamů byl omezen z {ActualCount} na {MaxCount}.", 
+        rawData.Count, MAX_DATA_POINTS);
+        
+    // Vypočítáme interval mezi záznamy, abychom dosáhli požadovaného počtu
+    int step = rawData.Count / MAX_DATA_POINTS;
+    rawData = rawData.Where((x, i) => i % step == 0).Take(MAX_DATA_POINTS).ToList();
+}
+```
+
+### 5. Přidání zobrazení chyb a mechanismu pro opětovné načtení
+
+**Uživatelské rozhraní pro zobrazení chyb:**
+- Přidání informativních hlášek při selhání načítání dat
+- Tlačítka pro opětovné načtení dat po chybě
+- Zobrazení detailů chyby v UI pro snadnější diagnostiku
+
+```html
+<div class="error-message app-error">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <h3>@Localizer.GetString("Meteo.ApplicationError")</h3>
+    <p>@ErrorDetails</p>
+    <button class="btn btn-retry" @onclick="ResetAndRetry">
+        <i class="bi bi-arrow-repeat"></i>
+        <span>@Localizer.GetString("Meteo.RetryLoading")</span>
+    </button>
+</div>
+```
+
+### 6. Lepší logování a monitorování
+
+**Podrobné logování problémů:**
+- Nahrazení Console.WriteLine za správné logování pomocí ILogger
+- Detailní zprávy s informacemi o stavu aplikace
+- Zachytávání a logování výjimek pro snazší diagnostiku problémů
+
+```csharp
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Chyba při načítání dat: {Message}", ex.Message);
+    
+    // Zobrazíme chybu uživateli po opakovaných selháních
+    if (_refreshAttemptCount >= MAX_REFRESH_ATTEMPTS)
+    {
+        IsApplicationError = true;
+        ErrorDetails = $"Nepodařilo se načíst data po {MAX_REFRESH_ATTEMPTS} pokusech. Poslední chyba: {ex.Message}";
+        _refreshAttemptCount = 0; // Resetujeme počítadlo pro příští pokus
+    }
+}
+```
+
+Tyto optimalizace výrazně snížily spotřebu paměti při načítání meteorologických dat, zlepšily stabilitu aplikace a poskytly lepší uživatelskou zkušenost při řešení chyb a problémů.

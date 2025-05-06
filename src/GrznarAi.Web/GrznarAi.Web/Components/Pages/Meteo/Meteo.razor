@@ -2,6 +2,7 @@
 @inject IWeatherService WeatherService
 @inject IMeteoHistoryService MeteoHistoryService
 @inject ILocalizationService Localizer
+@inject ILogger<Meteo> _logger
 @using GrznarAi.Web.Models
 @using GrznarAi.Web.Services
 @using System.Globalization
@@ -22,6 +23,18 @@
             <div class="spinner">
                 <span class="visually-hidden">@Localizer.GetString("Meteo.Loading")</span>
             </div>
+        </div>
+    }
+    else if (IsApplicationError)
+    {
+        <div class="error-message app-error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <h3>@Localizer.GetString("Meteo.ApplicationError")</h3>
+            <p>@ErrorDetails</p>
+            <button class="btn btn-retry" @onclick="ResetAndRetry">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>@Localizer.GetString("Meteo.RetryLoading")</span>
+            </button>
         </div>
     }
     else if (WeatherData == null && !IsLoading && !IsInitialRender)
@@ -978,6 +991,62 @@
         color: #dc3545;
     }
     
+    /* Styly pro aplikační chyby */
+    .error-message.app-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: rgba(220, 53, 69, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        text-align: center;
+        margin: 2rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .error-message.app-error h3 {
+        color: #dc3545;
+        margin-bottom: 1rem;
+    }
+    
+    .error-message.app-error p {
+        margin-bottom: 1.5rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    
+    .btn-retry {
+        padding: 0.75rem 1.5rem;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-retry:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-retry i {
+        font-size: 1.25rem;
+        margin-bottom: 0;
+        color: white;
+    }
+    
     /* Stylování pro sekci historických dat */
     .historical-data-section {
         padding: 2rem;
@@ -1290,6 +1359,18 @@
     private List<YearlyStatistics> YearlyStatistics { get; set; }
     private const int HISTORICAL_YEARS = 10;
     private CancellationTokenSource _cts;
+    
+    // Přidání pro omezení souběžných volání
+    private static SemaphoreSlim _weatherDataSemaphore = new SemaphoreSlim(1, 1);
+    private static SemaphoreSlim _historicalDataSemaphore = new SemaphoreSlim(1, 1);
+    private DateTime _lastRefreshTime = DateTime.MinValue;
+    private int _refreshAttemptCount = 0;
+    private const int MAX_REFRESH_ATTEMPTS = 3;
+    private const int MIN_REFRESH_INTERVAL_SECONDS = 30;
+    
+    // Proměnné pro zobrazení chyb uživateli
+    private bool IsApplicationError { get; set; } = false;
+    private string ErrorDetails { get; set; } = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -1348,36 +1429,62 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Chyba při načítání dat: {ex.Message}");
+            IsApplicationError = true;
+            ErrorDetails = $"Chyba při načítání dat: {ex.Message}";
             IsInitialRender = false;
+            
+            _logger.LogError(ex, "Chyba při načítání dat: {Message}", ex.Message);
             StateHasChanged();
         }
     }
     
     private async Task LoadWeatherDataAsync()
     {
-        IsLoading = true;
+        // Pokud již probíhá načítání, nespouštíme další
+        if (!await _weatherDataSemaphore.WaitAsync(TimeSpan.FromMilliseconds(100)))
+        {
+            return; // Již probíhá jiné načítání, nespouštíme další
+        }
+        
         try
         {
+            IsLoading = true;
             WeatherData = await WeatherService.GetWeatherDataAsync();
             IsApiDataLoaded = true;
+            _lastRefreshTime = DateTime.Now;
+            _refreshAttemptCount = 0; // Reset počítadla pokusů po úspěšném načtení
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Chyba při načítání dat o počasí: {ex.Message}");
+            _logger.LogError(ex, "Chyba při načítání dat o počasí: {Message}", ex.Message);
+            _refreshAttemptCount++;
+            
+            if (_refreshAttemptCount >= MAX_REFRESH_ATTEMPTS)
+            {
+                IsApplicationError = true;
+                ErrorDetails = $"Nepodařilo se načíst data o počasí po {MAX_REFRESH_ATTEMPTS} pokusech. Poslední chyba: {ex.Message}";
+                _refreshAttemptCount = 0; // Resetujeme počítadlo pro příští pokus
+            }
         }
         finally
         {
             IsLoading = false;
             StateHasChanged();
+            _weatherDataSemaphore.Release();
         }
     }
     
     private async Task LoadHistoricalDataAsync()
     {
-        IsLoadingHistoricalData = true;
+        // Pokud již probíhá načítání, nespouštíme další
+        if (!await _historicalDataSemaphore.WaitAsync(TimeSpan.FromMilliseconds(100)))
+        {
+            return; // Již probíhá jiné načítání, nespouštíme další
+        }
+        
         try
         {
+            IsLoadingHistoricalData = true;
             var today = DateTime.Today;
             DailyStatistics = await MeteoHistoryService.GetDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
             
@@ -1389,17 +1496,36 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Chyba při načítání historických dat: {ex.Message}");
+            _logger.LogError(ex, "Chyba při načítání historických dat: {Message}", ex.Message);
         }
         finally
         {
             IsLoadingHistoricalData = false;
             StateHasChanged();
+            _historicalDataSemaphore.Release();
         }
     }
     
     private async Task RefreshDataAsync()
     {
+        // Kontrola minimálního intervalu mezi obnovením dat (30 sekund)
+        var timeSinceLastRefresh = DateTime.Now - _lastRefreshTime;
+        if (timeSinceLastRefresh.TotalSeconds < MIN_REFRESH_INTERVAL_SECONDS)
+        {
+            // Příliš brzké obnovení - počkáme na uplynutí minimálního intervalu
+            int waitSeconds = MIN_REFRESH_INTERVAL_SECONDS - (int)timeSinceLastRefresh.TotalSeconds;
+            _logger.LogInformation("Příliš brzké obnovení dat. Další obnovení možné za {Seconds} sekund.", waitSeconds);
+            return;
+        }
+        
+        // Kontrola maximálního počtu pokusů o obnovení
+        if (_refreshAttemptCount >= MAX_REFRESH_ATTEMPTS)
+        {
+            IsApplicationError = true;
+            ErrorDetails = $"Byl dosažen maximální počet pokusů o obnovení dat ({MAX_REFRESH_ATTEMPTS}).";
+            return;
+        }
+        
         IsApiDataLoaded = false;
         IsHistoricalDataLoaded = false;
         
@@ -1441,34 +1567,66 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Chyba při obnovování dat: {ex.Message}");
+            IsApplicationError = true;
+            ErrorDetails = $"Chyba při obnovování dat: {ex.Message}";
+            _refreshAttemptCount++;
+            
+            _logger.LogError(ex, "Chyba při obnovování dat: {Message}", ex.Message);
         }
     }
     
     private async Task RefreshWeatherDataAsync()
     {
-        IsLoading = true;
+        // Pokud již probíhá načítání, nespouštíme další
+        if (!await _weatherDataSemaphore.WaitAsync(TimeSpan.FromMilliseconds(100)))
+        {
+            return; // Již probíhá jiné načítání, nespouštíme další
+        }
+        
         try
         {
+            IsLoading = true;
+            _refreshAttemptCount++;
+            _lastRefreshTime = DateTime.Now;
+            
             WeatherData = await WeatherService.RefreshWeatherDataAsync();
             IsApiDataLoaded = true;
+            
+            if (WeatherData != null)
+            {
+                // Úspěšné načtení - resetujeme počítadlo pokusů
+                _refreshAttemptCount = 0;
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Chyba při obnovování dat o počasí: {ex.Message}");
+            _logger.LogError(ex, "Chyba při obnovování dat o počasí: {Message}", ex.Message);
+            
+            if (_refreshAttemptCount >= MAX_REFRESH_ATTEMPTS)
+            {
+                IsApplicationError = true;
+                ErrorDetails = $"Nepodařilo se obnovit data o počasí po {MAX_REFRESH_ATTEMPTS} pokusech.";
+            }
         }
         finally
         {
             IsLoading = false;
             StateHasChanged();
+            _weatherDataSemaphore.Release();
         }
     }
     
     private async Task RefreshHistoricalDataAsync()
     {
-        IsLoadingHistoricalData = true;
+        // Pokud již probíhá načítání, nespouštíme další
+        if (!await _historicalDataSemaphore.WaitAsync(TimeSpan.FromMilliseconds(100)))
+        {
+            return; // Již probíhá jiné načítání, nespouštíme další
+        }
+        
         try
         {
+            IsLoadingHistoricalData = true;
             var today = DateTime.Today;
             DailyStatistics = await MeteoHistoryService.RefreshDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
             
@@ -1480,15 +1638,55 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Chyba při obnovování historických dat: {ex.Message}");
+            _logger.LogError(ex, "Chyba při obnovování historických dat: {Message}", ex.Message);
         }
         finally
         {
             IsLoadingHistoricalData = false;
             StateHasChanged();
+            _historicalDataSemaphore.Release();
         }
     }
     
+    private async Task ResetAndRetry()
+    {
+        IsApplicationError = false;
+        ErrorDetails = string.Empty;
+        _refreshAttemptCount = 0;
+        _lastRefreshTime = DateTime.MinValue;
+        
+        await LoadDataWithRetryAsync();
+    }
+    
+    private async Task LoadDataWithRetryAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            IsLoadingHistoricalData = true;
+            
+            // Spustíme obě načítání paralelně
+            var weatherTask = LoadWeatherDataAsync();
+            var historicalTask = LoadHistoricalDataAsync();
+            
+            // Čekáme na dokončení obou úkolů
+            await Task.WhenAll(weatherTask, historicalTask);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Chyba při opětovném načítání dat: {Message}", ex.Message);
+            IsApplicationError = true;
+            ErrorDetails = $"Chyba při opětovném načítání dat: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+            IsLoadingHistoricalData = false;
+            StateHasChanged();
+        }
+    }
+
+    #region Formátovací a pomocné metody
     private string GetWeatherBackground()
     {
         if (WeatherData?.Data?.Outdoor == null)
@@ -1676,13 +1874,13 @@
         return value.Value.ToString("0.0", CultureInfo.InvariantCulture);
     }
     
-    private string FormatRawValue(string value)
+    private string FormatRawValue(string? value)
     {
         if (string.IsNullOrEmpty(value))
-            return "N/A";
+            return "--";
             
-        if (double.TryParse(value, out var numValue))
-            return numValue.ToString("0.0", CultureInfo.InvariantCulture);
+        if (double.TryParse(value, out double result))
+            return result.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
             
         return value;
     }
@@ -1743,6 +1941,7 @@
             
         return date.Value.ToString("d. M. yyyy");
     }
+    #endregion
 
     public void Dispose()
     {

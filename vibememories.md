@@ -1549,3 +1549,60 @@ Implemented enhanced Y-axis scaling in temperature charts to better visualize tr
    ```
 
 This implementation provides much better visualization as the temperature trends now utilize the full chart height rather than being compressed in a small portion of the available space. Each time period has optimized ranges that match realistic temperature values for the geographic location.
+
+## Grafy s ApexCharts (JavaScript)
+
+### Přehled implementace
+
+Na stránce `/meteo/trends` byl implementován interaktivní teplotní graf pomocí JavaScript knihovny ApexCharts. Toto nahradilo původní implementaci pomocí Radzen Blazor komponent.
+
+1. **Důvody pro nahrazení Radzen za ApexCharts:**
+   * Lepší výkon a plynulejší interakce
+   * Více možností přizpůsobení (vzhled, animace, tooltip)
+   * Možnost exportu dat a grafů
+   * Lepší podpora pro zoom a interaktivitu
+   * Čistý JavaScript přístup bez závislosti na Blazor komponentách
+
+2. **Implementované soubory:**
+   * `wwwroot/js/apexcharts-integration.js` - Hlavní integrační JavaScript soubor
+   * `Components/Pages/Meteo/MeteoTrends.razor` - Upravená Blazor komponenta
+
+3. **Obsah apexcharts-integration.js:**
+   * `loadApexChartsScript()` - Funkce pro zajištění načtení ApexCharts
+   * `renderTemperatureChart()` - Vykresluje graf s teplotními daty
+
+4. **Integrace v Blazor komponentě:**
+   * Funkce `RenderChartAsync()` připraví data ve správném formátu
+   * `OnAfterRenderAsync()` zajistí vykreslení grafu po načtení stránky
+   * `JSRuntime.InvokeVoidAsync()` volá JavaScript funkce z C# kódu
+
+### Řešené problémy a optimalizace
+
+1. **Statický rendering a JSInterop:**
+   * JavaScript interop volání byla přesunuta z `OnInitializedAsync()` do `OnAfterRenderAsync()`, což řeší problém se statickým renderováním.
+   * Přidáno robustní zachycení výjimek kolem všech JSInterop volání.
+
+2. **Integritní kontrola CDN skriptu:**
+   * Odstraněn atribut `integrity` z dynamického načítání skriptů, který způsoboval problémy s CSP.
+   * Přidáno přímé načítání ApexCharts knihovny z CDN v `MainLayout.razor` pro zajištění dostupnosti.
+
+3. **Ochrana proti chybám vykreslování:**
+   * Přidána kontrola platnosti elementu grafu před vykreslením.
+   * Implementována ochrana proti vykreslení grafu bez dat.
+   * Přidána kontrola existence metody `destroy()` před jejím voláním.
+
+4. **Optimalizace pro výkon:**
+   * Minimalizace počtu překreslení grafu.
+   * Efektivní generování dat grafu s odpovídající granularitou podle zvoleného období.
+
+5. **Oprava řazení dat v ročním grafu:**
+   * Řešen problém s nesprávným řazením týdnů v ročním pohledu, kde data přes přelom roku nebyla správně seřazena.
+   * Přidán složený klíč pro řazení podle roku a týdne v roce.
+   * Vylepšeno zobrazení popisků osy X z formátu 'MM-dd' na 'dd.MM.yy' pro lepší čitelnost a zřetelné rozlišení let.
+   * Přidáno explicitní řazení dat podle data před jejich zobrazením v grafu.
+   * Upraven způsob nastavení časového rozpětí pro roční pohled pro přesnější pokrytí celého roku.
+
+### Poznámky pro údržbu
+
+* **Aktualizace knihovny:** Při aktualizaci ApexCharts na novou verzi je potřeba aktualizovat CDN URL v `MainLayout.razor`.
+* **Přidání nových grafů:** Pro přidání nových typů grafů je potřeba vytvořit novou funkci v `apexcharts-integration.js` a příslušnou metodu pro přípravu dat v Blazor komponentě.

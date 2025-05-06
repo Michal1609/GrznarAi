@@ -1,12 +1,11 @@
 @page "/meteo/trends"
 @inject IWeatherHistoryService WeatherHistoryService
 @inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Services
 @using System.Globalization
-@using Radzen
-@using Radzen.Blazor
-@using Radzen.Blazor.Rendering
+@using Microsoft.JSInterop
 @rendermode InteractiveServer
 
 <PageTitle>@Localizer.GetString("Meteo.Trends.Title") - GrznarAI</PageTitle>
@@ -44,7 +43,7 @@
                     <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => ChangeDateAsync(-1)">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(args => ChangeDatePickerAsync())" Class="date-picker" />
+                    <input type="date" class="form-control date-picker" value="@SelectedDate.ToString("yyyy-MM-dd")" @onchange="@(e => ChangeDateFromInputAsync(e.Value))" />
                     <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="() => ChangeDateAsync(1)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
@@ -57,7 +56,7 @@
                         <i class="bi bi-chevron-left"></i>
                     </button>
                     <span class="me-2">@StartDate.ToString("d") - @EndDate.ToString("d")</span>
-                    <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(args => ChangeDatePickerAsync())" Class="date-picker mx-2" />
+                    <input type="date" class="form-control date-picker mx-2" value="@SelectedDate.ToString("yyyy-MM-dd")" @onchange="@(e => ChangeDateFromInputAsync(e.Value))" />
                     <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="() => ChangeDateAsync(7)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
@@ -70,7 +69,7 @@
                         <i class="bi bi-chevron-left"></i>
                     </button>
                     <span class="me-2">@StartDate.ToString("d") - @EndDate.ToString("d")</span>
-                    <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(args => ChangeDatePickerAsync())" Class="date-picker mx-2" />
+                    <input type="date" class="form-control date-picker mx-2" value="@SelectedDate.ToString("yyyy-MM-dd")" @onchange="@(e => ChangeDateFromInputAsync(e.Value))" />
                     <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="() => ChangeDateAsync(30)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
@@ -82,8 +81,8 @@
                     <button class="btn btn-sm btn-outline-secondary me-2" @onclick="() => ChangeDateAsync(-365)">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <span class="me-2">@StartDate.ToString("d") - @EndDate.ToString("d")</span>
-                    <RadzenDatePicker @bind-Value="SelectedDate" DateFormat="d" Change="@(args => ChangeDatePickerAsync())" Class="date-picker mx-2" />
+                    <span class="me-2 fw-bold">@StartDate.ToString("dd.MM.yyyy") - @EndDate.ToString("dd.MM.yyyy")</span>
+                    <input type="date" class="form-control date-picker mx-2" value="@SelectedDate.ToString("yyyy-MM-dd")" @onchange="@(e => ChangeDateFromInputAsync(e.Value))" />
                     <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="() => ChangeDateAsync(365)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
@@ -118,54 +117,7 @@
                 </div>
             </div>
             
-            <RadzenChart @ref="chart">
-                <RadzenLegend Position="LegendPosition.Bottom" />
-                
-                <RadzenCategoryAxis Step="@GetDateAxisStep()" LabelAutoRotation="-45">
-                    @if (CurrentPeriod == PeriodType.Day)
-                    {
-                        <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Time")" />
-                        <RadzenAxisLabels FormatString="{0:HH:mm}" />
-                    }
-                    else if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
-                    {
-                        <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Date")" />
-                        <RadzenAxisLabels FormatString="{0:MM-dd}" />
-                    }
-                    else
-                    {
-                        <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Date")" />
-                        <RadzenAxisLabels FormatString="{0:yyyy-MM-dd}" />
-                    }
-                    <RadzenGridLines Visible="true" />
-                </RadzenCategoryAxis>
-                
-                <RadzenValueAxis Min="@GetTemperatureAxisMin()" Max="@GetTemperatureAxisMax()">
-                    <RadzenAxisTitle Text="@Localizer.GetString("Meteo.Trends.Temperature")" />
-                    <RadzenGridLines Visible="true" />
-                    <RadzenAxisOptions Formatter="@FormatTemperatureAxis" />
-                </RadzenValueAxis>
-                
-                <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayTime" 
-                                 Title="@Localizer.GetString("Meteo.Trends.MinTemperature")"
-                                 LineType="LineType.Solid" ValueProperty="MinTemperature">
-                    <RadzenMarkers MarkerType="MarkerType.Circle" Size="4" />
-                </RadzenLineSeries>
-                
-                <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayTime" 
-                                 Title="@Localizer.GetString("Meteo.Trends.AvgTemperature")"
-                                 LineType="LineType.Solid" ValueProperty="AvgTemperature">
-                    <RadzenMarkers MarkerType="MarkerType.Square" Size="4" />
-                </RadzenLineSeries>
-                
-                <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="DisplayTime" 
-                                 Title="@Localizer.GetString("Meteo.Trends.MaxTemperature")"
-                                 LineType="LineType.Solid" ValueProperty="MaxTemperature">
-                    <RadzenMarkers MarkerType="MarkerType.Diamond" Size="4" />
-                </RadzenLineSeries>
-                
-                <RadzenChartTooltipOptions Visible="true" Shared="true" />
-            </RadzenChart>
+            <div id="temperatureChart" style="width: 100%; height: 400px;"></div>
         </div>
     }
 </div>
@@ -188,7 +140,6 @@
         public float? MaxTemperature { get; set; }
     }
     
-    private RadzenChart chart;
     private PeriodType CurrentPeriod { get; set; } = PeriodType.Day;
     private DateTime SelectedDate { get; set; } = DateTime.Now.Date;
     private DateTime StartDate { get; set; }
@@ -221,24 +172,32 @@
         return dateValue?.ToString() ?? "";
     }
     
-    private string FormatTemperature(object value)
-    {
-        if (value is double doubleValue)
-        {
-            return $"{doubleValue:F1} °C";
-        }
-        else if (value is float floatValue)
-        {
-            return $"{floatValue:F1} °C";
-        }
-        
-        return $"{value} °C";
-    }
-    
     protected override async Task OnInitializedAsync()
     {
         await SetupDateRangeAsync();
         await LoadDataAsync();
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            if (firstRender)
+            {
+                // Načtení skriptu při prvním renderování
+                await JSRuntime.InvokeVoidAsync("loadApexChartsScript");
+            }
+            
+            // Vykreslení grafu pouze pokud máme data a načetli jsme již JS knihovnu
+            if (!IsLoading && WeatherData != null && WeatherData.Any())
+            {
+                await RenderChartAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error in OnAfterRenderAsync: {ex.Message}");
+        }
     }
     
     private async Task ChangePeriodAsync(PeriodType newPeriod)
@@ -269,12 +228,16 @@
         }
     }
     
-    private async Task ChangeDatePickerAsync()
+    private async Task ChangeDateFromInputAsync(object value)
     {
         try
         {
-            await SetupDateRangeAsync();
-            await LoadDataAsync();
+            if (value != null && DateTime.TryParse(value.ToString(), out DateTime date))
+            {
+                SelectedDate = date;
+                await SetupDateRangeAsync();
+                await LoadDataAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -299,8 +262,9 @@
                 EndDate = SelectedDate.Date.AddDays(1).AddSeconds(-1);
                 break;
             case PeriodType.Year:
-                StartDate = SelectedDate.Date.AddDays(-364);
+                // Pro roční pohled nastavíme StartDate jeden rok zpět od EndDate
                 EndDate = SelectedDate.Date.AddDays(1).AddSeconds(-1);
+                StartDate = EndDate.AddYears(-1).AddDays(1);
                 break;
         }
     }
@@ -409,13 +373,25 @@
                 break;
                 
             case PeriodType.Year:
-                // For year view, group by week
+                // For year view, group by week but zajistíme správné pořadí
+                // Použijeme DateTime jako klíč místo čísla týdne pro lepší seřazení
                 var yearGroups = localData
                     .GroupBy(d => CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
                         d.LocalTime, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
                     .OrderBy(g => g.Key);
                 
-                foreach (var group in yearGroups)
+                // Přepracujeme tuto logiku, abychom měli jistotu, že data jsou správně seřazena
+                var orderedYearGroups = localData
+                    .GroupBy(d => new { 
+                        Week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                            d.LocalTime, CalendarWeekRule.FirstDay, DayOfWeek.Monday),
+                        // Přidáme rok, aby se správně seřadily týdny přes přelom roku
+                        Year = d.LocalTime.Year 
+                    })
+                    .OrderBy(g => g.Key.Year)
+                    .ThenBy(g => g.Key.Week);
+                
+                foreach (var group in orderedYearGroups)
                 {
                     var firstDayOfGroup = group.OrderBy(d => d.LocalTime).First().LocalTime.Date;
                     
@@ -432,23 +408,6 @@
         }
         
         return result;
-    }
-    
-    private int GetDateAxisStep()
-    {
-        switch (CurrentPeriod)
-        {
-            case PeriodType.Day:
-                return 4; // Every 4 hours
-            case PeriodType.Week:
-                return 1; // Every day
-            case PeriodType.Month:
-                return 7; // Every week
-            case PeriodType.Year:
-                return 12; // Every month
-            default:
-                return 1;
-        }
     }
     
     private void CalculateTemperatureSummary()
@@ -475,202 +434,102 @@
             .Max(d => d.MaxTemperature);
     }
     
-    private string FormatTemperatureAxis(object value)
+    private async Task RenderChartAsync()
     {
-        if (value is double doubleValue)
+        try
         {
-            // Zaokrouhlíme na 1 desetinné místo
-            return $"{Math.Round(doubleValue, 1)} °C";
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+                
+            var categories = new List<string>();
+            var minTempData = new List<object>();
+            var avgTempData = new List<object>();
+            var maxTempData = new List<object>();
+            
+            // Ensure WeatherData is correctly ordered for all views
+            var orderedData = WeatherData.OrderBy(d => d.Date).ToList();
+            
+            // Prepare data for the chart based on period
+            foreach (var point in orderedData)
+            {
+                string category;
+                
+                if (CurrentPeriod == PeriodType.Day && point.DisplayTime is TimeSpan ts)
+                {
+                    category = ts.ToString(@"hh\:mm");
+                }
+                else if (point.DisplayTime is DateTime dt)
+                {
+                    if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+                    {
+                        category = dt.ToString("dd.MM.");
+                    }
+                    else if (CurrentPeriod == PeriodType.Year)
+                    {
+                        // Pro roční pohled zobrazíme datum ve formátu dd.MM.yy pro lepší jasnost
+                        category = dt.ToString("dd.MM.yy");
+                    }
+                    else
+                    {
+                        category = dt.ToString("yyyy-MM-dd");
+                    }
+                }
+                else
+                {
+                    category = point.DisplayTime?.ToString() ?? "";
+                }
+                
+                categories.Add(category);
+                minTempData.Add(point.MinTemperature ?? 0);
+                avgTempData.Add(point.AvgTemperature ?? 0);
+                maxTempData.Add(point.MaxTemperature ?? 0);
+            }
+            
+            // Kontrola, zda máme nějaká validní data
+            if (categories.Count == 0 || minTempData.Count == 0)
+            {
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení grafu");
+                return;
+            }
+            
+            string minTitle = Localizer.GetString("Meteo.Trends.MinTemperature");
+            string avgTitle = Localizer.GetString("Meteo.Trends.AvgTemperature");
+            string maxTitle = Localizer.GetString("Meteo.Trends.MaxTemperature");
+            string xAxisTitle = CurrentPeriod == PeriodType.Day 
+                ? Localizer.GetString("Meteo.Trends.Time") 
+                : Localizer.GetString("Meteo.Trends.Date");
+            string yAxisTitle = Localizer.GetString("Meteo.Trends.Temperature");
+            
+            // Calculate min/max for Y axis (similar to original function but simplified)
+            var allTemps = minTempData.Concat(avgTempData).Concat(maxTempData)
+                .Where(t => t != null)
+                .Select(t => Convert.ToSingle(t))
+                .ToList();
+                
+            if (allTemps.Count == 0)
+            {
+                Console.Error.WriteLine("Žádné validní teplotní údaje");
+                return;
+            }
+                
+            float minY = allTemps.Min() - 2;
+            float maxY = allTemps.Max() + 2;
+            
+            // Render chart through JS interop
+            await JSRuntime.InvokeVoidAsync("renderTemperatureChart", 
+                "temperatureChart", 
+                categories,
+                new[] { minTempData, avgTempData, maxTempData },
+                new[] { minTitle, avgTitle, maxTitle },
+                xAxisTitle,
+                yAxisTitle,
+                minY,
+                maxY);
         }
-        else if (value is float floatValue)
+        catch (Exception ex)
         {
-            // Zaokrouhlíme na 1 desetinné místo
-            return $"{Math.Round(floatValue, 1)} °C";
+            Console.Error.WriteLine($"Error rendering chart: {ex.Message}");
         }
-        else if (value is int intValue)
-        {
-            return $"{intValue} °C";
-        }
-        
-        return $"{value} °C";
-    }
-    
-    private int GetTemperatureAxisMin()
-    {
-        switch (CurrentPeriod)
-        {
-            case PeriodType.Day:
-                return GetTemperatureAxisMinDay();
-            case PeriodType.Week:
-                return GetTemperatureAxisMinWeek();
-            case PeriodType.Month:
-                return GetTemperatureAxisMinMonth();
-            case PeriodType.Year:
-                return GetTemperatureAxisMinYear();
-            default:
-                return 0;
-        }
-    }
-    
-    private int GetTemperatureAxisMax()
-    {
-        switch (CurrentPeriod)
-        {
-            case PeriodType.Day:
-                return GetTemperatureAxisMaxDay();
-            case PeriodType.Week:
-                return GetTemperatureAxisMaxWeek();
-            case PeriodType.Month:
-                return GetTemperatureAxisMaxMonth();
-            case PeriodType.Year:
-                return GetTemperatureAxisMaxYear();
-            default:
-                return 40;
-        }
-    }
-    
-    private int GetTemperatureAxisMinDay()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return 0;
-            
-        var minTemp = WeatherData
-            .Where(d => d.MinTemperature.HasValue)
-            .Min(d => d.MinTemperature) ?? 10;
-            
-        var maxTemp = WeatherData
-            .Where(d => d.MaxTemperature.HasValue)
-            .Max(d => d.MaxTemperature) ?? 20;
-            
-        // Pro denní pohled chceme aby rozpětí bylo rozumné
-        int lowerBound = (int)Math.Floor((double)minTemp - 2);
-        
-        // Pokud je rozpětí menší než 8 stupňů, rozšíříme ho
-        if (maxTemp - lowerBound < 8)
-            lowerBound = (int)maxTemp - 8;
-            
-        // Zaokrouhlíme na celá čísla dolů
-        return lowerBound;
-    }
-    
-    private int GetTemperatureAxisMaxDay()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return 30;
-            
-        var maxTemp = WeatherData
-            .Where(d => d.MaxTemperature.HasValue)
-            .Max(d => d.MaxTemperature) ?? 20;
-            
-        // Pro denní pohled nastavíme maximum o 2-3 stupně vyšší
-        int upperBound = (int)Math.Ceiling((double)maxTemp + 2);
-        
-        // Zaokrouhlíme na celá čísla nahoru
-        return upperBound;
-    }
-    
-    private int GetTemperatureAxisMinWeek()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return -5;
-            
-        var minTemp = WeatherData
-            .Where(d => d.MinTemperature.HasValue)
-            .Min(d => d.MinTemperature) ?? 0;
-            
-        // Pro týdenní pohled ponecháme více prostoru, ale stále reálné teploty
-        int lowerBound = (int)Math.Floor((double)minTemp - 3);
-        
-        // Nejnižší možné minimum pro ČR
-        if (lowerBound < -15) lowerBound = -15;
-            
-        return lowerBound;
-    }
-    
-    private int GetTemperatureAxisMaxWeek()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return 30;
-            
-        var maxTemp = WeatherData
-            .Where(d => d.MaxTemperature.HasValue)
-            .Max(d => d.MaxTemperature) ?? 25;
-            
-        // Pro týdenní pohled nastavíme maximum o 3 stupně vyšší
-        int upperBound = (int)Math.Ceiling((double)maxTemp + 3);
-        
-        // Nejvyšší reálné teploty pro ČR
-        if (upperBound > 40) upperBound = 40;
-            
-        return upperBound;
-    }
-    
-    private int GetTemperatureAxisMinMonth()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return -10;
-            
-        var minTemp = WeatherData
-            .Where(d => d.MinTemperature.HasValue)
-            .Min(d => d.MinTemperature) ?? -5;
-            
-        // Pro měsíční pohled
-        int lowerBound = (int)Math.Floor((double)minTemp - 3);
-        
-        // Nejnižší možné minimum pro ČR
-        if (lowerBound < -20) lowerBound = -20;
-            
-        return lowerBound;
-    }
-    
-    private int GetTemperatureAxisMaxMonth()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return 35;
-            
-        var maxTemp = WeatherData
-            .Where(d => d.MaxTemperature.HasValue)
-            .Max(d => d.MaxTemperature) ?? 25;
-            
-        int upperBound = (int)Math.Ceiling((double)maxTemp + 3);
-        
-        if (upperBound > 40) upperBound = 40;
-            
-        return upperBound;
-    }
-    
-    private int GetTemperatureAxisMinYear()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return -15;
-            
-        var minTemp = WeatherData
-            .Where(d => d.MinTemperature.HasValue)
-            .Min(d => d.MinTemperature) ?? -10;
-            
-        // Pro roční pohled
-        int lowerBound = (int)Math.Floor((double)minTemp - 2);
-        
-        // Nejnižší možné minimum pro ČR
-        if (lowerBound < -25) lowerBound = -25;
-            
-        return lowerBound;
-    }
-    
-    private int GetTemperatureAxisMaxYear()
-    {
-        if (WeatherData == null || !WeatherData.Any())
-            return 35;
-            
-        var maxTemp = WeatherData
-            .Where(d => d.MaxTemperature.HasValue)
-            .Max(d => d.MaxTemperature) ?? 30;
-            
-        int upperBound = (int)Math.Ceiling((double)maxTemp + 2);
-        
-        if (upperBound > 40) upperBound = 40;
-            
-        return upperBound;
     }
 }
 
@@ -710,18 +569,6 @@
     
     .date-picker {
         width: 150px;
-    }
-    
-    /* Custom styles for the chart tooltip */
-    :deep(.rz-tooltip) {
-        background: rgba(0, 0, 0, 0.8) !important;
-        color: white !important;
-        padding: 8px 12px !important;
-        border-radius: 4px !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-        font-size: 0.9rem !important;
-        white-space: nowrap !important;
-        border: none !important;
     }
     
     @@media (max-width: 768px) {

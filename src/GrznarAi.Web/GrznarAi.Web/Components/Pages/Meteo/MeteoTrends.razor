@@ -96,7 +96,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -106,25 +113,50 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinTemperature")" 
-                                     ValueProperty="TemperatureOut">
-                        <RadzenSeriesDataLabels Visible="false" />
-                        <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
-                        <RadzenCategoryAxisTitle Text="@GetDateAxisTitle()" />
-                        <RadzenValueAxisTitle Text="°C" />
-                    </RadzenLineSeries>
-                    
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgTemperature")" 
-                                     ValueProperty="AvgTemperature" LineType="LineType.Dashed">
-                        <RadzenSeriesDataLabels Visible="false" />
-                        <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
-                    </RadzenLineSeries>
-                    
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxTemperature")" 
-                                     ValueProperty="MaxTemperature">
-                        <RadzenSeriesDataLabels Visible="false" />
-                        <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
-                    </RadzenLineSeries>
+                    @if (SelectedPeriod == PeriodType.Day)
+                    {
+                        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MinTemperature")" 
+                                         ValueProperty="TemperatureOut">
+                            <RadzenSeriesDataLabels Visible="false" />
+                            <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
+                            <RadzenCategoryAxisTitle Text="@GetDateAxisTitle()" />
+                            <RadzenValueAxisTitle Text="°C" />
+                        </RadzenLineSeries>
+                        
+                        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.AvgTemperature")" 
+                                         ValueProperty="AvgTemperature" LineType="LineType.Dashed">
+                            <RadzenSeriesDataLabels Visible="false" />
+                            <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
+                        </RadzenLineSeries>
+                        
+                        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MaxTemperature")" 
+                                         ValueProperty="MaxTemperature">
+                            <RadzenSeriesDataLabels Visible="false" />
+                            <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
+                        </RadzenLineSeries>
+                    }
+                    else
+                    {
+                        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinTemperature")" 
+                                         ValueProperty="TemperatureOut">
+                            <RadzenSeriesDataLabels Visible="false" />
+                            <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
+                            <RadzenCategoryAxisTitle Text="@GetDateAxisTitle()" />
+                            <RadzenValueAxisTitle Text="°C" />
+                        </RadzenLineSeries>
+                        
+                        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgTemperature")" 
+                                         ValueProperty="AvgTemperature" LineType="LineType.Dashed">
+                            <RadzenSeriesDataLabels Visible="false" />
+                            <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
+                        </RadzenLineSeries>
+                        
+                        <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxTemperature")" 
+                                         ValueProperty="MaxTemperature">
+                            <RadzenSeriesDataLabels Visible="false" />
+                            <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
+                        </RadzenLineSeries>
+                    }
 
                     <RadzenChartTooltipOptions Visible="true" />
                 </RadzenChart>
@@ -152,7 +184,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -162,7 +201,7 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinHumidity")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MinHumidity")" 
                                      ValueProperty="MinHumidity">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
@@ -170,13 +209,13 @@
                         <RadzenValueAxisTitle Text="%" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgHumidity")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.AvgHumidity")" 
                                      ValueProperty="AvgHumidity" LineType="LineType.Dashed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxHumidity")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MaxHumidity")" 
                                      ValueProperty="MaxHumidity">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
@@ -208,7 +247,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -218,7 +264,7 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinPressure")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MinPressure")" 
                                      ValueProperty="MinBar">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
@@ -226,13 +272,13 @@
                         <RadzenValueAxisTitle Text="hPa" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgPressure")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.AvgPressure")" 
                                      ValueProperty="AvgBar" LineType="LineType.Dashed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxPressure")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MaxPressure")" 
                                      ValueProperty="MaxBar">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
@@ -264,7 +310,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -274,7 +327,7 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinWindSpeed")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MinWindSpeed")" 
                                      ValueProperty="MinWindSpeed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
@@ -282,19 +335,19 @@
                         <RadzenValueAxisTitle Text="m/s" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgWindSpeed")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.AvgWindSpeed")" 
                                      ValueProperty="WindSpeedAvg" LineType="LineType.Dashed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxWindSpeed")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MaxWindSpeed")" 
                                      ValueProperty="MaxWindSpeed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.WindGust")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.WindGust")" 
                                      ValueProperty="WindGust" LineType="LineType.Dotted">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Triangle" Size="5" />
@@ -327,7 +380,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -337,7 +397,7 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenColumnSeries Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.RainfallMm")" 
+                    <RadzenColumnSeries Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.RainfallMm")" 
                                        ValueProperty="TotalRain">
                         <RadzenSeriesDataLabels Visible="true" />
                         <RadzenLegend Visible="true" Position="LegendPosition.Bottom" />
@@ -369,7 +429,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -380,7 +447,7 @@
                     </RadzenValueAxis>
                     
                     <!-- Křivky pro min, avg, max sluneční záření -->
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MinSolarRadiation")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MinSolarRadiation")" 
                                      ValueProperty="MinSolarRad">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Circle" Size="5" />
@@ -388,13 +455,13 @@
                         <RadzenValueAxisTitle Text="W/m²" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgSolarRadiation")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.AvgSolarRadiation")" 
                                      ValueProperty="AvgSolarRad" LineType="LineType.Dashed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
                     </RadzenLineSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxSolarRadiation")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MaxSolarRadiation")" 
                                      ValueProperty="MaxSolarRad">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Diamond" Size="5" />
@@ -413,7 +480,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:hh\\:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis>
@@ -423,7 +497,7 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenColumnSeries Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.SunshineHours")" 
+                    <RadzenColumnSeries Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.SunshineHours")" 
                                        ValueProperty="SunshineHours">
                         <RadzenSeriesDataLabels Visible="true" />
                         <RadzenLegend Visible="true" Position="LegendPosition.Bottom" />
@@ -458,7 +532,14 @@
                         <RadzenGridLines Visible="true" />
                         <RadzenAxisTicks Visible="true" />
                         <RadzenAxisOptions Padding="20" />
-                        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        @if (SelectedPeriod == PeriodType.Day)
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:hh\\:mm}" />
+                        }
+                        else
+                        {
+                            <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+                        }
                     </RadzenCategoryAxis>
                     
                     <RadzenValueAxis Min="0" Max="12" Step="1">
@@ -468,14 +549,14 @@
                         <RadzenAxisOptions Padding="20" />
                     </RadzenValueAxis>
                     
-                    <RadzenColumnSeries Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.MaxUvIndex")" 
+                    <RadzenColumnSeries Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.MaxUvIndex")" 
                                        ValueProperty="MaxUvi">
                         <RadzenSeriesDataLabels Visible="true" />
                         <RadzenLegend Visible="true" Position="LegendPosition.Bottom" />
                         <RadzenCategoryAxisTitle Text="@GetDateAxisTitle()" />
                     </RadzenColumnSeries>
                     
-                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="Date" Title="@Localizer.GetString("Meteo.Trends.AvgUvIndex")" 
+                    <RadzenLineSeries Smooth="true" Data="@WeatherData" CategoryProperty="TimeOnly" Title="@Localizer.GetString("Meteo.Trends.AvgUvIndex")" 
                                      ValueProperty="AvgUvi" LineType="LineType.Dashed">
                         <RadzenSeriesDataLabels Visible="false" />
                         <RadzenMarkers MarkerType="MarkerType.Square" Size="5" />
@@ -672,7 +753,10 @@
                     .Select(g => {
                         var first = g.First();
                         // Explicitně nastavíme datum s přesnou hodinou (zaokrouhleno na celé hodiny)
-                        first.Date = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
+                        var dateTime = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);
+                        first.Date = dateTime;
+                        // Přidáme TimeOnly pro zobrazení jen času v denním režimu
+                        first.TimeOnly = dateTime.TimeOfDay;
                         first.AvgTemperature = (float?)g.Average(x => x.TemperatureOut);
                         first.MaxTemperature = g.Max(x => x.TemperatureOut);
                         
@@ -968,6 +1052,7 @@
     // Funkce pro formátování osy X podle vybraného období
     private string GetAxisLabelFormat()
     {
+        // Tato metoda se nyní používá pouze pro nedenní režimy
         return "{0:" + GetDateFormatString() + "}";
     }
 

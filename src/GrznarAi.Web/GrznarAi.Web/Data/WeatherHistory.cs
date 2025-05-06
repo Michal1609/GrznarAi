@@ -107,5 +107,9 @@ namespace GrznarAi.Web.Data
         
         [NotMapped]
         public float? MaxUvi { get; set; }
+        
+        // Vlastnost pro zobrazení času na ose X v denním režimu
+        [NotMapped]
+        public TimeSpan TimeOnly { get; set; }
     }
 } 

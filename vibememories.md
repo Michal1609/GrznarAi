@@ -1374,3 +1374,35 @@ V souboru MeteoTrends.razor byly opraveny problémy s přetypováním v metodě 
 - AvgUvi
 
 Přidání explicitního přetypování (float?) před volání metody Average() vyřešilo tyto chyby kompilace a projekt nyní správně builduje.
+
+## Oprava zobrazení popisků času na ose X v MeteoTrends.razor
+
+V komponentě MeteoTrends.razor byla opravena vizualizace popisků na ose X při denním zobrazení dat. Původně se zobrazovalo celé datum (např. "5.5.2025 5.5.2025 5.5.2025") i při denním zobrazení místo pouze hodin.
+
+Implementace změn:
+1. Upraven zobrazovací formát pro osu X při denním zobrazení pomocí podmíněného renderování:
+   ```csharp
+   @if (SelectedPeriod == PeriodType.Day)
+   {
+       <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />
+   }
+   else
+   {
+       <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="@GetAxisLabelFormat()" />
+   }
+   ```
+
+2. Tato úprava byla implementována pro všechny grafy v souboru MeteoTrends.razor.
+3. Metoda `GetAxisLabelFormat()` byla zjednodušena, protože se nyní používá pouze pro nedenní režimy.
+
+Tato změna zajišťuje, že při denním zobrazení meteorologických dat se na ose X zobrazují pouze hodiny ve formátu "HH:mm" místo plného data.
+
+## Oprava zobrazení času na ose X v grafech pro denní režim
+
+V komponentě MeteoTrends.razor byla opravena vizualizace časových popisků na ose X při denním zobrazení. V původní implementaci se zobrazovalo celé datum (např. "5.5.2025 5.5.2025...") i při denním zobrazení, místo aby se zobrazovaly pouze hodiny.
+
+Problém byl vyřešen přidáním vlastnosti `TimeOnly` typu `TimeSpan` do třídy `WeatherHistory` a její inicializací v metodě `CalculateAverages()` pro denní režim. Existující kód již používal podmíněné zobrazování popisků osy X s formátem "{0:HH:mm}" pro denní režim, ale nepoužíval správnou vlastnost pro hodnoty.
+
+Provedené změny:
+
+1. Přidána vlastnost `TimeOnly` typu `TimeSpan` do modelu `WeatherHistory`:\n   ```csharp\n   [NotMapped]\n   public TimeSpan TimeOnly { get; set; }\n   ```\n\n2. V metodě `CalculateAverages()` v sekci pro denní režim bylo přidáno nastavení této vlastnosti:\n   ```csharp\n   var dateTime = new DateTime(first.Date.Year, first.Date.Month, first.Date.Day, first.Date.Hour, 0, 0);\n   first.Date = dateTime;\n   // Přidáme TimeOnly pro zobrazení jen času v denním režimu\n   first.TimeOnly = dateTime.TimeOfDay;\n   ```\n\n3. Existující implementace již používá správný formát a podmíněné renderování RadzenAxisLabels:\n   ```csharp\n   @if (SelectedPeriod == PeriodType.Day)\n   {\n       <RadzenAxisLabels Rotation=\"@GetAxisLabelRotation()\" FormatString=\"{0:HH:mm}\" />\n   }\n   else\n   {\n       <RadzenAxisLabels Rotation=\"@GetAxisLabelRotation()\" FormatString=\"@GetAxisLabelFormat()\" />\n   }\n   ```\n\n4. Podmíněné použití správné vlastnosti pro CategoryProperty v RadzenLineSeries:\n   ```csharp\n   <RadzenLineSeries ... CategoryProperty=\"TimeOnly\" ... />\n   ```\n   pro denní režim a\n   ```csharp\n   <RadzenLineSeries ... CategoryProperty=\"Date\" ... />\n   ```\n   pro ostatní režimy.\n\nTato úprava zajišťuje, že v denním režimu se na ose X zobrazují pouze hodiny a minuty, zatímco v ostatních režimech se zobrazuje datum podle daného formátu.

@@ -36,7 +36,7 @@
         <div class="meteo-content">
             <!-- Hlavní ukazatel teploty a počasí -->
             <div class="main-temperature">
-                @if (IsInitialRender || WeatherData == null)
+                @if (IsInitialRender && !IsApiDataLoaded)
                 {
                     <div class="skeleton-loader">
                         <div class="skeleton-icon"></div>
@@ -45,7 +45,14 @@
                         <div class="skeleton-text-small"></div>
                     </div>
                 }
-                else
+                else if (IsLoading && !IsApiDataLoaded)
+                {
+                    <div class="loading-indicator centered">
+                        <div class="spinner-small"></div>
+                        <p>@Localizer.GetString("Meteo.CurrentWeather.Loading")</p>
+                    </div>
+                }
+                else if (WeatherData != null)
                 {
                     <div class="current-weather-icon">
                         <i class="bi bi-@GetWeatherIcon()"></i>
@@ -61,6 +68,13 @@
                         @Localizer.GetString("Meteo.LastUpdated"): @FormatDateTime(WeatherData.Time)
                     </div>
                 }
+                else
+                {
+                    <div class="no-data-message">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <p>@Localizer.GetString("Meteo.CurrentWeather.NoData")</p>
+                    </div>
+                }
                 
                 <!-- Tlačítko Vývoj přesunuto sem, přímo do hlavní sekce s teplotou -->
                 <div class="trends-button-container">
@@ -72,7 +86,7 @@
             
             <!-- Meteo dlaždice s daty -->
             <div class="meteo-tiles">
-                @if (IsInitialRender || WeatherData == null)
+                @if (IsInitialRender && !IsApiDataLoaded)
                 {
                     <!-- Skeleton placeholders pro dlaždice -->
                     @for (int i = 0; i < 8; i++)
@@ -84,7 +98,16 @@
                         </div>
                     }
                 }
-                else
+                else if (IsLoading && !IsApiDataLoaded)
+                {
+                    <div class="loading-placeholder">
+                        <div class="loading-indicator">
+                            <div class="spinner-small"></div>
+                            <p>@Localizer.GetString("Meteo.Details.Loading")</p>
+                        </div>
+                    </div>
+                }
+                else if (WeatherData != null)
                 {
                     <!-- Vnějšky podmínky -->
                     <div class="meteo-tile outdoor-humidity">
@@ -135,11 +158,20 @@
                         <div class="tile-label">@Localizer.GetString("Meteo.DewPoint")</div>
                     </div>
                 }
+                else
+                {
+                    <div class="no-data-placeholder">
+                        <div class="no-data-message">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>@Localizer.GetString("Meteo.Details.NoData")</p>
+                        </div>
+                    </div>
+                }
             </div>
             
             <!-- Výrazný ukazatel srážek a směru větru -->
             <div class="additional-indicators">
-                @if (IsInitialRender || WeatherData == null)
+                @if (IsInitialRender && !IsApiDataLoaded)
                 {
                     <!-- Skeleton placeholders pro indikátory -->
                     @for (int i = 0; i < 4; i++)
@@ -150,7 +182,14 @@
                         </div>
                     }
                 }
-                else
+                else if (IsLoading && !IsApiDataLoaded)
+                {
+                    <div class="loading-indicator">
+                        <div class="spinner-small"></div>
+                        <p>@Localizer.GetString("Meteo.Indicators.Loading")</p>
+                    </div>
+                }
+                else if (WeatherData != null)
                 {
                     <div class="wind-indicator">
                         <div class="wind-direction-wrap">
@@ -187,28 +226,34 @@
                         </div>
                     </div>
                 }
+                else
+                {
+                    <div class="no-data-message">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <p>@Localizer.GetString("Meteo.Indicators.NoData")</p>
+                    </div>
+                }
             </div>
             
             <!-- Historická data -->
             <div class="historical-data-section">
                 <h3 class="section-title">@Localizer.GetString("Meteo.HistoricalData")</h3>
                 
-                @if (IsLoadingHistoricalData && !IsInitialRender)
-                {
-                    <div class="loading-spinner-small">
-                        <div class="spinner">
-                            <span class="visually-hidden">@Localizer.GetString("Meteo.Loading")</span>
-                        </div>
-                    </div>
-                }
-                else if (IsInitialRender || DailyStatistics == null)
+                @if (IsInitialRender && !IsHistoricalDataLoaded)
                 {
                     <div class="skeleton-tables">
                         <div class="skeleton-table"></div>
                         <div class="skeleton-table"></div>
                     </div>
                 }
-                else 
+                else if (IsLoadingHistoricalData && !IsHistoricalDataLoaded)
+                {
+                    <div class="loading-indicator">
+                        <div class="spinner-small"></div>
+                        <p>@Localizer.GetString("Meteo.HistoricalData.Loading")</p>
+                    </div>
+                }
+                else if (DailyStatistics != null && YearlyStatistics != null)
                 {
                     <div class="historical-data-tables">
                         <!-- Tabulka 1: Statistiky za stejný den v posledních letech -->
@@ -302,6 +347,12 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-data-message">
+                        <p>@Localizer.GetString("Meteo.HistoricalData.NoDataAvailable")</p>
                     </div>
                 }
             </div>
@@ -1151,6 +1202,81 @@
             padding: 8px 16px;
         }
     }
+    
+    /* Načítací indikátor s textem */
+    .loading-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+        width: 100%;
+    }
+    
+    .loading-indicator.centered {
+        height: 100%;
+        justify-content: center;
+    }
+    
+    .loading-indicator p {
+        margin-top: 1rem;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.85);
+    }
+    
+    .spinner-small {
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+    }
+    
+    /* Zpráva při nedostupnosti dat */
+    .no-data-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        text-align: center;
+        width: 100%;
+    }
+    
+    .no-data-message i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .no-data-message p {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.85);
+    }
+    
+    /* Placeholdery pro načítání a chybové stavy */
+    .loading-placeholder, .no-data-placeholder {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 200px;
+    }
+    
+    .loading-placeholder .loading-indicator,
+    .no-data-placeholder .no-data-message {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        width: 100%;
+        max-width: 400px;
+        padding: 2rem;
+    }
 </style>
 
 @code {
@@ -1158,6 +1284,8 @@
     private bool IsLoading { get; set; } = false;
     private bool IsLoadingHistoricalData { get; set; } = false;
     private bool IsInitialRender { get; set; } = true;
+    private bool IsApiDataLoaded { get; set; } = false;
+    private bool IsHistoricalDataLoaded { get; set; } = false;
     private List<DailyStatisticsForDate> DailyStatistics { get; set; }
     private List<YearlyStatistics> YearlyStatistics { get; set; }
     private const int HISTORICAL_YEARS = 10;
@@ -1178,18 +1306,49 @@
 
     private async Task LoadDataAsync()
     {
+        // Spustíme načítání dat nezávisle na sobě, aby se první načtená data 
+        // zobrazila uživateli co nejdříve bez čekání na dokončení všech datových zdrojů
         try
         {
-            await Task.WhenAll(
-                LoadWeatherDataAsync(), 
-                LoadHistoricalDataAsync()
-            );
+            // Spustíme obě načítání paralelně pro zrychlení, ale budeme je sledovat nezávisle
+            var weatherTask = LoadWeatherDataAsync();
+            var historicalTask = LoadHistoricalDataAsync();
             
+            // Vytvoříme Task.WhenAny pro zjištění, která data se načtou první
+            while (!IsApiDataLoaded || !IsHistoricalDataLoaded)
+            {
+                // Pokud byla zrušena operace, přerušíme cyklus
+                if (_cts.Token.IsCancellationRequested)
+                    break;
+                    
+                // Počkáme na dokončení některého z úkolů
+                var completedTask = await Task.WhenAny(
+                    Task.WhenAll(weatherTask).ContinueWith(_ => { }),
+                    Task.WhenAll(historicalTask).ContinueWith(_ => { })
+                );
+                
+                // Aktualizujeme UI po dokončení každého úkolu
+                StateHasChanged();
+                
+                // Pokud jsou obě úlohy dokončeny, ukončíme cyklus
+                if (IsApiDataLoaded && IsHistoricalDataLoaded)
+                    break;
+                
+                // Krátká pauza před další kontrolou, aby nedošlo k zatížení UI
+                await Task.Delay(100, _cts.Token);
+            }
+            
+            // Dokončení načítání
             IsInitialRender = false;
             StateHasChanged();
         }
-        catch (Exception)
+        catch (TaskCanceledException)
         {
+            // Operace byla zrušena
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chyba při načítání dat: {ex.Message}");
             IsInitialRender = false;
             StateHasChanged();
         }
@@ -1201,14 +1360,16 @@
         try
         {
             WeatherData = await WeatherService.GetWeatherDataAsync();
+            IsApiDataLoaded = true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Logování chyby
+            Console.WriteLine($"Chyba při načítání dat o počasí: {ex.Message}");
         }
         finally
         {
             IsLoading = false;
+            StateHasChanged();
         }
     }
     
@@ -1223,47 +1384,106 @@
             int currentYear = DateTime.Today.Year;
             int startYear = currentYear - HISTORICAL_YEARS + 1;
             YearlyStatistics = await MeteoHistoryService.GetYearlyStatisticsAsync(startYear, currentYear);
+            
+            IsHistoricalDataLoaded = true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Logování chyby
+            Console.WriteLine($"Chyba při načítání historických dat: {ex.Message}");
         }
         finally
         {
             IsLoadingHistoricalData = false;
+            StateHasChanged();
         }
     }
     
     private async Task RefreshDataAsync()
     {
-        IsLoading = true;
-        IsLoadingHistoricalData = true;
-        StateHasChanged();
+        IsApiDataLoaded = false;
+        IsHistoricalDataLoaded = false;
+        
+        // Vytvoříme nový CancellationTokenSource pro tuto operaci
+        using var refreshCts = new CancellationTokenSource();
         
         try
         {
-            var weatherTask = WeatherService.RefreshWeatherDataAsync();
+            // Spustíme obě načítání paralelně
+            var weatherTask = RefreshWeatherDataAsync();
+            var historicalTask = RefreshHistoricalDataAsync();
             
-            var today = DateTime.Today;
-            var dailyTask = MeteoHistoryService.RefreshDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
-            
-            int currentYear = DateTime.Today.Year;
-            int startYear = currentYear - HISTORICAL_YEARS + 1;
-            var yearlyTask = MeteoHistoryService.RefreshYearlyStatisticsAsync(startYear, currentYear);
-            
-            await Task.WhenAll(weatherTask, dailyTask, yearlyTask);
-            
-            WeatherData = await weatherTask;
-            DailyStatistics = await dailyTask;
-            YearlyStatistics = await yearlyTask;
+            // Sledujeme dokončení úkolů nezávisle
+            while (!IsApiDataLoaded || !IsHistoricalDataLoaded)
+            {
+                if (refreshCts.Token.IsCancellationRequested)
+                    break;
+                
+                // Čekáme na dokončení některého z úkolů
+                var completedTask = await Task.WhenAny(
+                    Task.WhenAll(weatherTask).ContinueWith(_ => { }),
+                    Task.WhenAll(historicalTask).ContinueWith(_ => { })
+                );
+                
+                // Aktualizujeme UI po každém dokončeném úkolu
+                StateHasChanged();
+                
+                // Pokud jsou obě úlohy dokončeny, ukončíme cyklus
+                if (IsApiDataLoaded && IsHistoricalDataLoaded)
+                    break;
+                
+                // Krátká pauza před další kontrolou
+                await Task.Delay(100, refreshCts.Token);
+            }
         }
-        catch (Exception)
+        catch (TaskCanceledException)
         {
-            // Logování chyby
+            // Operace byla zrušena
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chyba při obnovování dat: {ex.Message}");
+        }
+    }
+    
+    private async Task RefreshWeatherDataAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            WeatherData = await WeatherService.RefreshWeatherDataAsync();
+            IsApiDataLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chyba při obnovování dat o počasí: {ex.Message}");
         }
         finally
         {
             IsLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task RefreshHistoricalDataAsync()
+    {
+        IsLoadingHistoricalData = true;
+        try
+        {
+            var today = DateTime.Today;
+            DailyStatistics = await MeteoHistoryService.RefreshDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
+            
+            int currentYear = DateTime.Today.Year;
+            int startYear = currentYear - HISTORICAL_YEARS + 1;
+            YearlyStatistics = await MeteoHistoryService.RefreshYearlyStatisticsAsync(startYear, currentYear);
+            
+            IsHistoricalDataLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chyba při obnovování historických dat: {ex.Message}");
+        }
+        finally
+        {
             IsLoadingHistoricalData = false;
             StateHasChanged();
         }

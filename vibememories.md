@@ -1734,3 +1734,66 @@ Implementovaný systém lokalizace využívá kombinaci standardních ASP.NET Co
 5.  **Přepínač jazyků (`NavMenu.razor`):**
     *   Dropdown menu s odkazy na endpoint `/Culture/SetCulture?culture=cs&redirectUri=...` a `/Culture/SetCulture?culture=en&redirectUri=...`.
     *   Používá `CultureInfo.CurrentUICulture` pro zvýraznění aktuálně zvoleného jazyka.
+
+## Úprava stránky s meteorologickými trendy
+
+### Modernizace přepínačů časových období (Den/Týden/Měsíc/Rok)
+
+Stránka `/meteo/trends` zobrazuje grafy s meteorologickými daty a umožňuje přepínat mezi různými časovými obdobími. Původní implementace používala standardní Bootstrap radio buttony, které zabíraly celou šířku stránky a nebyly vizuálně optimální.
+
+#### Provedené změny:
+
+1. **Modernější UI prvek pro přepínání období**:
+   * Nahrazení standardních radio buttonů moderními tlačítky s ikonami
+   * Implementace pomocí flexbox layoutu pro lepší responzivitu
+   * Přidání ikon Bootstrap (bi-calendar-day, bi-calendar-week, bi-calendar-month, bi-calendar-range)
+   * Vizuální odlišení aktivního období pomocí barvy a stínu
+
+2. **UI komponenta pro výběr období**:
+   ```html
+   <div class="period-tabs">
+       <div class="period-option @(CurrentPeriod == PeriodType.Day ? "active" : "")" @onclick="() => ChangePeriodAsync(PeriodType.Day)">
+           <i class="bi bi-calendar-day"></i>
+           <span>@Localizer.GetString("Meteo.Trends.Day")</span>
+       </div>
+       <!-- Obdobně pro week, month, year -->
+   </div>
+   ```
+
+3. **CSS pro nový design**:
+   * Kontejner s flexbox layoutem
+   * Zaoblené rohy a stíny (box-shadow) pro lepší vizuální dojem
+   * Vizuální odlišení aktivního stavu pomocí oranžové barvy (#ff8c00)
+   * Hover efekty pro zlepšení UX
+   * Responzivní design pro mobilní zařízení - při zúžení obrazovky se tlačítka přeskládají do 2x2 mřížky
+
+4. **Responzivní design**:
+   ```css
+   @media (max-width: 768px) {
+       .period-tabs {
+           flex-wrap: wrap;
+           justify-content: center;
+       }
+       
+       .period-option {
+           flex: 1 1 calc(50% - 1px);
+           justify-content: center;
+           border-right: none;
+           border-bottom: 1px solid #e9ecef;
+       }
+       
+       .period-option:nth-child(odd) {
+           border-right: 1px solid #e9ecef;
+       }
+       
+       .period-option:nth-last-child(-n+2) {
+           border-bottom: none;
+       }
+   }
+   ```
+
+5. **Vylepšení datových ovládacích prvků**:
+   * Styling pro výběr data pomocí stylovaného boxu (border-radius, box-shadow)
+   * Barevné sladění s přepínači období pro konzistentní vzhled
+
+Tyto změny zlepšují uživatelskou přívětivost a modernizují vzhled stránky s meteorologickými trendy. Nový design je kompaktnější, vizuálně přitažlivější a lépe funguje na různých velikostech obrazovky.

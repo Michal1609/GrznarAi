@@ -32,13 +32,6 @@
     else
     {
         <div class="meteo-content">
-            <!-- Hlavička s tlačítkem Vývoj -->
-            <div class="d-flex justify-content-end mb-3">
-                <a href="/meteo/trends" class="btn btn-primary">
-                    <i class="bi bi-graph-up"></i> @Localizer.GetString("Meteo.Trends")
-                </a>
-            </div>
-            
             <!-- Hlavní ukazatel teploty a počasí -->
             <div class="main-temperature">
                 <div class="current-weather-icon">
@@ -53,6 +46,13 @@
                 </div>
                 <div class="last-updated">
                     @Localizer.GetString("Meteo.LastUpdated"): @FormatDateTime(WeatherData.Time)
+                </div>
+                
+                <!-- Tlačítko Vývoj přesunuto sem, přímo do hlavní sekce s teplotou -->
+                <div class="trends-button-container">
+                    <a href="/meteo/trends" class="btn btn-trends">
+                        <i class="bi bi-graph-up"></i> @Localizer.GetString("Meteo.Trends")
+                    </a>
                 </div>
             </div>
             
@@ -289,6 +289,47 @@
         z-index: 10;
     }
     
+    /* Styly pro tlačítko Vývoj */
+    .trends-button-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 1.5rem;
+        width: 100%;
+    }
+    
+    .btn-trends {
+        background-color: #ff8c00;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        border-radius: 50px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 80%;
+        justify-content: center;
+    }
+    
+    .btn-trends i {
+        font-size: 1.3rem;
+    }
+    
+    .btn-trends:hover {
+        background-color: #ff6a00;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        color: white;
+    }
+    
+    .btn-trends:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
     /* Pozadí podle počasí */
     .bg-sunny {
         background: linear-gradient(135deg, #42A5F5 0%, #4FC3F7 50%, #81D4FA 100%);
@@ -476,7 +517,7 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 1.5rem;
+        padding: 1.5rem 1.5rem 2rem;
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         border-radius: 20px;
@@ -878,55 +919,75 @@
     }
     
     /* Responzivní design */
-    @@media (max-width: 991px) {
-        .meteo-content {
-            grid-template-columns: 1fr;
-            grid-template-areas: 
-                "main-temp"
-                "meteo-tiles"
-                "indicators"
-                "historical"
-                "refresh";
-        }
-    }
-    
     @@media (max-width: 768px) {
         .meteo-dashboard {
             padding: 1rem;
         }
         
-        .current-temp {
-            font-size: 3.5rem;
+        .meteo-content {
+            gap: 1rem;
         }
         
-        .temp-unit {
-            font-size: 1.75rem;
+        .main-temperature {
+            padding: 1.5rem;
+        }
+        
+        .current-temp {
+            font-size: 3rem;
+        }
+        
+        .meteo-tiles {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .meteo-tile {
+            padding: 0.75rem;
         }
         
         .additional-indicators {
-            grid-template-columns: 1fr 1fr;
+            flex-direction: column;
+            align-items: center;
         }
         
-        .section-title {
-            font-size: 1.4rem;
+        .wind-indicator, .rain-indicator {
+            margin-bottom: 1rem;
+            width: 100%;
         }
         
-        .data-table-container h4 {
-            font-size: 1.1rem;
+        .btn-trends {
+            padding: 10px 20px;
+            font-size: 1rem;
+            width: 100%;
+        }
+        
+        .trends-button-container {
+            margin-top: 1rem;
         }
     }
     
-    @@media (max-width: 576px) {
-        .additional-indicators {
+    @@media (max-width: 480px) {
+        .meteo-tiles {
             grid-template-columns: 1fr;
+            gap: 0.5rem;
         }
         
-        .historical-data-section {
-            padding: 1rem;
+        .current-temp {
+            font-size: 2.5rem;
         }
         
-        .table-dark {
-            font-size: 0.8rem;
+        .historical-data-tables {
+            flex-direction: column;
+        }
+        
+        .data-table-container {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-trends {
+            font-size: 0.95rem;
+            padding: 8px 16px;
         }
     }
 </style>

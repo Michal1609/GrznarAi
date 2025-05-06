@@ -1606,3 +1606,131 @@ Na stránce `/meteo/trends` byl implementován interaktivní teplotní graf pomo
 
 * **Aktualizace knihovny:** Při aktualizaci ApexCharts na novou verzi je potřeba aktualizovat CDN URL v `MainLayout.razor`.
 * **Přidání nových grafů:** Pro přidání nových typů grafů je potřeba vytvořit novou funkci v `apexcharts-integration.js` a příslušnou metodu pro přípravu dat v Blazor komponentě.
+
+## Mechanismus MeteoTrends grafů 
+
+### Přehled implementace grafů na stránce MeteoTrends
+
+Stránka MeteoTrends (`Components/Pages/Meteo/MeteoTrends.razor`) zobrazuje grafy s meteorologickými daty. Implementace používá ApexCharts.js knihovnu.
+
+1. **Struktura dat:**
+   * Třída `WeatherDataPoint` obsahuje aggregované hodnoty:
+     - Teplotní údaje (`MinTemperature`, `AvgTemperature`, `MaxTemperature`)
+     - Vlhkostní údaje (`MinHumidity`, `AvgHumidity`, `MaxHumidity`)
+     - Datum a čas (`Date`, `DisplayTime`)
+
+2. **JavaScript integrace:**
+   * Soubor `wwwroot/js/apexcharts-integration.js` obsahuje:
+     - `loadApexChartsScript()` - Funkce pro zajištění načtení ApexCharts
+     - `renderTemperatureChart()` - Funkce pro vykreslení teplotního grafu
+     - `renderHumidityChart()` - Funkce pro vykreslení grafu vlhkosti
+
+3. **Logika vykreslování grafů:**
+   * Hlavní metoda `RenderChartAsync()` volá specializované metody pro každý typ grafu
+   * `RenderTemperatureChartAsync()` - Zpracování a vykreslení teplotního grafu
+   * `RenderHumidityChartAsync()` - Zpracování a vykreslení grafu vlhkosti
+
+4. **Agregace dat:**
+   * Metoda `AggregateData()` seskupuje vstupní data podle období (den, týden, měsíc, rok)
+   * Pro každý typ grafu jsou počítány hodnoty Min, Avg, Max 
+   * Souhrnné hodnoty jsou uloženy v properties `TemperatureMinValue`, `HumidityMaxValue`, atd.
+
+5. **Architektura kódu:**
+   * Logika pro jednotlivé grafy je rozdělena do samostatných metod pro snazší rozšiřování
+   * Pro přidání nového grafu stačí:
+     1. Přidat odpovídající vlastnosti do třídy `WeatherDataPoint`
+     2. Aktualizovat metodu `AggregateData` pro práci s novými hodnotami
+     3. Přidat metodu pro výpočet souhrnných hodnot (např. `CalculateNewValueSummary`)
+     4. Přidat metodu pro vykreslení grafu (např. `RenderNewValueChartAsync`)
+     5. Přidat odpovídající JavaScript funkci do `apexcharts-integration.js`
+     6. Přidat HTML a CSS pro zobrazení nového grafu
+
+### JavaScript funkce pro grafy
+
+```javascript
+// Vykreslení teplotního grafu
+window.renderTemperatureChart = function (
+    elementId,
+    categories,
+    seriesData,
+    seriesTitles,
+    xAxisTitle,
+    yAxisTitle,
+    minY,
+    maxY
+) {
+    // Inicializace grafu...
+};
+
+// Vykreslení grafu vlhkosti
+window.renderHumidityChart = function (
+    elementId,
+    categories,
+    seriesData,
+    seriesTitles,
+    xAxisTitle,
+    yAxisTitle,
+    minY,
+    maxY
+) {
+    // Inicializace grafu...
+};
+```
+
+### Jednotná struktura pro grafy
+
+Každý graf na stránce MeteoTrends má konzistentní strukturu HTML:
+
+```html
+<div class="chart-container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2>@Localizer.GetString("Meteo.Trends.GraphTitle")</h2>
+        <div class="data-summary">
+            <span class="badge bg-info me-2">Min: @MinValue?.ToString("F1") @Unit</span>
+            <span class="badge bg-secondary me-2">Avg: @AvgValue?.ToString("F1") @Unit</span>
+            <span class="badge bg-danger">Max: @MaxValue?.ToString("F1") @Unit</span>
+        </div>
+    </div>
+    
+    <div id="chartId" style="width: 100%; height: 400px;"></div>
+</div>
+```
+
+### Rozšiřování grafů
+
+Při přidávání dalších grafů (například pro tlak, rychlost větru, srážky) je doporučeno:
+
+1. Dodržovat stejnou strukturu kódu pro konzistenci
+2. Vytvořit oddělené metody pro každý typ grafu
+3. Přizpůsobit rozsah os (minY, maxY) podle typu dat
+4. Použít vhodné jednotky a formáty zobrazení hodnot
+5. Zajistit responzivní zobrazení grafů na různých zařízeních
+
+## Mechanismus lokalizace (CS/EN)
+
+Implementovaný systém lokalizace využívá kombinaci standardních ASP.NET Core mechanismů a vlastní služby pro správu textů z databáze.
+
+1.  **Databáze:**
+    *   Texty jsou uloženy v tabulce `LocalizationStrings` (`Data/LocalizationString.cs`).
+    *   Každý záznam má unikátní `Key` (např. `HomePage.Title`), český text (`ValueCs`), anglický text (`ValueEn`) a volitelný popis (`Description`).
+    *   Základní texty (např. pro domovskou stránku) byly přidány pomocí EF Core Data Seeding v `ApplicationDbContext.OnModelCreating` a migrace `SeedHomePageLocalization`.
+
+2.  **Služba `LocalizationService` (`Services/LocalizationService.cs`):**
+    *   Implementuje `ILocalizationService` a `IHostedService`.
+    *   Je registrována jako **Singleton**, aby držela cache.
+    *   Jako `IHostedService` automaticky načte všechny texty z DB do `ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _cache` při startu aplikace (`StartAsync` -> `InitializeAsync` -> `ReloadCacheAsync`). Cache má strukturu `[kód jazyka] -> [klíč textu] -> [přeložený text]`.
+    *   Metoda `GetString(key)` (nebo `GetString(key, culture)`) získá aktuální UI kulturu (`CultureInfo.CurrentUICulture`), najde odpovídající slovník v cache a vrátí text podle klíče. Pokud text není nalezen, vrátí `[key]`.
+    *   Obsahuje metody pro administraci (`GetAllStringsAdminAsync`, `AddStringAsync`, atd.), které po změně v DB znovu načtou cache (`ReloadCacheAsync`).
+
+3.  **Konfigurace v `Program.cs`:**
+    *   `builder.Services.Configure<RequestLocalizationOptions>`: Definuje podporované kultury (`cs`, `en`), výchozí kulturu (`en`) a nastavuje `CookieRequestCultureProvider` jako primární zdroj pro určení jazyka.
+    *   `app.UseRequestLocalization(...)`: Aktivuje middleware, který na začátku každého requestu nastaví `CultureInfo.CurrentCulture` a `CultureInfo.CurrentUICulture` podle hodnoty z cookie `.AspNetCore.Culture`.
+    *   `app.MapGet("/Culture/SetCulture", ...)`: Minimal API endpoint, který přijme kód jazyka (`cs`/`en`) a návratové URL, nastaví cookie `.AspNetCore.Culture` a přesměruje uživatele zpět (což způsobí obnovení stránky a aplikování nové kultury).
+
+4.  **Použití v Razor komponentách:**
+    *   Injectuje se služba: `@inject ILocalizationService Localizer`
+    *   Texty se zobrazují pomocí: `@Localizer.GetString("Klic.Textu")`
+
+5.  **Přepínač jazyků (`NavMenu.razor`):**
+    *   Dropdown menu s odkazy na endpoint `/Culture/SetCulture?culture=cs&redirectUri=...` a `/Culture/SetCulture?culture=en&redirectUri=...`.
+    *   Používá `CultureInfo.CurrentUICulture` pro zvýraznění aktuálně zvoleného jazyka.

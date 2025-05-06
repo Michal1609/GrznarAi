@@ -12,30 +12,30 @@
 
 <div class="meteo-trends-container">
     <h1>@Localizer.GetString("Meteo.Trends.Title")</h1>
-    
+
     <div class="period-selector mb-4">
         <div class="btn-group" role="group">
             <input type="radio" class="btn-check" name="periodOption" id="dayOption" autocomplete="off"
-                   checked="@(CurrentPeriod == PeriodType.Day)" 
-                   @onchange="@(() => ChangePeriodAsync(PeriodType.Day))" />
+            checked="@(CurrentPeriod == PeriodType.Day)" 
+            @onchange="@(() => ChangePeriodAsync(PeriodType.Day))" />
             <label class="btn btn-outline-primary" for="dayOption">@Localizer.GetString("Meteo.Trends.Day")</label>
 
             <input type="radio" class="btn-check" name="periodOption" id="weekOption" autocomplete="off"
-                   checked="@(CurrentPeriod == PeriodType.Week)" 
-                   @onchange="@(() => ChangePeriodAsync(PeriodType.Week))" />
+            checked="@(CurrentPeriod == PeriodType.Week)" 
+            @onchange="@(() => ChangePeriodAsync(PeriodType.Week))" />
             <label class="btn btn-outline-primary" for="weekOption">@Localizer.GetString("Meteo.Trends.Week")</label>
 
             <input type="radio" class="btn-check" name="periodOption" id="monthOption" autocomplete="off"
-                   checked="@(CurrentPeriod == PeriodType.Month)" 
-                   @onchange="@(() => ChangePeriodAsync(PeriodType.Month))" />
+            checked="@(CurrentPeriod == PeriodType.Month)" 
+            @onchange="@(() => ChangePeriodAsync(PeriodType.Month))" />
             <label class="btn btn-outline-primary" for="monthOption">@Localizer.GetString("Meteo.Trends.Month")</label>
 
             <input type="radio" class="btn-check" name="periodOption" id="yearOption" autocomplete="off"
-                   checked="@(CurrentPeriod == PeriodType.Year)" 
-                   @onchange="@(() => ChangePeriodAsync(PeriodType.Year))" />
+            checked="@(CurrentPeriod == PeriodType.Year)" 
+            @onchange="@(() => ChangePeriodAsync(PeriodType.Year))" />
             <label class="btn btn-outline-primary" for="yearOption">@Localizer.GetString("Meteo.Trends.Year")</label>
         </div>
-        
+
         <div class="date-controls mt-2">
             @if (CurrentPeriod == PeriodType.Day)
             {
@@ -90,7 +90,7 @@
             }
         </div>
     </div>
-    
+
     @if (IsLoading)
     {
         <div class="loading-indicator">
@@ -116,8 +116,60 @@
                     <span class="badge bg-danger">Max: @TemperatureMaxValue?.ToString("F1") °C</span>
                 </div>
             </div>
-            
+
             <div id="temperatureChart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <div class="chart-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2>@Localizer.GetString("Meteo.Trends.Humidity")</h2>
+                <div class="humidity-summary">
+                    <span class="badge bg-info me-2">Min: @HumidityMinValue?.ToString("F1") %</span>
+                    <span class="badge bg-secondary me-2">Avg: @HumidityAvgValue?.ToString("F1") %</span>
+                    <span class="badge bg-danger">Max: @HumidityMaxValue?.ToString("F1") %</span>
+                </div>
+            </div>
+            
+            <div id="humidityChart" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div class="chart-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2>@Localizer.GetString("Meteo.Trends.Pressure")</h2>
+                <div class="pressure-summary">
+                    <span class="badge bg-info me-2">Min: @PressureMinValue?.ToString("F1") hPa</span>
+                    <span class="badge bg-secondary me-2">Avg: @PressureAvgValue?.ToString("F1") hPa</span>
+                    <span class="badge bg-danger">Max: @PressureMaxValue?.ToString("F1") hPa</span>
+                </div>
+            </div>
+            
+            <div id="pressureChart" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div class="chart-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2>@Localizer.GetString("Meteo.Trends.WindSpeed")</h2>
+                <div class="wind-speed-summary">
+                    <span class="badge bg-info me-2">Min: @WindSpeedMinValue?.ToString("F1") m/s</span>
+                    <span class="badge bg-secondary me-2">Avg: @WindSpeedAvgValue?.ToString("F1") m/s</span>
+                    <span class="badge bg-danger me-2">Max: @WindSpeedMaxValue?.ToString("F1") m/s</span>
+                    <span class="badge bg-warning">Nárazy: @WindGustMaxValue?.ToString("F1") m/s</span>
+                </div>
+            </div>
+            
+            <div id="windSpeedChart" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div class="chart-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2>@Localizer.GetString("Meteo.Trends.Rainfall")</h2>
+                <div class="rainfall-summary">
+                    <span class="badge bg-primary me-2">Celkem: @RainfallTotalValue?.ToString("F1") mm</span>
+                    <span class="badge bg-info">Max. intenzita: @RainfallRateMaxValue?.ToString("F1") mm/h</span>
+                </div>
+            </div>
+            
+            <div id="rainfallChart" style="width: 100%; height: 400px;"></div>
         </div>
     }
 </div>
@@ -130,7 +182,7 @@
         Month,
         Year
     }
-    
+
     private class WeatherDataPoint
     {
         public DateTime Date { get; set; }
@@ -138,19 +190,47 @@
         public float? MinTemperature { get; set; }
         public float? AvgTemperature { get; set; }
         public float? MaxTemperature { get; set; }
+        public float? MinHumidity { get; set; }
+        public float? AvgHumidity { get; set; }
+        public float? MaxHumidity { get; set; }
+        public float? MinPressure { get; set; }
+        public float? AvgPressure { get; set; }
+        public float? MaxPressure { get; set; }
+        public float? MinWindSpeed { get; set; }
+        public float? AvgWindSpeed { get; set; }
+        public float? MaxWindSpeed { get; set; }
+        public float? MaxWindGust { get; set; }
+        public float? RainfallTotal { get; set; }
+        public float? RainfallRate { get; set; }
     }
-    
+
     private PeriodType CurrentPeriod { get; set; } = PeriodType.Day;
     private DateTime SelectedDate { get; set; } = DateTime.Now.Date;
     private DateTime StartDate { get; set; }
     private DateTime EndDate { get; set; }
     private bool IsLoading { get; set; } = true;
     private List<WeatherDataPoint> WeatherData { get; set; } = new List<WeatherDataPoint>();
-    
+
     private float? TemperatureMinValue { get; set; }
     private float? TemperatureAvgValue { get; set; }
     private float? TemperatureMaxValue { get; set; }
+
+    private float? HumidityMinValue { get; set; }
+    private float? HumidityAvgValue { get; set; }
+    private float? HumidityMaxValue { get; set; }
+
+    private float? PressureMinValue { get; set; }
+    private float? PressureAvgValue { get; set; }
+    private float? PressureMaxValue { get; set; }
+
+    private float? WindSpeedMinValue { get; set; }
+    private float? WindSpeedAvgValue { get; set; }
+    private float? WindSpeedMaxValue { get; set; }
+    private float? WindGustMaxValue { get; set; }
     
+    private float? RainfallTotalValue { get; set; }
+    private float? RainfallRateMaxValue { get; set; }
+
     private string FormatTooltipDate(object dateValue)
     {
         if (CurrentPeriod == PeriodType.Day)
@@ -168,16 +248,16 @@
         {
             return dateString;
         }
-        
+
         return dateValue?.ToString() ?? "";
     }
-    
+
     protected override async Task OnInitializedAsync()
     {
         await SetupDateRangeAsync();
         await LoadDataAsync();
     }
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         try
@@ -187,7 +267,7 @@
                 // Načtení skriptu při prvním renderování
                 await JSRuntime.InvokeVoidAsync("loadApexChartsScript");
             }
-            
+
             // Vykreslení grafu pouze pokud máme data a načetli jsme již JS knihovnu
             if (!IsLoading && WeatherData != null && WeatherData.Any())
             {
@@ -199,7 +279,7 @@
             Console.Error.WriteLine($"Error in OnAfterRenderAsync: {ex.Message}");
         }
     }
-    
+
     private async Task ChangePeriodAsync(PeriodType newPeriod)
     {
         try
@@ -213,7 +293,7 @@
             Console.Error.WriteLine($"Error changing period: {ex.Message}");
         }
     }
-    
+
     private async Task ChangeDateAsync(int days)
     {
         try
@@ -227,7 +307,7 @@
             Console.Error.WriteLine($"Error changing date: {ex.Message}");
         }
     }
-    
+
     private async Task ChangeDateFromInputAsync(object value)
     {
         try
@@ -244,7 +324,7 @@
             Console.Error.WriteLine($"Error changing date from calendar: {ex.Message}");
         }
     }
-    
+
     private async Task SetupDateRangeAsync()
     {
         switch (CurrentPeriod)
@@ -268,7 +348,7 @@
                 break;
         }
     }
-    
+
     private async Task LoadDataAsync()
     {
         try
@@ -289,6 +369,10 @@
             WeatherData = AggregateData(rawData);
             
             CalculateTemperatureSummary();
+            CalculateHumiditySummary();
+            CalculatePressureSummary();
+            CalculateWindSpeedSummary();
+            CalculateRainfallSummary();
             
             IsLoading = false;
             StateHasChanged();
@@ -300,111 +384,223 @@
             StateHasChanged();
         }
     }
-    
+
     private List<WeatherDataPoint> AggregateData(List<WeatherHistory> rawData)
     {
         List<WeatherDataPoint> result = new List<WeatherDataPoint>();
-        
+
         // Convert all UTC times to local time
         var localData = rawData.Select(d => new {
             Data = d,
             LocalTime = DateTime.SpecifyKind(d.Date, DateTimeKind.Utc).ToLocalTime()
         }).ToList();
-        
+
         switch (CurrentPeriod)
         {
             case PeriodType.Day:
-                // For day view, group by hour
-                var dayGroups = localData
+                // Pro denní pohled správně vypočítáme srážky pro každou hodinu
+                // Seřadíme data chronologicky
+                var sortedDayData = localData.OrderBy(d => d.LocalTime).ToList();
+                // Seskupíme podle hodin
+                var dayGroups = sortedDayData
                     .GroupBy(d => new DateTime(
                         d.LocalTime.Year, d.LocalTime.Month, d.LocalTime.Day, 
                         d.LocalTime.Hour, 0, 0))
                     .OrderBy(g => g.Key);
-                
+
+                // Vytvoříme slovník pro uložení hodnot Rain z předchozího záznamu pro každou hodinu
+                var prevRainValues = new Dictionary<DateTime, float>();
+
                 foreach (var group in dayGroups)
                 {
+                    // Získáme první a poslední hodnotu srážek v této hodině - zajistíme, že nejsou null
+                    float groupFirstRain = group.First().Data.Rain ?? 0f;
+                    float groupLastRain = group.Last().Data.Rain ?? 0f;
+                    
+                    // Výpočet srážek pro tuto hodinu závisí na tom, zda máme předchozí hodnotu
+                    float hourlyRainfall = 0;
+                    
+                    if (prevRainValues.TryGetValue(group.Key.Date, out float prevRain))
+                    {
+                        // Pokud máme předchozí hodnotu, rozdíl je změna v srážkách
+                        hourlyRainfall = Math.Max(0, groupLastRain - prevRain);
+                    }
+                    else
+                    {
+                        // Pro první hodinu dne používáme rozdíl mezi poslední a první hodnotou v této hodině
+                        hourlyRainfall = Math.Max(0, groupLastRain - groupFirstRain);
+                    }
+                    
+                    // Uložíme poslední hodnotu srážek z této hodiny pro další výpočty
+                    prevRainValues[group.Key.Date] = groupLastRain;
+                    
                     result.Add(new WeatherDataPoint
                     {
                         Date = group.Key,
                         DisplayTime = group.Key.TimeOfDay,
                         MinTemperature = group.Min(d => d.Data.TemperatureOut),
-                        AvgTemperature = group.Average(d => d.Data.TemperatureOut),
-                        MaxTemperature = group.Max(d => d.Data.TemperatureOut)
+                        AvgTemperature = (float?)group.Average(d => d.Data.TemperatureOut),
+                        MaxTemperature = group.Max(d => d.Data.TemperatureOut),
+                        MinHumidity = group.Min(d => d.Data.HumidityOut),
+                        AvgHumidity = (float?)group.Average(d => d.Data.HumidityOut),
+                        MaxHumidity = group.Max(d => d.Data.HumidityOut),
+                        MinPressure = group.Min(d => d.Data.Bar),
+                        AvgPressure = (float?)group.Average(d => d.Data.Bar),
+                        MaxPressure = group.Max(d => d.Data.Bar),
+                        MinWindSpeed = group.Min(d => d.Data.WindSpeedAvg),
+                        AvgWindSpeed = (float?)group.Average(d => d.Data.WindSpeedAvg),
+                        MaxWindSpeed = group.Max(d => d.Data.WindSpeedAvg),
+                        MaxWindGust = group.Max(d => d.Data.WindSpeedHi),
+                        RainfallTotal = hourlyRainfall,
+                        RainfallRate = group.Max(d => d.Data.RainRate)
                     });
                 }
                 break;
-                
+
             case PeriodType.Week:
-                // For week view, group by day
-                var weekGroups = localData
-                    .GroupBy(d => d.LocalTime.Date)
-                    .OrderBy(g => g.Key);
-                
-                foreach (var group in weekGroups)
-                {
-                    result.Add(new WeatherDataPoint
-                    {
-                        Date = group.Key,
-                        DisplayTime = group.Key,
-                        MinTemperature = group.Min(d => d.Data.TemperatureOut),
-                        AvgTemperature = group.Average(d => d.Data.TemperatureOut),
-                        MaxTemperature = group.Max(d => d.Data.TemperatureOut)
-                    });
-                }
-                break;
-                
             case PeriodType.Month:
-                // For month view, group by day
-                var monthGroups = localData
-                    .GroupBy(d => d.LocalTime.Date)
-                    .OrderBy(g => g.Key);
-                
-                foreach (var group in monthGroups)
-                {
-                    result.Add(new WeatherDataPoint
-                    {
-                        Date = group.Key,
-                        DisplayTime = group.Key,
-                        MinTemperature = group.Min(d => d.Data.TemperatureOut),
-                        AvgTemperature = group.Average(d => d.Data.TemperatureOut),
-                        MaxTemperature = group.Max(d => d.Data.TemperatureOut)
-                    });
-                }
-                break;
-                
             case PeriodType.Year:
-                // For year view, group by week but zajistíme správné pořadí
-                // Použijeme DateTime jako klíč místo čísla týdne pro lepší seřazení
-                var yearGroups = localData
-                    .GroupBy(d => CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
-                        d.LocalTime, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
-                    .OrderBy(g => g.Key);
+                // Příprava pro výpočet denních srážek
+                var dailyRainData = CalculateDailyRainfall(localData.Select(ld => new { 
+                    Rain = ld.Data.Rain, 
+                    Date = ld.LocalTime.Date 
+                }).ToList());
                 
-                // Přepracujeme tuto logiku, abychom měli jistotu, že data jsou správně seřazena
-                var orderedYearGroups = localData
-                    .GroupBy(d => new { 
-                        Week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
-                            d.LocalTime, CalendarWeekRule.FirstDay, DayOfWeek.Monday),
-                        // Přidáme rok, aby se správně seřadily týdny přes přelom roku
-                        Year = d.LocalTime.Year 
-                    })
-                    .OrderBy(g => g.Key.Year)
-                    .ThenBy(g => g.Key.Week);
-                
-                foreach (var group in orderedYearGroups)
+                // Týdenní, měsíční a roční pohledy používají stejnou logiku, jen se liší ve skupinách
+                if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
                 {
-                    var firstDayOfGroup = group.OrderBy(d => d.LocalTime).First().LocalTime.Date;
-                    
-                    result.Add(new WeatherDataPoint
+                    // Pro týdenní a měsíční pohled, seskupíme podle dne
+                    var periodDayGroups = localData
+                        .GroupBy(d => d.LocalTime.Date)
+                        .OrderBy(g => g.Key);
+                        
+                    foreach (var group in periodDayGroups)
                     {
-                        Date = firstDayOfGroup,
-                        DisplayTime = firstDayOfGroup,
-                        MinTemperature = group.Min(d => d.Data.TemperatureOut),
-                        AvgTemperature = group.Average(d => d.Data.TemperatureOut),
-                        MaxTemperature = group.Max(d => d.Data.TemperatureOut)
-                    });
+                        DateTime displayDate = group.Key;
+                        
+                        // Získání celkových srážek pro tento den
+                        float dailyRainfall = 0;
+                        if (dailyRainData.TryGetValue(displayDate.Date, out float rainfall))
+                        {
+                            dailyRainfall = rainfall;
+                        }
+
+                        result.Add(new WeatherDataPoint
+                        {
+                            Date = displayDate,
+                            DisplayTime = displayDate,
+                            MinTemperature = group.Min(d => d.Data.TemperatureOut),
+                            AvgTemperature = (float?)group.Average(d => d.Data.TemperatureOut),
+                            MaxTemperature = group.Max(d => d.Data.TemperatureOut),
+                            MinHumidity = group.Min(d => d.Data.HumidityOut),
+                            AvgHumidity = (float?)group.Average(d => d.Data.HumidityOut),
+                            MaxHumidity = group.Max(d => d.Data.HumidityOut),
+                            MinPressure = group.Min(d => d.Data.Bar),
+                            AvgPressure = (float?)group.Average(d => d.Data.Bar),
+                            MaxPressure = group.Max(d => d.Data.Bar),
+                            MinWindSpeed = group.Min(d => d.Data.WindSpeedAvg),
+                            AvgWindSpeed = (float?)group.Average(d => d.Data.WindSpeedAvg),
+                            MaxWindSpeed = group.Max(d => d.Data.WindSpeedAvg),
+                            MaxWindGust = group.Max(d => d.Data.WindSpeedHi),
+                            RainfallTotal = dailyRainfall,
+                            RainfallRate = group.Max(d => d.Data.RainRate)
+                        });
+                    }
+                }
+                else // PeriodType.Year
+                {
+                    // Pro roční pohled, seskupíme podle týdne
+                    var yearGroups = localData
+                        .GroupBy(d => new { 
+                            Week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                                d.LocalTime, CalendarWeekRule.FirstDay, DayOfWeek.Monday),
+                            Year = d.LocalTime.Year 
+                        })
+                        .OrderBy(g => g.Key.Year)
+                        .ThenBy(g => g.Key.Week);
+
+                    foreach (var group in yearGroups)
+                    {
+                        // Pro roční pohled, získáme první den ze skupiny pro zobrazení
+                        DateTime displayDate = group.OrderBy(d => d.LocalTime).First().LocalTime.Date;
+                        
+                        // Získání celkových srážek pro tento den/týden
+                        float periodRainfall = 0;
+                        if (dailyRainData.TryGetValue(displayDate.Date, out float rainfall))
+                        {
+                            periodRainfall = rainfall;
+                        }
+
+                        result.Add(new WeatherDataPoint
+                        {
+                            Date = displayDate,
+                            DisplayTime = displayDate,
+                            MinTemperature = group.Min(d => d.Data.TemperatureOut),
+                            AvgTemperature = (float?)group.Average(d => d.Data.TemperatureOut),
+                            MaxTemperature = group.Max(d => d.Data.TemperatureOut),
+                            MinHumidity = group.Min(d => d.Data.HumidityOut),
+                            AvgHumidity = (float?)group.Average(d => d.Data.HumidityOut),
+                            MaxHumidity = group.Max(d => d.Data.HumidityOut),
+                            MinPressure = group.Min(d => d.Data.Bar),
+                            AvgPressure = (float?)group.Average(d => d.Data.Bar),
+                            MaxPressure = group.Max(d => d.Data.Bar),
+                            MinWindSpeed = group.Min(d => d.Data.WindSpeedAvg),
+                            AvgWindSpeed = (float?)group.Average(d => d.Data.WindSpeedAvg),
+                            MaxWindSpeed = group.Max(d => d.Data.WindSpeedAvg),
+                            MaxWindGust = group.Max(d => d.Data.WindSpeedHi),
+                            RainfallTotal = periodRainfall,
+                            RainfallRate = group.Max(d => d.Data.RainRate)
+                        });
+                    }
                 }
                 break;
+        }
+        
+        return result;
+    }
+    
+    // Pomocná metoda pro výpočet denních srážek
+    private Dictionary<DateTime, float> CalculateDailyRainfall<T>(List<T> localData) where T : class
+    {
+        var result = new Dictionary<DateTime, float>();
+        
+        // Seskupení dat podle dne - použijeme dynamický přístup k vlastnostem
+        var dailyGroups = localData
+            .GroupBy(d => (DateTime)d.GetType().GetProperty("Date").GetValue(d))
+            .OrderBy(g => g.Key)
+            .ToList();
+            
+        foreach (var group in dailyGroups)
+        {
+            // Získání maximální hodnoty srážek pro tento den - ošetření null hodnot
+            float maxRainToday = group.Max(d => {
+                var value = d.GetType().GetProperty("Rain").GetValue(d);
+                return value == null ? 0f : (float)value;
+            });
+            
+            float minRainToday = group.Min(d => {
+                var value = d.GetType().GetProperty("Rain").GetValue(d);
+                return value == null ? 0f : (float)value;
+            });
+            
+            // Pokud máme předchozí den, použijeme jeho maximum jako minimum pro dnešek
+            if (dailyGroups.IndexOf(group) > 0)
+            {
+                var prevGroup = dailyGroups[dailyGroups.IndexOf(group) - 1];
+                float prevDayMaxRain = prevGroup.Max(d => {
+                    var value = d.GetType().GetProperty("Rain").GetValue(d);
+                    return value == null ? 0f : (float)value;
+                });
+                
+                // Výpočet denních srážek jako rozdíl mezi maximem dneška a maximem včerejška
+                float dailyRainfall = Math.Max(0, maxRainToday - prevDayMaxRain);
+                result[group.Key] = dailyRainfall;
+            }
+            else
+            {
+                // Pro první den v datech použijeme rozdíl mezi max a min
+                result[group.Key] = Math.Max(0, maxRainToday - minRainToday);
+            }
         }
         
         return result;
@@ -434,7 +630,123 @@
             .Max(d => d.MaxTemperature);
     }
     
+    private void CalculateHumiditySummary()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+        {
+            HumidityMinValue = null;
+            HumidityAvgValue = null;
+            HumidityMaxValue = null;
+            return;
+        }
+        
+        HumidityMinValue = WeatherData
+            .Where(d => d.MinHumidity.HasValue)
+            .Min(d => d.MinHumidity);
+        
+        // Calculate the average of all AvgHumidity values
+        HumidityAvgValue = WeatherData
+            .Where(d => d.AvgHumidity.HasValue)
+            .Average(d => d.AvgHumidity);
+        
+        HumidityMaxValue = WeatherData
+            .Where(d => d.MaxHumidity.HasValue)
+            .Max(d => d.MaxHumidity);
+    }
+    
+    private void CalculatePressureSummary()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+        {
+            PressureMinValue = null;
+            PressureAvgValue = null;
+            PressureMaxValue = null;
+            return;
+        }
+        
+        PressureMinValue = WeatherData
+            .Where(d => d.MinPressure.HasValue)
+            .Min(d => d.MinPressure);
+        
+        // Calculate the average of all AvgPressure values
+        PressureAvgValue = WeatherData
+            .Where(d => d.AvgPressure.HasValue)
+            .Average(d => d.AvgPressure);
+        
+        PressureMaxValue = WeatherData
+            .Where(d => d.MaxPressure.HasValue)
+            .Max(d => d.MaxPressure);
+    }
+    
+    private void CalculateWindSpeedSummary()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+        {
+            WindSpeedMinValue = null;
+            WindSpeedAvgValue = null;
+            WindSpeedMaxValue = null;
+            WindGustMaxValue = null;
+            return;
+        }
+        
+        WindSpeedMinValue = WeatherData
+            .Where(d => d.MinWindSpeed.HasValue)
+            .Min(d => d.MinWindSpeed);
+        
+        // Calculate the average of all AvgWindSpeed values
+        WindSpeedAvgValue = WeatherData
+            .Where(d => d.AvgWindSpeed.HasValue)
+            .Average(d => d.AvgWindSpeed);
+        
+        WindSpeedMaxValue = WeatherData
+            .Where(d => d.MaxWindSpeed.HasValue)
+            .Max(d => d.MaxWindSpeed);
+            
+        WindGustMaxValue = WeatherData
+            .Where(d => d.MaxWindGust.HasValue)
+            .Max(d => d.MaxWindGust);
+    }
+    
+    private void CalculateRainfallSummary()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+        {
+            RainfallTotalValue = null;
+            RainfallRateMaxValue = null;
+            return;
+        }
+        
+        // Celkové srážky jsou součtem všech denních hodnot (které už jsou správně vypočítané)
+        RainfallTotalValue = WeatherData
+            .Where(d => d.RainfallTotal.HasValue)
+            .Sum(d => d.RainfallTotal);
+            
+        // Maximální intenzita srážek je maximum ze všech hodnot Rain Rate
+        RainfallRateMaxValue = WeatherData
+            .Where(d => d.RainfallRate.HasValue)
+            .Max(d => d.RainfallRate);
+    }
+    
     private async Task RenderChartAsync()
+    {
+        try
+        {
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+            
+            await RenderTemperatureChartAsync();
+            await RenderHumidityChartAsync();
+            await RenderPressureChartAsync();
+            await RenderWindSpeedChartAsync();
+            await RenderRainfallChartAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error rendering charts: {ex.Message}");
+        }
+    }
+    
+    private async Task RenderTemperatureChartAsync()
     {
         try
         {
@@ -488,7 +800,7 @@
             // Kontrola, zda máme nějaká validní data
             if (categories.Count == 0 || minTempData.Count == 0)
             {
-                Console.Error.WriteLine("Nedostatek dat pro vykreslení grafu");
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení teplotního grafu");
                 return;
             }
             
@@ -500,7 +812,7 @@
                 : Localizer.GetString("Meteo.Trends.Date");
             string yAxisTitle = Localizer.GetString("Meteo.Trends.Temperature");
             
-            // Calculate min/max for Y axis (similar to original function but simplified)
+            // Calculate min/max for Y axis
             var allTemps = minTempData.Concat(avgTempData).Concat(maxTempData)
                 .Where(t => t != null)
                 .Select(t => Convert.ToSingle(t))
@@ -528,7 +840,399 @@
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error rendering chart: {ex.Message}");
+            Console.Error.WriteLine($"Error rendering temperature chart: {ex.Message}");
+        }
+    }
+    
+    private async Task RenderHumidityChartAsync()
+    {
+        try
+        {
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+                
+            var categories = new List<string>();
+            var minHumidityData = new List<object>();
+            var avgHumidityData = new List<object>();
+            var maxHumidityData = new List<object>();
+            
+            // Ensure WeatherData is correctly ordered for all views
+            var orderedData = WeatherData.OrderBy(d => d.Date).ToList();
+            
+            // Prepare data for the chart based on period
+            foreach (var point in orderedData)
+            {
+                string category;
+                
+                if (CurrentPeriod == PeriodType.Day && point.DisplayTime is TimeSpan ts)
+                {
+                    category = ts.ToString(@"hh\:mm");
+                }
+                else if (point.DisplayTime is DateTime dt)
+                {
+                    if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+                    {
+                        category = dt.ToString("dd.MM.");
+                    }
+                    else if (CurrentPeriod == PeriodType.Year)
+                    {
+                        // Pro roční pohled zobrazíme datum ve formátu dd.MM.yy pro lepší jasnost
+                        category = dt.ToString("dd.MM.yy");
+                    }
+                    else
+                    {
+                        category = dt.ToString("yyyy-MM-dd");
+                    }
+                }
+                else
+                {
+                    category = point.DisplayTime?.ToString() ?? "";
+                }
+                
+                categories.Add(category);
+                minHumidityData.Add(point.MinHumidity ?? 0);
+                avgHumidityData.Add(point.AvgHumidity ?? 0);
+                maxHumidityData.Add(point.MaxHumidity ?? 0);
+            }
+            
+            // Kontrola, zda máme nějaká validní data
+            if (categories.Count == 0 || minHumidityData.Count == 0)
+            {
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení vlhkostního grafu");
+                return;
+            }
+            
+            string minTitle = Localizer.GetString("Meteo.Trends.MinHumidity");
+            string avgTitle = Localizer.GetString("Meteo.Trends.AvgHumidity");
+            string maxTitle = Localizer.GetString("Meteo.Trends.MaxHumidity");
+            string xAxisTitle = CurrentPeriod == PeriodType.Day 
+                ? Localizer.GetString("Meteo.Trends.Time") 
+                : Localizer.GetString("Meteo.Trends.Date");
+            string yAxisTitle = Localizer.GetString("Meteo.Trends.Humidity");
+            
+            // Calculate min/max for Y axis
+            var allHumidity = minHumidityData.Concat(avgHumidityData).Concat(maxHumidityData)
+                .Where(h => h != null)
+                .Select(h => Convert.ToSingle(h))
+                .ToList();
+                
+            if (allHumidity.Count == 0)
+            {
+                Console.Error.WriteLine("Žádné validní údaje o vlhkosti");
+                return;
+            }
+                
+            float minY = Math.Max(0, allHumidity.Min() - 5);
+            float maxY = Math.Min(100, allHumidity.Max() + 5);
+            
+            // Render chart through JS interop
+            await JSRuntime.InvokeVoidAsync("renderHumidityChart", 
+                "humidityChart", 
+                categories,
+                new[] { minHumidityData, avgHumidityData, maxHumidityData },
+                new[] { minTitle, avgTitle, maxTitle },
+                xAxisTitle,
+                yAxisTitle,
+                minY,
+                maxY);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error rendering humidity chart: {ex.Message}");
+        }
+    }
+
+    private async Task RenderPressureChartAsync()
+    {
+        try
+        {
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+                
+            var categories = new List<string>();
+            var minPressureData = new List<object>();
+            var avgPressureData = new List<object>();
+            var maxPressureData = new List<object>();
+            
+            // Ensure WeatherData is correctly ordered for all views
+            var orderedData = WeatherData.OrderBy(d => d.Date).ToList();
+            
+            // Prepare data for the chart based on period
+            foreach (var point in orderedData)
+            {
+                string category;
+                
+                if (CurrentPeriod == PeriodType.Day && point.DisplayTime is TimeSpan ts)
+                {
+                    category = ts.ToString(@"hh\:mm");
+                }
+                else if (point.DisplayTime is DateTime dt)
+                {
+                    if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+                    {
+                        category = dt.ToString("dd.MM.");
+                    }
+                    else if (CurrentPeriod == PeriodType.Year)
+                    {
+                        // Pro roční pohled zobrazíme datum ve formátu dd.MM.yy pro lepší jasnost
+                        category = dt.ToString("dd.MM.yy");
+                    }
+                    else
+                    {
+                        category = dt.ToString("yyyy-MM-dd");
+                    }
+                }
+                else
+                {
+                    category = point.DisplayTime?.ToString() ?? "";
+                }
+                
+                categories.Add(category);
+                minPressureData.Add(point.MinPressure ?? 0);
+                avgPressureData.Add(point.AvgPressure ?? 0);
+                maxPressureData.Add(point.MaxPressure ?? 0);
+            }
+            
+            // Kontrola, zda máme nějaká validní data
+            if (categories.Count == 0 || minPressureData.Count == 0)
+            {
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení grafu tlaku");
+                return;
+            }
+            
+            string minTitle = Localizer.GetString("Meteo.Trends.MinPressure");
+            string avgTitle = Localizer.GetString("Meteo.Trends.AvgPressure");
+            string maxTitle = Localizer.GetString("Meteo.Trends.MaxPressure");
+            string xAxisTitle = CurrentPeriod == PeriodType.Day 
+                ? Localizer.GetString("Meteo.Trends.Time") 
+                : Localizer.GetString("Meteo.Trends.Date");
+            string yAxisTitle = Localizer.GetString("Meteo.Trends.Pressure");
+            
+            // Calculate min/max for Y axis
+            var allPressure = minPressureData.Concat(avgPressureData).Concat(maxPressureData)
+                .Where(p => p != null)
+                .Select(p => Convert.ToSingle(p))
+                .ToList();
+                
+            if (allPressure.Count == 0)
+            {
+                Console.Error.WriteLine("Žádné validní údaje o tlaku");
+                return;
+            }
+                
+            float minY = allPressure.Min() - 2;
+            float maxY = allPressure.Max() + 2;
+            
+            // Render chart through JS interop
+            await JSRuntime.InvokeVoidAsync("renderPressureChart", 
+                "pressureChart", 
+                categories,
+                new[] { minPressureData, avgPressureData, maxPressureData },
+                new[] { minTitle, avgTitle, maxTitle },
+                xAxisTitle,
+                yAxisTitle,
+                minY,
+                maxY);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error rendering pressure chart: {ex.Message}");
+        }
+    }
+
+    private async Task RenderWindSpeedChartAsync()
+    {
+        try
+        {
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+                
+            var categories = new List<string>();
+            var minWindSpeedData = new List<object>();
+            var avgWindSpeedData = new List<object>();
+            var maxWindSpeedData = new List<object>();
+            var maxWindGustData = new List<object>();
+            
+            // Ensure WeatherData is correctly ordered for all views
+            var orderedData = WeatherData.OrderBy(d => d.Date).ToList();
+            
+            // Prepare data for the chart based on period
+            foreach (var point in orderedData)
+            {
+                string category;
+                
+                if (CurrentPeriod == PeriodType.Day && point.DisplayTime is TimeSpan ts)
+                {
+                    category = ts.ToString(@"hh\:mm");
+                }
+                else if (point.DisplayTime is DateTime dt)
+                {
+                    if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+                    {
+                        category = dt.ToString("dd.MM.");
+                    }
+                    else if (CurrentPeriod == PeriodType.Year)
+                    {
+                        // Pro roční pohled zobrazíme datum ve formátu dd.MM.yy pro lepší jasnost
+                        category = dt.ToString("dd.MM.yy");
+                    }
+                    else
+                    {
+                        category = dt.ToString("yyyy-MM-dd");
+                    }
+                }
+                else
+                {
+                    category = point.DisplayTime?.ToString() ?? "";
+                }
+                
+                categories.Add(category);
+                minWindSpeedData.Add(point.MinWindSpeed ?? 0);
+                avgWindSpeedData.Add(point.AvgWindSpeed ?? 0);
+                maxWindSpeedData.Add(point.MaxWindSpeed ?? 0);
+                maxWindGustData.Add(point.MaxWindGust ?? 0);
+            }
+            
+            // Kontrola, zda máme nějaká validní data
+            if (categories.Count == 0 || minWindSpeedData.Count == 0)
+            {
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení grafu rychlosti větru");
+                return;
+            }
+            
+            string minTitle = Localizer.GetString("Meteo.Trends.MinWindSpeed");
+            string avgTitle = Localizer.GetString("Meteo.Trends.AvgWindSpeed");
+            string maxTitle = Localizer.GetString("Meteo.Trends.MaxWindSpeed");
+            string gustTitle = Localizer.GetString("Meteo.Trends.WindGust");
+            string xAxisTitle = CurrentPeriod == PeriodType.Day 
+                ? Localizer.GetString("Meteo.Trends.Time") 
+                : Localizer.GetString("Meteo.Trends.Date");
+            string yAxisTitle = Localizer.GetString("Meteo.Trends.WindSpeed");
+            
+            // Calculate min/max for Y axis
+            var allWindSpeeds = minWindSpeedData.Concat(avgWindSpeedData).Concat(maxWindSpeedData).Concat(maxWindGustData)
+                .Where(w => w != null)
+                .Select(w => Convert.ToSingle(w))
+                .ToList();
+                
+            if (allWindSpeeds.Count == 0)
+            {
+                Console.Error.WriteLine("Žádné validní údaje o rychlosti větru");
+                return;
+            }
+                
+            float minY = 0; // Rychlost větru nemůže být záporná
+            float maxY = allWindSpeeds.Max() + 2;
+            
+            // Render chart through JS interop
+            await JSRuntime.InvokeVoidAsync("renderWindSpeedChart", 
+                "windSpeedChart", 
+                categories,
+                new[] { minWindSpeedData, avgWindSpeedData, maxWindSpeedData, maxWindGustData },
+                new[] { minTitle, avgTitle, maxTitle, gustTitle },
+                xAxisTitle,
+                yAxisTitle,
+                minY,
+                maxY);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error rendering wind speed chart: {ex.Message}");
+        }
+    }
+
+    private async Task RenderRainfallChartAsync()
+    {
+        try
+        {
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+                
+            var categories = new List<string>();
+            var rainfallData = new List<object>();
+            var rainfallRateData = new List<object>();
+            
+            // Ensure WeatherData is correctly ordered for all views
+            var orderedData = WeatherData.OrderBy(d => d.Date).ToList();
+            
+            // Prepare data for the chart based on period
+            foreach (var point in orderedData)
+            {
+                string category;
+                
+                if (CurrentPeriod == PeriodType.Day && point.DisplayTime is TimeSpan ts)
+                {
+                    category = ts.ToString(@"hh\:mm");
+                }
+                else if (point.DisplayTime is DateTime dt)
+                {
+                    if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+                    {
+                        category = dt.ToString("dd.MM.");
+                    }
+                    else if (CurrentPeriod == PeriodType.Year)
+                    {
+                        // Pro roční pohled zobrazíme datum ve formátu dd.MM.yy pro lepší jasnost
+                        category = dt.ToString("dd.MM.yy");
+                    }
+                    else
+                    {
+                        category = dt.ToString("yyyy-MM-dd");
+                    }
+                }
+                else
+                {
+                    category = point.DisplayTime?.ToString() ?? "";
+                }
+                
+                categories.Add(category);
+                rainfallData.Add(point.RainfallTotal ?? 0);
+                rainfallRateData.Add(point.RainfallRate ?? 0);
+            }
+            
+            // Kontrola, zda máme nějaká validní data
+            if (categories.Count == 0 || rainfallData.Count == 0)
+            {
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení grafu srážek");
+                return;
+            }
+            
+            string rainfallTitle = Localizer.GetString("Meteo.Trends.Rainfall");
+            string rainfallRateTitle = Localizer.GetString("Meteo.Trends.RainfallRate");
+            string xAxisTitle = CurrentPeriod == PeriodType.Day 
+                ? Localizer.GetString("Meteo.Trends.Time") 
+                : Localizer.GetString("Meteo.Trends.Date");
+            string yAxisTitle = Localizer.GetString("Meteo.Trends.Rainfall");
+            
+            // Calculate max for Y axis
+            var allRainfall = rainfallData.Concat(rainfallRateData)
+                .Where(r => r != null)
+                .Select(r => Convert.ToSingle(r))
+                .ToList();
+                
+            if (allRainfall.Count == 0 || allRainfall.All(r => r <= 0))
+            {
+                Console.Error.WriteLine("Žádné validní údaje o srážkách");
+                return;
+            }
+                
+            float minY = 0; // Srážky nemohou být záporné
+            float maxY = allRainfall.Max() * 1.2f; // Trochu více prostoru nad sloupci
+            
+            // Render chart through JS interop
+            await JSRuntime.InvokeVoidAsync("renderRainfallChart", 
+                "rainfallChart", 
+                categories,
+                new[] { rainfallData, rainfallRateData },
+                new[] { rainfallTitle, rainfallRateTitle },
+                xAxisTitle,
+                yAxisTitle,
+                minY,
+                maxY);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error rendering rainfall chart: {ex.Message}");
         }
     }
 }
@@ -544,7 +1248,11 @@
         gap: 10px;
     }
     
-    .temperature-summary {
+    .temperature-summary,
+    .humidity-summary,
+    .pressure-summary,
+    .wind-speed-summary,
+    .rainfall-summary {
         font-weight: 500;
     }
     
@@ -572,7 +1280,11 @@
     }
     
     @@media (max-width: 768px) {
-        .temperature-summary {
+        .temperature-summary,
+        .humidity-summary,
+        .pressure-summary,
+        .wind-speed-summary,
+        .rainfall-summary {
             display: flex;
             flex-direction: column;
             align-items: flex-end;

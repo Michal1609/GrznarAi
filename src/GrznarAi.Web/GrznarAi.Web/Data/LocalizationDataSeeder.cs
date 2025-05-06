@@ -547,7 +547,29 @@ namespace GrznarAi.Web.Data
             AddEntry("Meteo.Trends.Days", "Dny", "Days", "Days axis label");
             AddEntry("Meteo.Trends.Weeks", "Týdny", "Weeks", "Weeks axis label");
             
-            // --- Historical Data Section ---
+            // Lokalizační klíče pro vlhkostní graf v meteo trendech
+            AddEntry("Meteo.Trends.MinHumidity", "Min. vlhkost", "Min. Humidity", "Min humidity label");
+            AddEntry("Meteo.Trends.AvgHumidity", "Prům. vlhkost", "Avg. Humidity", "Avg humidity label");
+            AddEntry("Meteo.Trends.MaxHumidity", "Max. vlhkost", "Max. Humidity", "Max humidity label");
+            AddEntry("Meteo.Trends.Time", "Čas", "Time", "Time axis label");
+            AddEntry("Meteo.Trends.Date", "Datum", "Date", "Date axis label");
+
+            // Lokalizační klíče pro graf atmosférického tlaku v meteo trendech
+            AddEntry("Meteo.Trends.MinPressure", "Min. tlak", "Min. Pressure", "Min pressure label");
+            AddEntry("Meteo.Trends.AvgPressure", "Prům. tlak", "Avg. Pressure", "Avg pressure label");
+            AddEntry("Meteo.Trends.MaxPressure", "Max. tlak", "Max. Pressure", "Max pressure label");
+            
+            // Lokalizační klíče pro graf rychlosti větru v meteo trendech
+            AddEntry("Meteo.Trends.MinWindSpeed", "Min. rychlost", "Min. Speed", "Min wind speed label");
+            AddEntry("Meteo.Trends.AvgWindSpeed", "Prům. rychlost", "Avg. Speed", "Avg wind speed label");
+            AddEntry("Meteo.Trends.MaxWindSpeed", "Max. rychlost", "Max. Speed", "Max wind speed label");
+            AddEntry("Meteo.Trends.WindGust", "Nárazy větru", "Wind Gust", "Wind gust label");
+            
+            // Lokalizační klíče pro graf srážek v meteo trendech
+            AddEntry("Meteo.Trends.RainfallRate", "Intenzita srážek", "Rainfall Rate", "Rainfall rate label");
+            AddEntry("Meteo.Trends.TotalRainfall", "Celkové srážky", "Total Rainfall", "Total rainfall label");
+
+            // --- Admin Page Localization ---
 
             // --- End Seed Data --- 
 

@@ -13,30 +13,29 @@
 <div class="meteo-trends-container">
     <h1>@Localizer.GetString("Meteo.Trends.Title")</h1>
 
-    <div class="period-selector mb-4">
-        <div class="btn-group" role="group">
-            <input type="radio" class="btn-check" name="periodOption" id="dayOption" autocomplete="off"
-            checked="@(CurrentPeriod == PeriodType.Day)" 
-            @onchange="@(() => ChangePeriodAsync(PeriodType.Day))" />
-            <label class="btn btn-outline-primary" for="dayOption">@Localizer.GetString("Meteo.Trends.Day")</label>
-
-            <input type="radio" class="btn-check" name="periodOption" id="weekOption" autocomplete="off"
-            checked="@(CurrentPeriod == PeriodType.Week)" 
-            @onchange="@(() => ChangePeriodAsync(PeriodType.Week))" />
-            <label class="btn btn-outline-primary" for="weekOption">@Localizer.GetString("Meteo.Trends.Week")</label>
-
-            <input type="radio" class="btn-check" name="periodOption" id="monthOption" autocomplete="off"
-            checked="@(CurrentPeriod == PeriodType.Month)" 
-            @onchange="@(() => ChangePeriodAsync(PeriodType.Month))" />
-            <label class="btn btn-outline-primary" for="monthOption">@Localizer.GetString("Meteo.Trends.Month")</label>
-
-            <input type="radio" class="btn-check" name="periodOption" id="yearOption" autocomplete="off"
-            checked="@(CurrentPeriod == PeriodType.Year)" 
-            @onchange="@(() => ChangePeriodAsync(PeriodType.Year))" />
-            <label class="btn btn-outline-primary" for="yearOption">@Localizer.GetString("Meteo.Trends.Year")</label>
+    <div class="period-selector-container mb-4">
+        <div class="period-selector">
+            <div class="period-tabs">
+                <div class="period-option @(CurrentPeriod == PeriodType.Day ? "active" : "")" @onclick="() => ChangePeriodAsync(PeriodType.Day)">
+                    <i class="bi bi-calendar-day"></i>
+                    <span>@Localizer.GetString("Meteo.Trends.Day")</span>
+                </div>
+                <div class="period-option @(CurrentPeriod == PeriodType.Week ? "active" : "")" @onclick="() => ChangePeriodAsync(PeriodType.Week)">
+                    <i class="bi bi-calendar-week"></i>
+                    <span>@Localizer.GetString("Meteo.Trends.Week")</span>
+                </div>
+                <div class="period-option @(CurrentPeriod == PeriodType.Month ? "active" : "")" @onclick="() => ChangePeriodAsync(PeriodType.Month)">
+                    <i class="bi bi-calendar-month"></i>
+                    <span>@Localizer.GetString("Meteo.Trends.Month")</span>
+                </div>
+                <div class="period-option @(CurrentPeriod == PeriodType.Year ? "active" : "")" @onclick="() => ChangePeriodAsync(PeriodType.Year)">
+                    <i class="bi bi-calendar-range"></i>
+                    <span>@Localizer.GetString("Meteo.Trends.Year")</span>
+                </div>
+            </div>
         </div>
 
-        <div class="date-controls mt-2">
+        <div class="date-controls mt-3">
             @if (CurrentPeriod == PeriodType.Day)
             {
                 <div class="d-flex align-items-center">
@@ -1584,17 +1583,62 @@
         padding: 20px;
     }
     
-    .period-selector {
+    .period-selector-container {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
+    }
+    
+    .period-selector {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .period-tabs {
+        display: flex;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    
+    .period-option {
+        padding: 10px 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        user-select: none;
+        border-right: 1px solid #e9ecef;
+    }
+    
+    .period-option:last-child {
+        border-right: none;
+    }
+    
+    .period-option i {
+        font-size: 1.1rem;
+    }
+    
+    .period-option:hover:not(.active) {
+        background-color: #e9ecef;
+    }
+    
+    .period-option.active {
+        background-color: #ff8c00;
+        color: white;
+        box-shadow: 0 2px 5px rgba(255, 140, 0, 0.3);
+        font-weight: 500;
     }
     
     .temperature-summary,
     .humidity-summary,
     .pressure-summary,
     .wind-speed-summary,
-    .rainfall-summary {
+    .rainfall-summary,
+    .solar-radiation-summary,
+    .uv-index-summary {
         font-weight: 500;
     }
     
@@ -1615,18 +1659,45 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        background-color: white;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
     .date-picker {
         width: 150px;
+        border-radius: 4px;
     }
     
     @@media (max-width: 768px) {
+        .period-tabs {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .period-option {
+            flex: 1 1 calc(50% - 1px);
+            justify-content: center;
+            border-right: none;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .period-option:nth-child(odd) {
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .period-option:nth-last-child(-n+2) {
+            border-bottom: none;
+        }
+        
         .temperature-summary,
         .humidity-summary,
         .pressure-summary,
         .wind-speed-summary,
-        .rainfall-summary {
+        .rainfall-summary,
+        .solar-radiation-summary,
+        .uv-index-summary {
             display: flex;
             flex-direction: column;
             align-items: flex-end;

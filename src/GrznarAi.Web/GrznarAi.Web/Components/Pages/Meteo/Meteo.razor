@@ -5,7 +5,9 @@
 @using GrznarAi.Web.Models
 @using GrznarAi.Web.Services
 @using System.Globalization
+@using System.Threading
 @rendermode InteractiveServer
+@implements IDisposable
 
 <PageTitle>@Localizer.GetString("Meteo.Title") - GrznarAI</PageTitle>
 
@@ -14,7 +16,7 @@
         <div class="@GetWeatherAnimationClass()"></div>
     </div>
     
-    @if (IsLoading)
+    @if (IsLoading && !IsInitialRender)
     {
         <div class="loading-overlay">
             <div class="spinner">
@@ -22,7 +24,7 @@
             </div>
         </div>
     }
-    else if (WeatherData == null)
+    else if (WeatherData == null && !IsLoading && !IsInitialRender)
     {
         <div class="error-message">
             <i class="bi bi-exclamation-triangle-fill"></i>
@@ -34,19 +36,31 @@
         <div class="meteo-content">
             <!-- Hlavní ukazatel teploty a počasí -->
             <div class="main-temperature">
-                <div class="current-weather-icon">
-                    <i class="bi bi-@GetWeatherIcon()"></i>
-                </div>
-                <div class="temperature-display">
-                    <span class="current-temp">@FormatRawValue(WeatherData.Data?.Outdoor?.Temperature?.RawValue)°</span>
-                    <span class="temp-unit">@WeatherData.Data?.Outdoor?.Temperature?.Unit</span>
-                </div>
-                <div class="weather-condition">
-                    <span>@GetWeatherCondition()</span>
-                </div>
-                <div class="last-updated">
-                    @Localizer.GetString("Meteo.LastUpdated"): @FormatDateTime(WeatherData.Time)
-                </div>
+                @if (IsInitialRender || WeatherData == null)
+                {
+                    <div class="skeleton-loader">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-temp"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text-small"></div>
+                    </div>
+                }
+                else
+                {
+                    <div class="current-weather-icon">
+                        <i class="bi bi-@GetWeatherIcon()"></i>
+                    </div>
+                    <div class="temperature-display">
+                        <span class="current-temp">@FormatRawValue(WeatherData.Data?.Outdoor?.Temperature?.RawValue)°</span>
+                        <span class="temp-unit">@WeatherData.Data?.Outdoor?.Temperature?.Unit</span>
+                    </div>
+                    <div class="weather-condition">
+                        <span>@GetWeatherCondition()</span>
+                    </div>
+                    <div class="last-updated">
+                        @Localizer.GetString("Meteo.LastUpdated"): @FormatDateTime(WeatherData.Time)
+                    </div>
+                }
                 
                 <!-- Tlačítko Vývoj přesunuto sem, přímo do hlavní sekce s teplotou -->
                 <div class="trends-button-container">
@@ -58,104 +72,140 @@
             
             <!-- Meteo dlaždice s daty -->
             <div class="meteo-tiles">
-                <!-- Vnějšky podmínky -->
-                <div class="meteo-tile outdoor-humidity">
-                    <i class="bi bi-droplet"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.Outdoor?.Humidity?.RawValue)@WeatherData.Data?.Outdoor?.Humidity?.Unit</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.Humidity")</div>
-                </div>
-                
-                <div class="meteo-tile pressure">
-                    <i class="bi bi-arrow-down-up"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.Pressure?.Relative?.RawValue)</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.Pressure")</div>
-                </div>
-                
-                <div class="meteo-tile wind-speed">
-                    <i class="bi bi-wind"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.Wind?.WindSpeed?.RawValue) @WeatherData.Data?.Wind?.WindSpeed?.Unit</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.WindSpeed")</div>
-                </div>
-                
-                <div class="meteo-tile feels-like">
-                    <i class="bi bi-emoji-smile"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.Outdoor?.FeelsLike?.RawValue)°@WeatherData.Data?.Outdoor?.FeelsLike?.Unit</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.FeelsLike")</div>
-                </div>
-                
-                <div class="meteo-tile indoor-temp">
-                    <i class="bi bi-house"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.Indoor?.Temperature?.RawValue)°@WeatherData.Data?.Indoor?.Temperature?.Unit</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.IndoorTemperature")</div>
-                </div>
-                
-                <div class="meteo-tile indoor-humidity">
-                    <i class="bi bi-moisture"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.Indoor?.Humidity?.RawValue)@WeatherData.Data?.Indoor?.Humidity?.Unit</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.IndoorHumidity")</div>
-                </div>
-                
-                <div class="meteo-tile uv-index">
-                    <i class="bi bi-sun"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.SolarAndUvi?.Uvi?.RawValue)</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.UVIndex")</div>
-                </div>
-                
-                <div class="meteo-tile dew-point">
-                    <i class="bi bi-water"></i>
-                    <div class="tile-value">@FormatRawValue(WeatherData.Data?.Outdoor?.DewPoint?.RawValue)°@WeatherData.Data?.Outdoor?.DewPoint?.Unit</div>
-                    <div class="tile-label">@Localizer.GetString("Meteo.DewPoint")</div>
-                </div>
+                @if (IsInitialRender || WeatherData == null)
+                {
+                    <!-- Skeleton placeholders pro dlaždice -->
+                    @for (int i = 0; i < 8; i++)
+                    {
+                        <div class="meteo-tile skeleton-tile">
+                            <div class="skeleton-icon-small"></div>
+                            <div class="skeleton-value"></div>
+                            <div class="skeleton-label"></div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <!-- Vnějšky podmínky -->
+                    <div class="meteo-tile outdoor-humidity">
+                        <i class="bi bi-droplet"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.Outdoor?.Humidity?.RawValue)@WeatherData.Data?.Outdoor?.Humidity?.Unit</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.Humidity")</div>
+                    </div>
+                    
+                    <div class="meteo-tile pressure">
+                        <i class="bi bi-arrow-down-up"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.Pressure?.Relative?.RawValue)</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.Pressure")</div>
+                    </div>
+                    
+                    <div class="meteo-tile wind-speed">
+                        <i class="bi bi-wind"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.Wind?.WindSpeed?.RawValue) @WeatherData.Data?.Wind?.WindSpeed?.Unit</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.WindSpeed")</div>
+                    </div>
+                    
+                    <div class="meteo-tile feels-like">
+                        <i class="bi bi-emoji-smile"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.Outdoor?.FeelsLike?.RawValue)°@WeatherData.Data?.Outdoor?.FeelsLike?.Unit</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.FeelsLike")</div>
+                    </div>
+                    
+                    <div class="meteo-tile indoor-temp">
+                        <i class="bi bi-house"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.Indoor?.Temperature?.RawValue)°@WeatherData.Data?.Indoor?.Temperature?.Unit</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.IndoorTemperature")</div>
+                    </div>
+                    
+                    <div class="meteo-tile indoor-humidity">
+                        <i class="bi bi-moisture"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.Indoor?.Humidity?.RawValue)@WeatherData.Data?.Indoor?.Humidity?.Unit</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.IndoorHumidity")</div>
+                    </div>
+                    
+                    <div class="meteo-tile uv-index">
+                        <i class="bi bi-sun"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.SolarAndUvi?.Uvi?.RawValue)</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.UVIndex")</div>
+                    </div>
+                    
+                    <div class="meteo-tile dew-point">
+                        <i class="bi bi-water"></i>
+                        <div class="tile-value">@FormatRawValue(WeatherData.Data?.Outdoor?.DewPoint?.RawValue)°@WeatherData.Data?.Outdoor?.DewPoint?.Unit</div>
+                        <div class="tile-label">@Localizer.GetString("Meteo.DewPoint")</div>
+                    </div>
+                }
             </div>
             
             <!-- Výrazný ukazatel srážek a směru větru -->
             <div class="additional-indicators">
-                <div class="wind-indicator">
-                    <div class="wind-direction-wrap">
-                        <div class="wind-direction-indicator" style="transform: rotate(@(GetWindDirectionDegrees())deg)">
-                            <i class="bi bi-arrow-up"></i>
+                @if (IsInitialRender || WeatherData == null)
+                {
+                    <!-- Skeleton placeholders pro indikátory -->
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div class="wind-indicator skeleton-indicator">
+                            <div class="skeleton-circle"></div>
+                            <div class="skeleton-text-medium"></div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="wind-indicator">
+                        <div class="wind-direction-wrap">
+                            <div class="wind-direction-indicator" style="transform: rotate(@(GetWindDirectionDegrees())deg)">
+                                <i class="bi bi-arrow-up"></i>
+                            </div>
+                        </div>
+                        <div class="wind-direction-text">
+                            @FormatWindDirection(WeatherData.Data?.Wind?.WindDirection?.Value)
                         </div>
                     </div>
-                    <div class="wind-direction-text">
-                        @FormatWindDirection(WeatherData.Data?.Wind?.WindDirection?.Value)
+                    
+                    <div class="rain-indicator">
+                        <i class="bi bi-cloud-rain"></i>
+                        <div class="rain-data">
+                            <div class="rain-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Daily?.RawValue) @WeatherData.Data?.Rainfall?.Daily?.Unit</div>
+                            <div class="rain-label">@Localizer.GetString("Meteo.RainfallDaily")</div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="rain-indicator">
-                    <i class="bi bi-cloud-rain"></i>
-                    <div class="rain-data">
-                        <div class="rain-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Daily?.RawValue) @WeatherData.Data?.Rainfall?.Daily?.Unit</div>
-                        <div class="rain-label">@Localizer.GetString("Meteo.RainfallDaily")</div>
+                    
+                    <div class="rain-indicator weekly-rain">
+                        <i class="bi bi-calendar-week"></i>
+                        <div class="rain-data">
+                            <div class="rain-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Weekly?.RawValue) @WeatherData.Data?.Rainfall?.Weekly?.Unit</div>
+                            <div class="rain-label">@Localizer.GetString("Meteo.RainfallWeekly")</div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="rain-indicator weekly-rain">
-                    <i class="bi bi-calendar-week"></i>
-                    <div class="rain-data">
-                        <div class="rain-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Weekly?.RawValue) @WeatherData.Data?.Rainfall?.Weekly?.Unit</div>
-                        <div class="rain-label">@Localizer.GetString("Meteo.RainfallWeekly")</div>
+                    
+                    <div class="rain-indicator monthly-rain">
+                        <i class="bi bi-calendar-month"></i>
+                        <div class="rain-data">
+                            <div class="rain-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Monthly?.RawValue) @WeatherData.Data?.Rainfall?.Monthly?.Unit</div>
+                            <div class="rain-label">@Localizer.GetString("Meteo.RainfallMonthly")</div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="rain-indicator monthly-rain">
-                    <i class="bi bi-calendar-month"></i>
-                    <div class="rain-data">
-                        <div class="rain-value">@FormatRawValue(WeatherData.Data?.Rainfall?.Monthly?.RawValue) @WeatherData.Data?.Rainfall?.Monthly?.Unit</div>
-                        <div class="rain-label">@Localizer.GetString("Meteo.RainfallMonthly")</div>
-                    </div>
-                </div>
+                }
             </div>
             
             <!-- Historická data -->
             <div class="historical-data-section">
                 <h3 class="section-title">@Localizer.GetString("Meteo.HistoricalData")</h3>
                 
-                @if (IsLoadingHistoricalData)
+                @if (IsLoadingHistoricalData && !IsInitialRender)
                 {
                     <div class="loading-spinner-small">
                         <div class="spinner">
                             <span class="visually-hidden">@Localizer.GetString("Meteo.Loading")</span>
                         </div>
+                    </div>
+                }
+                else if (IsInitialRender || DailyStatistics == null)
+                {
+                    <div class="skeleton-tables">
+                        <div class="skeleton-table"></div>
+                        <div class="skeleton-table"></div>
                     </div>
                 }
                 else 
@@ -287,6 +337,117 @@
         grid-template-rows: auto auto auto auto;
         gap: 1.5rem;
         z-index: 10;
+    }
+    
+    /* Skeleton loaders styly */
+    @@keyframes skeleton-pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 0.8; }
+        100% { opacity: 0.6; }
+    }
+    
+    .skeleton-loader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        animation: skeleton-pulse 1.5s infinite;
+    }
+    
+    .skeleton-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 1rem;
+    }
+    
+    .skeleton-temp {
+        width: 150px;
+        height: 50px;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 0.75rem;
+    }
+    
+    .skeleton-text {
+        width: 120px;
+        height: 24px;
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 0.75rem;
+    }
+    
+    .skeleton-text-small {
+        width: 90px;
+        height: 16px;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .skeleton-text-medium {
+        width: 100px;
+        height: 20px;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .skeleton-tile {
+        animation: skeleton-pulse 1.5s infinite;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .skeleton-icon-small {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 0.75rem;
+    }
+    
+    .skeleton-value {
+        width: 70px;
+        height: 30px;
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 0.5rem;
+    }
+    
+    .skeleton-label {
+        width: 60px;
+        height: 16px;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .skeleton-indicator {
+        display: flex;
+        align-items: center;
+        animation: skeleton-pulse 1.5s infinite;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .skeleton-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-right: 1rem;
+    }
+    
+    .skeleton-tables {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        animation: skeleton-pulse 1.5s infinite;
+    }
+    
+    .skeleton-table {
+        width: 100%;
+        height: 150px;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.1);
     }
     
     /* Styly pro tlačítko Vývoj */
@@ -994,16 +1155,44 @@
 
 @code {
     private WeatherData WeatherData { get; set; }
-    private bool IsLoading { get; set; } = true;
-    private bool IsLoadingHistoricalData { get; set; } = true;
+    private bool IsLoading { get; set; } = false;
+    private bool IsLoadingHistoricalData { get; set; } = false;
+    private bool IsInitialRender { get; set; } = true;
     private List<DailyStatisticsForDate> DailyStatistics { get; set; }
     private List<YearlyStatistics> YearlyStatistics { get; set; }
-    private const int HISTORICAL_YEARS = 10; // Počet let zpětně pro historická data
+    private const int HISTORICAL_YEARS = 10;
+    private CancellationTokenSource _cts;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await LoadWeatherDataAsync();
-        await LoadHistoricalDataAsync();
+        _cts = new CancellationTokenSource();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            await Task.WhenAll(
+                LoadWeatherDataAsync(), 
+                LoadHistoricalDataAsync()
+            );
+            
+            IsInitialRender = false;
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            IsInitialRender = false;
+            StateHasChanged();
+        }
     }
     
     private async Task LoadWeatherDataAsync()
@@ -1028,11 +1217,9 @@
         IsLoadingHistoricalData = true;
         try
         {
-            // Načtení denních statistik pro aktuální datum napříč lety
             var today = DateTime.Today;
             DailyStatistics = await MeteoHistoryService.GetDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
             
-            // Načtení ročních statistik pro posledních několik let
             int currentYear = DateTime.Today.Year;
             int startYear = currentYear - HISTORICAL_YEARS + 1;
             YearlyStatistics = await MeteoHistoryService.GetYearlyStatisticsAsync(startYear, currentYear);
@@ -1051,18 +1238,24 @@
     {
         IsLoading = true;
         IsLoadingHistoricalData = true;
+        StateHasChanged();
+        
         try
         {
-            // Refresh weather data
-            WeatherData = await WeatherService.RefreshWeatherDataAsync();
+            var weatherTask = WeatherService.RefreshWeatherDataAsync();
             
-            // Refresh historical data as well
             var today = DateTime.Today;
-            DailyStatistics = await MeteoHistoryService.RefreshDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
+            var dailyTask = MeteoHistoryService.RefreshDailyStatisticsForLastYearsAsync(today, HISTORICAL_YEARS);
             
             int currentYear = DateTime.Today.Year;
             int startYear = currentYear - HISTORICAL_YEARS + 1;
-            YearlyStatistics = await MeteoHistoryService.RefreshYearlyStatisticsAsync(startYear, currentYear);
+            var yearlyTask = MeteoHistoryService.RefreshYearlyStatisticsAsync(startYear, currentYear);
+            
+            await Task.WhenAll(weatherTask, dailyTask, yearlyTask);
+            
+            WeatherData = await weatherTask;
+            DailyStatistics = await dailyTask;
+            YearlyStatistics = await yearlyTask;
         }
         catch (Exception)
         {
@@ -1072,6 +1265,7 @@
         {
             IsLoading = false;
             IsLoadingHistoricalData = false;
+            StateHasChanged();
         }
     }
     
@@ -1090,7 +1284,6 @@
         double.TryParse(WeatherData.Data.SolarAndUvi?.Uvi?.RawValue, out uvi);
         double.TryParse(WeatherData.Data.Rainfall?.RainRate?.RawValue, out rain);
         
-        // Zjistíme, jestli je noc
         bool isNight = false;
         if (!string.IsNullOrEmpty(WeatherData.Time))
         {
@@ -1241,16 +1434,13 @@
             
         if (DateTime.TryParse(dateTimeStr, out var dateTime))
         {
-            // Převedeme čas z UTC na lokální časové pásmo
             dateTime = dateTime.ToLocalTime();
             return dateTime.ToString("HH:mm, dd MMM yyyy");
         }
             
-        // Pokud je to unix timestamp
         if (long.TryParse(dateTimeStr, out var timestamp))
         {
             var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
-            // Převedeme čas z UTC na lokální časové pásmo
             var localDateTime = dateTimeOffset.LocalDateTime;
             return localDateTime.ToString("HH:mm, dd MMM yyyy");
         }
@@ -1302,7 +1492,6 @@
             return Localizer.GetString("Meteo.WindDirection.NW");
     }
     
-    // Metody pro formátování dat v tabulkách
     private string FormatTemperature(float? temperature)
     {
         if (!temperature.HasValue)
@@ -1333,5 +1522,11 @@
             return "";
             
         return date.Value.ToString("d. M. yyyy");
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
     }
 }

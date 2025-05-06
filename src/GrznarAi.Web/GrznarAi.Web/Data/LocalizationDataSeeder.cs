@@ -537,7 +537,14 @@ namespace GrznarAi.Web.Data
             AddEntry("Meteo.Trends.WindSpeed", "Rychlost větru", "Wind Speed", "Wind speed chart title");
             AddEntry("Meteo.Trends.Rainfall", "Srážky", "Rainfall", "Rainfall chart title");
             AddEntry("Meteo.Trends.SolarRadiation", "Sluneční záření", "Solar Radiation", "Solar radiation chart title");
+            AddEntry("Meteo.Trends.MinSolarRadiation", "Min. záření", "Min. Radiation", "Min solar radiation label");
+            AddEntry("Meteo.Trends.AvgSolarRadiation", "Prům. záření", "Avg. Radiation", "Avg solar radiation label");
+            AddEntry("Meteo.Trends.MaxSolarRadiation", "Max. záření", "Max. Radiation", "Max solar radiation label");
+            AddEntry("Meteo.Trends.SunshineHours", "Hodiny slunečního svitu", "Sunshine Hours", "Sunshine hours label");
             AddEntry("Meteo.Trends.UVIndex", "UV index", "UV Index", "UV index chart title");
+            AddEntry("Meteo.Trends.MinUVIndex", "Min. UV index", "Min. UV Index", "Min UV index label");
+            AddEntry("Meteo.Trends.AvgUVIndex", "Prům. UV index", "Avg. UV Index", "Avg UV index label");
+            AddEntry("Meteo.Trends.MaxUVIndex", "Max. UV index", "Max. UV Index", "Max UV index label");
             AddEntry("Meteo.Trends.DateTime", "Datum a čas", "Date & Time", "DateTime axis label");
             AddEntry("Meteo.Trends.NoData", "Pro vybrané období nejsou k dispozici žádná data", "No data available for the selected period", "No data message");
             

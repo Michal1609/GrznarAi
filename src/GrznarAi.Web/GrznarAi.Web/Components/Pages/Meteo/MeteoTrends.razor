@@ -171,6 +171,33 @@
             
             <div id="rainfallChart" style="width: 100%; height: 400px;"></div>
         </div>
+        
+        <div class="chart-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2>@Localizer.GetString("Meteo.Trends.SolarRadiation")</h2>
+                <div class="solar-radiation-summary">
+                    <span class="badge bg-info me-2">Min: @SolarRadMinValue?.ToString("F1") W/m²</span>
+                    <span class="badge bg-secondary me-2">Avg: @SolarRadAvgValue?.ToString("F1") W/m²</span>
+                    <span class="badge bg-danger me-2">Max: @SolarRadMaxValue?.ToString("F1") W/m²</span>
+                    <span class="badge bg-warning">Sunshine: @SunshineHoursValue?.ToString("F1") h</span>
+                </div>
+            </div>
+            
+            <div id="solarRadiationChart" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div class="chart-container mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2>@Localizer.GetString("Meteo.Trends.UVIndex")</h2>
+                <div class="uv-index-summary">
+                    <span class="badge bg-info me-2">Min: @UVIndexMinValue?.ToString("F1")</span>
+                    <span class="badge bg-secondary me-2">Avg: @UVIndexAvgValue?.ToString("F1")</span>
+                    <span class="badge bg-danger">Max: @UVIndexMaxValue?.ToString("F1")</span>
+                </div>
+            </div>
+            
+            <div id="uvIndexChart" style="width: 100%; height: 400px;"></div>
+        </div>
     }
 </div>
 
@@ -202,6 +229,13 @@
         public float? MaxWindGust { get; set; }
         public float? RainfallTotal { get; set; }
         public float? RainfallRate { get; set; }
+        public float? MinSolarRad { get; set; }
+        public float? AvgSolarRad { get; set; }
+        public float? MaxSolarRad { get; set; }
+        public float? SunshineHours { get; set; }
+        public int? MinUVIndex { get; set; }
+        public float? AvgUVIndex { get; set; }
+        public int? MaxUVIndex { get; set; }
     }
 
     private PeriodType CurrentPeriod { get; set; } = PeriodType.Day;
@@ -230,6 +264,16 @@
     
     private float? RainfallTotalValue { get; set; }
     private float? RainfallRateMaxValue { get; set; }
+
+    private float? SolarRadMinValue { get; set; }
+    private float? SolarRadAvgValue { get; set; }
+    private float? SolarRadMaxValue { get; set; }
+    
+    private float? SunshineHoursValue { get; set; }
+
+    private float? UVIndexMinValue { get; set; }
+    private float? UVIndexAvgValue { get; set; }
+    private float? UVIndexMaxValue { get; set; }
 
     private string FormatTooltipDate(object dateValue)
     {
@@ -373,6 +417,7 @@
             CalculatePressureSummary();
             CalculateWindSpeedSummary();
             CalculateRainfallSummary();
+            CalculateSolarRadiationSummary();
             
             IsLoading = false;
             StateHasChanged();
@@ -452,7 +497,15 @@
                         MaxWindSpeed = group.Max(d => d.Data.WindSpeedAvg),
                         MaxWindGust = group.Max(d => d.Data.WindSpeedHi),
                         RainfallTotal = hourlyRainfall,
-                        RainfallRate = group.Max(d => d.Data.RainRate)
+                        RainfallRate = group.Max(d => d.Data.RainRate),
+                        MinSolarRad = group.Min(d => d.Data.SolarRad),
+                        AvgSolarRad = (float?)group.Average(d => d.Data.SolarRad),
+                        MaxSolarRad = group.Max(d => d.Data.SolarRad),
+                        // Počítáme hodiny slunečního svitu v rámci hodiny (v části dne)
+                        SunshineHours = CalculateSunshineHours(group.Select(d => d.Data.SolarRad).ToList()),
+                        MinUVIndex = group.Min(d => d.Data.Uvi),
+                        AvgUVIndex = (float?)group.Average(d => d.Data.Uvi),
+                        MaxUVIndex = group.Max(d => d.Data.Uvi)
                     });
                 }
                 break;
@@ -503,7 +556,15 @@
                             MaxWindSpeed = group.Max(d => d.Data.WindSpeedAvg),
                             MaxWindGust = group.Max(d => d.Data.WindSpeedHi),
                             RainfallTotal = dailyRainfall,
-                            RainfallRate = group.Max(d => d.Data.RainRate)
+                            RainfallRate = group.Max(d => d.Data.RainRate),
+                            MinSolarRad = group.Min(d => d.Data.SolarRad),
+                            AvgSolarRad = (float?)group.Average(d => d.Data.SolarRad),
+                            MaxSolarRad = group.Max(d => d.Data.SolarRad),
+                            // Počítáme hodiny slunečního svitu v rámci dne
+                            SunshineHours = CalculateSunshineHours(group.Select(d => d.Data.SolarRad).ToList()),
+                            MinUVIndex = group.Min(d => d.Data.Uvi),
+                            AvgUVIndex = (float?)group.Average(d => d.Data.Uvi),
+                            MaxUVIndex = group.Max(d => d.Data.Uvi)
                         });
                     }
                 }
@@ -549,7 +610,15 @@
                             MaxWindSpeed = group.Max(d => d.Data.WindSpeedAvg),
                             MaxWindGust = group.Max(d => d.Data.WindSpeedHi),
                             RainfallTotal = periodRainfall,
-                            RainfallRate = group.Max(d => d.Data.RainRate)
+                            RainfallRate = group.Max(d => d.Data.RainRate),
+                            MinSolarRad = group.Min(d => d.Data.SolarRad),
+                            AvgSolarRad = (float?)group.Average(d => d.Data.SolarRad),
+                            MaxSolarRad = group.Max(d => d.Data.SolarRad),
+                            // Počítáme hodiny slunečního svitu v rámci dne
+                            SunshineHours = CalculateSunshineHours(group.Select(d => d.Data.SolarRad).ToList()),
+                            MinUVIndex = group.Min(d => d.Data.Uvi),
+                            AvgUVIndex = (float?)group.Average(d => d.Data.Uvi),
+                            MaxUVIndex = group.Max(d => d.Data.Uvi)
                         });
                     }
                 }
@@ -727,6 +796,61 @@
             .Max(d => d.RainfallRate);
     }
     
+    private void CalculateSolarRadiationSummary()
+    {
+        if (WeatherData == null || !WeatherData.Any())
+        {
+            SolarRadMinValue = null;
+            SolarRadAvgValue = null;
+            SolarRadMaxValue = null;
+            SunshineHoursValue = null;
+            UVIndexMinValue = null;
+            UVIndexAvgValue = null;
+            UVIndexMaxValue = null;
+            return;
+        }
+        
+        // Minimální, průměrné a maximální hodnoty slunečního záření
+        SolarRadMinValue = WeatherData
+            .Where(d => d.MinSolarRad.HasValue)
+            .Min(d => d.MinSolarRad);
+            
+        SolarRadAvgValue = WeatherData
+            .Where(d => d.AvgSolarRad.HasValue)
+            .Average(d => d.AvgSolarRad);
+            
+        SolarRadMaxValue = WeatherData
+            .Where(d => d.MaxSolarRad.HasValue)
+            .Max(d => d.MaxSolarRad);
+            
+        // Celkový počet hodin slunečního svitu
+        SunshineHoursValue = WeatherData
+            .Where(d => d.SunshineHours.HasValue)
+            .Sum(d => d.SunshineHours);
+        
+        // Minimální, průměrné a maximální hodnoty UV indexu
+        if (WeatherData.Any(d => d.MinUVIndex.HasValue))
+        {
+            UVIndexMinValue = WeatherData
+                .Where(d => d.MinUVIndex.HasValue)
+                .Min(d => d.MinUVIndex);
+        }
+        
+        if (WeatherData.Any(d => d.AvgUVIndex.HasValue))
+        {
+            UVIndexAvgValue = WeatherData
+                .Where(d => d.AvgUVIndex.HasValue)
+                .Average(d => d.AvgUVIndex);
+        }
+        
+        if (WeatherData.Any(d => d.MaxUVIndex.HasValue))
+        {
+            UVIndexMaxValue = WeatherData
+                .Where(d => d.MaxUVIndex.HasValue)
+                .Max(d => d.MaxUVIndex);
+        }
+    }
+    
     private async Task RenderChartAsync()
     {
         try
@@ -739,6 +863,8 @@
             await RenderPressureChartAsync();
             await RenderWindSpeedChartAsync();
             await RenderRainfallChartAsync();
+            await RenderSolarRadiationChartAsync();
+            await RenderUVIndexChartAsync();
         }
         catch (Exception ex)
         {
@@ -1233,6 +1359,222 @@
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error rendering rainfall chart: {ex.Message}");
+        }
+    }
+
+    private async Task RenderSolarRadiationChartAsync()
+    {
+        try
+        {
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+                
+            var categories = new List<string>();
+            var minSolarRadData = new List<object>();
+            var avgSolarRadData = new List<object>();
+            var maxSolarRadData = new List<object>(); 
+            var sunshineHoursData = new List<object>();
+            
+            // Ensure WeatherData is correctly ordered for all views
+            var orderedData = WeatherData.OrderBy(d => d.Date).ToList();
+            
+            // Prepare data for the chart based on period
+            foreach (var point in orderedData)
+            {
+                string category;
+                
+                if (CurrentPeriod == PeriodType.Day && point.DisplayTime is TimeSpan ts)
+                {
+                    category = ts.ToString(@"hh\:mm");
+                }
+                else if (point.DisplayTime is DateTime dt)
+                {
+                    if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+                    {
+                        category = dt.ToString("dd.MM.");
+                    }
+                    else if (CurrentPeriod == PeriodType.Year)
+                    {
+                        // Pro roční pohled zobrazíme datum ve formátu dd.MM.yy pro lepší jasnost
+                        category = dt.ToString("dd.MM.yy");
+                    }
+                    else
+                    {
+                        category = dt.ToString("yyyy-MM-dd");
+                    }
+                }
+                else
+                {
+                    category = point.DisplayTime?.ToString() ?? "";
+                }
+                
+                categories.Add(category);
+                minSolarRadData.Add(point.MinSolarRad ?? 0);
+                avgSolarRadData.Add(point.AvgSolarRad ?? 0);
+                maxSolarRadData.Add(point.MaxSolarRad ?? 0);
+                sunshineHoursData.Add(point.SunshineHours ?? 0);
+            }
+            
+            // Kontrola, zda máme nějaká validní data
+            if (categories.Count == 0 || minSolarRadData.Count == 0)
+            {
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení grafu slunečního záření");
+                return;
+            }
+            
+            string minSolarRadTitle = Localizer.GetString("Meteo.Trends.MinSolarRadiation");
+            string avgSolarRadTitle = Localizer.GetString("Meteo.Trends.AvgSolarRadiation");
+            string maxSolarRadTitle = Localizer.GetString("Meteo.Trends.MaxSolarRadiation");
+            string sunshineHoursTitle = Localizer.GetString("Meteo.Trends.SunshineHours");
+            string xAxisTitle = CurrentPeriod == PeriodType.Day 
+                ? Localizer.GetString("Meteo.Trends.Time") 
+                : Localizer.GetString("Meteo.Trends.Date");
+            string yAxisTitle = Localizer.GetString("Meteo.Trends.SolarRadiation");
+            
+            // Render chart through JS interop
+            await JSRuntime.InvokeVoidAsync("renderSolarRadiationChart", 
+                "solarRadiationChart", 
+                categories,
+                new[] { minSolarRadData, avgSolarRadData, maxSolarRadData, sunshineHoursData },
+                new[] { minSolarRadTitle, avgSolarRadTitle, maxSolarRadTitle, sunshineHoursTitle },
+                xAxisTitle,
+                yAxisTitle);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error rendering solar radiation chart: {ex.Message}");
+        }
+    }
+
+    private async Task RenderUVIndexChartAsync()
+    {
+        try
+        {
+            if (WeatherData == null || !WeatherData.Any())
+                return;
+                
+            var categories = new List<string>();
+            var minUVIndexData = new List<object>();
+            var avgUVIndexData = new List<object>();
+            var maxUVIndexData = new List<object>();
+            
+            // Ensure WeatherData is correctly ordered for all views
+            var orderedData = WeatherData.OrderBy(d => d.Date).ToList();
+            
+            // Prepare data for the chart based on period
+            foreach (var point in orderedData)
+            {
+                string category;
+                
+                if (CurrentPeriod == PeriodType.Day && point.DisplayTime is TimeSpan ts)
+                {
+                    category = ts.ToString(@"hh\:mm");
+                }
+                else if (point.DisplayTime is DateTime dt)
+                {
+                    if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+                    {
+                        category = dt.ToString("dd.MM.");
+                    }
+                    else if (CurrentPeriod == PeriodType.Year)
+                    {
+                        // Pro roční pohled zobrazíme datum ve formátu dd.MM.yy pro lepší jasnost
+                        category = dt.ToString("dd.MM.yy");
+                    }
+                    else
+                    {
+                        category = dt.ToString("yyyy-MM-dd");
+                    }
+                }
+                else
+                {
+                    category = point.DisplayTime?.ToString() ?? "";
+                }
+                
+                categories.Add(category);
+                minUVIndexData.Add(point.MinUVIndex ?? 0);
+                avgUVIndexData.Add(point.AvgUVIndex ?? 0);
+                maxUVIndexData.Add(point.MaxUVIndex ?? 0);
+            }
+            
+            // Kontrola, zda máme nějaká validní data
+            if (categories.Count == 0 || minUVIndexData.Count == 0)
+            {
+                Console.Error.WriteLine("Nedostatek dat pro vykreslení grafu UV indexu");
+                return;
+            }
+            
+            string minUVIndexTitle = Localizer.GetString("Meteo.Trends.MinUVIndex");
+            string avgUVIndexTitle = Localizer.GetString("Meteo.Trends.AvgUVIndex");
+            string maxUVIndexTitle = Localizer.GetString("Meteo.Trends.MaxUVIndex");
+            string xAxisTitle = CurrentPeriod == PeriodType.Day 
+                ? Localizer.GetString("Meteo.Trends.Time") 
+                : Localizer.GetString("Meteo.Trends.Date");
+            string yAxisTitle = Localizer.GetString("Meteo.Trends.UVIndex");
+            
+            // Calculate min/max for Y axis
+            var allUVIndex = minUVIndexData.Concat(avgUVIndexData).Concat(maxUVIndexData)
+                .Where(u => u != null)
+                .Select(u => Convert.ToSingle(u))
+                .ToList();
+                
+            if (allUVIndex.Count == 0)
+            {
+                Console.Error.WriteLine("Žádné validní údaje o UV indexu");
+                return;
+            }
+                
+            float minY = 0; // UV index nemůže být záporný
+            float maxY = allUVIndex.Max() + 1;
+            
+            // Render chart through JS interop
+            await JSRuntime.InvokeVoidAsync("renderUVIndexChart", 
+                "uvIndexChart", 
+                categories,
+                new[] { minUVIndexData, avgUVIndexData, maxUVIndexData },
+                new[] { minUVIndexTitle, avgUVIndexTitle, maxUVIndexTitle },
+                xAxisTitle,
+                yAxisTitle,
+                minY,
+                maxY);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error rendering UV index chart: {ex.Message}");
+        }
+    }
+
+    private float CalculateSunshineHours(List<float?> solarRadData)
+    {
+        if (solarRadData == null || !solarRadData.Any())
+            return 0;
+        
+        // Počet záznamů s dostatečnou intenzitou slunečního záření
+        int sunnyRecordsCount = solarRadData.Count(sr => sr.HasValue && sr.Value > 120);
+        
+        // Celkový počet záznamů
+        int totalRecords = solarRadData.Count;
+        
+        if (totalRecords == 0)
+            return 0;
+        
+        // Výpočet podle typu periody
+        if (CurrentPeriod == PeriodType.Day)
+        {
+            // Pro denní pohled předpokládáme, že máme záznamy každých 5 minut
+            // Takže počet záznamů * 5 minut / 60 = hodiny slunečního svitu
+            return sunnyRecordsCount * 5f / 60f;
+        }
+        else if (CurrentPeriod == PeriodType.Week || CurrentPeriod == PeriodType.Month)
+        {
+            // Pro týdenní a měsíční pohled předpokládáme, že máme agregované údaje po hodinách
+            return sunnyRecordsCount;
+        }
+        else // PeriodType.Year
+        {
+            // Pro roční pohled předpokládáme, že máme agregované údaje po dnech
+            // a v průměru svítí slunce 12 hodin denně max
+            return sunnyRecordsCount * 12f;
         }
     }
 }

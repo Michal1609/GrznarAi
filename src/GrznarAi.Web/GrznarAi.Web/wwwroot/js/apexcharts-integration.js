@@ -890,3 +890,392 @@ window.renderRainfallChart = function (
         console.error('Error initializing or rendering rainfall chart:', error);
     }
 };
+
+// Function to render solar radiation chart with sunshine hours as column
+window.renderSolarRadiationChart = function (
+    elementId,
+    categories,
+    seriesData,
+    seriesTitles,
+    xAxisTitle,
+    yAxisTitle
+) {
+    // Destroy existing chart if it exists
+    if (window.solarRadiationChart && typeof window.solarRadiationChart.destroy === 'function') {
+        try {
+            window.solarRadiationChart.destroy();
+        } catch (error) {
+            console.error('Error destroying solar radiation chart:', error);
+            // Pokračujeme i při chybě destroy
+        }
+    }
+
+    // Oddělení údajů pro sluneční záření (čáry) a hodiny slunečního svitu (sloupce)
+    const solarRadData = [
+        {
+            name: seriesTitles[0], // Min
+            type: 'line',
+            data: seriesData[0],
+            color: '#0dcaf0' // info color
+        },
+        {
+            name: seriesTitles[1], // Avg
+            type: 'line',
+            data: seriesData[1],
+            color: '#6c757d' // secondary color
+        },
+        {
+            name: seriesTitles[2], // Max
+            type: 'line',
+            data: seriesData[2],
+            color: '#dc3545' // danger color
+        }
+    ];
+
+    const sunshineHoursData = {
+        name: seriesTitles[3], // Sunshine hours
+        type: 'column',
+        data: seriesData[3],
+        color: '#ffc107', // warning color
+        yAxisIndex: 1 // Použití druhé osy Y
+    };
+
+    // Spojení dat do jednoho pole
+    const combinedSeries = [...solarRadData, sunshineHoursData];
+
+    const options = {
+        series: combinedSeries,
+        chart: {
+            height: 400,
+            type: 'line',
+            zoom: {
+                enabled: true,
+                type: 'x'
+            },
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true,
+                    reset: true
+                },
+                autoSelected: 'zoom'
+            },
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 800,
+                animateGradually: {
+                    enabled: true,
+                    delay: 150
+                },
+                dynamicAnimation: {
+                    enabled: true,
+                    speed: 350
+                }
+            },
+            fontFamily: 'inherit'
+        },
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: [2, 2, 2, 0] // Poslední 0 pro sloupcový graf
+        },
+        fill: {
+            opacity: [1, 1, 1, 0.7] // Nižší průhlednost pro sloupcový graf
+        },
+        markers: {
+            size: 4,
+            hover: {
+                size: 6
+            }
+        },
+        title: {
+            text: undefined,
+            align: 'left'
+        },
+        grid: {
+            borderColor: '#e7e7e7',
+            row: {
+                colors: ['#f3f3f3', 'transparent'],
+                opacity: 0.5
+            }
+        },
+        xaxis: {
+            categories: categories,
+            title: {
+                text: xAxisTitle
+            },
+            labels: {
+                rotate: -45,
+                rotateAlways: false,
+                style: {
+                    fontSize: '12px',
+                    fontWeight: 400
+                }
+            }
+        },
+        yaxis: [
+            {
+                title: {
+                    text: yAxisTitle
+                },
+                labels: {
+                    formatter: function (val) {
+                        return val.toFixed(1) + ' W/m²';
+                    }
+                }
+            },
+            {
+                opposite: true,
+                title: {
+                    text: 'Sunshine Hours (h)'
+                },
+                labels: {
+                    formatter: function (val) {
+                        return val.toFixed(1) + ' h';
+                    }
+                }
+            }
+        ],
+        legend: {
+            position: 'bottom',
+            horizontalAlign: 'center',
+            floating: false,
+            offsetY: 0,
+            offsetX: 0
+        },
+        tooltip: {
+            shared: true,
+            intersect: false,
+            y: [
+                {
+                    formatter: function (val) {
+                        return val.toFixed(1) + ' W/m²';
+                    }
+                },
+                {
+                    formatter: function (val) {
+                        return val.toFixed(1) + ' W/m²';
+                    }
+                },
+                {
+                    formatter: function (val) {
+                        return val.toFixed(1) + ' W/m²';
+                    }
+                },
+                {
+                    formatter: function (val) {
+                        return val.toFixed(1) + ' h';
+                    }
+                }
+            ]
+        },
+        responsive: [
+            {
+                breakpoint: 768,
+                options: {
+                    chart: {
+                        height: 320
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        ]
+    };
+
+    // Zkontrolujeme, zda element existuje
+    const chartElement = document.getElementById(elementId);
+    if (!chartElement) {
+        console.error(`Element with ID "${elementId}" not found`);
+        return;
+    }
+
+    try {
+        // Initialize chart
+        window.solarRadiationChart = new ApexCharts(chartElement, options);
+        window.solarRadiationChart.render();
+    } catch (error) {
+        console.error('Error initializing or rendering solar radiation chart:', error);
+    }
+};
+
+// Function to render UV index chart
+window.renderUVIndexChart = function (
+    elementId,
+    categories,
+    seriesData,
+    seriesTitles,
+    xAxisTitle,
+    yAxisTitle,
+    minY,
+    maxY
+) {
+    // Destroy existing chart if it exists
+    if (window.uvIndexChart && typeof window.uvIndexChart.destroy === 'function') {
+        try {
+            window.uvIndexChart.destroy();
+        } catch (error) {
+            console.error('Error destroying UV index chart:', error);
+            // Pokračujeme i při chybě destroy
+        }
+    }
+
+    const options = {
+        series: [
+            {
+                name: seriesTitles[0],
+                data: seriesData[0],
+                color: '#0dcaf0' // info color (for min UV)
+            },
+            {
+                name: seriesTitles[1],
+                data: seriesData[1],
+                color: '#6c757d' // secondary color (for avg UV)
+            },
+            {
+                name: seriesTitles[2],
+                data: seriesData[2],
+                color: '#dc3545' // danger color (for max UV)
+            }
+        ],
+        chart: {
+            height: 400,
+            type: 'line',
+            zoom: {
+                enabled: true,
+                type: 'x'
+            },
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true,
+                    reset: true
+                },
+                autoSelected: 'zoom'
+            },
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 800,
+                animateGradually: {
+                    enabled: true,
+                    delay: 150
+                },
+                dynamicAnimation: {
+                    enabled: true,
+                    speed: 350
+                }
+            },
+            fontFamily: 'inherit'
+        },
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: [2, 2, 2]
+        },
+        markers: {
+            size: 4,
+            hover: {
+                size: 6
+            }
+        },
+        title: {
+            text: undefined,
+            align: 'left'
+        },
+        grid: {
+            borderColor: '#e7e7e7',
+            row: {
+                colors: ['#f3f3f3', 'transparent'],
+                opacity: 0.5
+            }
+        },
+        xaxis: {
+            categories: categories,
+            title: {
+                text: xAxisTitle
+            },
+            labels: {
+                rotate: -45,
+                rotateAlways: false,
+                style: {
+                    fontSize: '12px',
+                    fontWeight: 400
+                }
+            }
+        },
+        yaxis: {
+            title: {
+                text: yAxisTitle
+            },
+            min: Math.floor(minY),
+            max: Math.ceil(maxY),
+            tickAmount: Math.ceil(maxY) <= 11 ? Math.ceil(maxY) : undefined,
+            labels: {
+                formatter: function (val) {
+                    return val.toFixed(0);
+                }
+            }
+        },
+        legend: {
+            position: 'bottom',
+            horizontalAlign: 'center',
+            floating: false,
+            offsetY: 0,
+            offsetX: 0
+        },
+        tooltip: {
+            shared: true,
+            intersect: false,
+            y: {
+                formatter: function (val) {
+                    return val.toFixed(1);
+                }
+            }
+        },
+        responsive: [
+            {
+                breakpoint: 768,
+                options: {
+                    chart: {
+                        height: 320
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        ]
+    };
+
+    // Zkontrolujeme, zda element existuje
+    const chartElement = document.getElementById(elementId);
+    if (!chartElement) {
+        console.error(`Element with ID "${elementId}" not found`);
+        return;
+    }
+
+    try {
+        // Initialize chart
+        window.uvIndexChart = new ApexCharts(chartElement, options);
+        window.uvIndexChart.render();
+    } catch (error) {
+        console.error('Error initializing or rendering UV index chart:', error);
+    }
+};

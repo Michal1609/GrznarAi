@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-GrznarAi.Web-d3b66777-1320-4284-9d54-6381674b455f</UserSecretsId>
+	<ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,29 +8,29 @@ using System.Threading.Tasks;
 
 namespace GrznarAi.Web.Services.Weather
 {
-    public class TemperatureDataPoint
+    public class HumidityDataPoint
     {
         public DateTime Date { get; set; }
         public object DisplayTime { get; set; }
-        public float? MinTemperature { get; set; }
-        public float? AvgTemperature { get; set; }
-        public float? MaxTemperature { get; set; }
+        public float? MinHumidity { get; set; }
+        public float? AvgHumidity { get; set; }
+        public float? MaxHumidity { get; set; }
     }
 
-    public interface ITemperatureHistoryService
+    public interface IHumidityHistoryService
     {
-        Task<List<TemperatureDataPoint>> GetTemperatureDataAsync(DateTime startDate, DateTime endDate, string aggregationType);
+        Task<List<HumidityDataPoint>> GetHumidityDataAsync(DateTime startDate, DateTime endDate, string aggregationType);
     }
 
-    public class TemperatureHistoryService : ITemperatureHistoryService
+    public class HumidityHistoryService : IHumidityHistoryService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
-        private readonly ILogger<TemperatureHistoryService> _logger;
+        private readonly ILogger<HumidityHistoryService> _logger;
         private readonly TimeZoneInfo _localTimeZone;
 
-        public TemperatureHistoryService(
+        public HumidityHistoryService(
             IDbContextFactory<ApplicationDbContext> contextFactory,
-            ILogger<TemperatureHistoryService> logger)
+            ILogger<HumidityHistoryService> logger)
         {
             _contextFactory = contextFactory;
             _logger = logger;
@@ -39,16 +39,16 @@ namespace GrznarAi.Web.Services.Weather
             _logger.LogInformation("Použitá časová zóna: {TimeZone}", _localTimeZone.DisplayName);
         }
 
-        public async Task<List<TemperatureDataPoint>> GetTemperatureDataAsync(DateTime startDate, DateTime endDate, string aggregationType)
+        public async Task<List<HumidityDataPoint>> GetHumidityDataAsync(DateTime startDate, DateTime endDate, string aggregationType)
         {
-            _logger.LogInformation("GetTemperatureDataAsync - Načítání teplotních dat: {StartDate} až {EndDate}, typ agregace: {AggregationType}", 
+            _logger.LogInformation("GetHumidityDataAsync - Načítání dat vlhkosti: {StartDate} až {EndDate}, typ agregace: {AggregationType}", 
                 startDate, endDate, aggregationType);
 
             // Konverze vstupních parametrů na UTC pro dotazy do databáze
             DateTime startDateUtc = DateTime.SpecifyKind(startDate, DateTimeKind.Local).ToUniversalTime();
             DateTime endDateUtc = DateTime.SpecifyKind(endDate, DateTimeKind.Local).ToUniversalTime();
 
-            _logger.LogInformation("GetTemperatureDataAsync - Konvertované UTC časy: {StartDateUtc} až {EndDateUtc}", 
+            _logger.LogInformation("GetHumidityDataAsync - Konvertované UTC časy: {StartDateUtc} až {EndDateUtc}", 
                 startDateUtc, endDateUtc);
 
             using var context = await _contextFactory.CreateDbContextAsync();
@@ -56,20 +56,20 @@ namespace GrznarAi.Web.Services.Weather
             // Podle typu agregace zvolíme způsob, jakým budou data seskupena
             var result = aggregationType switch
             {
-                "hourly" => await GetHourlyTemperatureDataAsync(context, startDateUtc, endDateUtc),
-                "daily" => await GetDailyTemperatureDataAsync(context, startDateUtc, endDateUtc),
-                "weekly" => await GetWeeklyTemperatureDataAsync(context, startDateUtc, endDateUtc),
-                "monthly" => await GetMonthlyTemperatureDataAsync(context, startDateUtc, endDateUtc),
-                _ => await GetHourlyTemperatureDataAsync(context, startDateUtc, endDateUtc)
+                "hourly" => await GetHourlyHumidityDataAsync(context, startDateUtc, endDateUtc),
+                "daily" => await GetDailyHumidityDataAsync(context, startDateUtc, endDateUtc),
+                "weekly" => await GetWeeklyHumidityDataAsync(context, startDateUtc, endDateUtc),
+                "monthly" => await GetMonthlyHumidityDataAsync(context, startDateUtc, endDateUtc),
+                _ => await GetHourlyHumidityDataAsync(context, startDateUtc, endDateUtc)
             };
 
-            _logger.LogInformation("GetTemperatureDataAsync - Načteno {Count} záznamů", result.Count);
+            _logger.LogInformation("GetHumidityDataAsync - Načteno {Count} záznamů", result.Count);
             return result;
         }
 
-        private async Task<List<TemperatureDataPoint>> GetHourlyTemperatureDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        private async Task<List<HumidityDataPoint>> GetHourlyHumidityDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
         {
-            _logger.LogInformation("GetHourlyTemperatureDataAsync - Začátek načítání hodinových dat");
+            _logger.LogInformation("GetHourlyHumidityDataAsync - Začátek načítání hodinových dat vlhkosti");
             
             // Kontrola, zda existují nějaká data pro dané období
             var dataExists = await context.WeatherHistory
@@ -77,9 +77,9 @@ namespace GrznarAi.Web.Services.Weather
                 
             if (!dataExists)
             {
-                _logger.LogWarning("GetHourlyTemperatureDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                _logger.LogWarning("GetHourlyHumidityDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
                     startDateUtc, endDateUtc);
-                return new List<TemperatureDataPoint>();
+                return new List<HumidityDataPoint>();
             }
             
             // Použijeme dvoustupňové zpracování - nejdřív získáme agregovaná data z UTC času
@@ -98,9 +98,9 @@ namespace GrznarAi.Web.Services.Weather
                     g.Key.Month,
                     g.Key.Day,
                     g.Key.Hour,
-                    MinTemperature = g.Min(x => x.TemperatureOut),
-                    AvgTemperature = g.Average(x => x.TemperatureOut),
-                    MaxTemperature = g.Max(x => x.TemperatureOut)
+                    MinHumidity = g.Min(x => x.HumidityOut),
+                    AvgHumidity = g.Average(x => x.HumidityOut),
+                    MaxHumidity = g.Max(x => x.HumidityOut)
                 })
                 .OrderBy(d => d.Year)
                 .ThenBy(d => d.Month)
@@ -108,7 +108,7 @@ namespace GrznarAi.Web.Services.Weather
                 .ThenBy(d => d.Hour)
                 .ToListAsync();
 
-            // Poté transformujeme agregovaná data na TemperatureDataPoint a konvertujeme čas z UTC na lokální
+            // Poté transformujeme agregovaná data na HumidityDataPoint a konvertujeme čas z UTC na lokální
             var result = aggregatedData.Select(d => 
             {
                 // Vytvoříme UTC čas
@@ -116,23 +116,23 @@ namespace GrznarAi.Web.Services.Weather
                 // Konvertujeme na lokální čas
                 var localDate = TimeZoneInfo.ConvertTimeFromUtc(utcDate, _localTimeZone);
                 
-                return new TemperatureDataPoint
+                return new HumidityDataPoint
                 {
                     Date = localDate,
                     DisplayTime = localDate.ToString("HH:00"),
-                    MinTemperature = d.MinTemperature,
-                    AvgTemperature = d.AvgTemperature,
-                    MaxTemperature = d.MaxTemperature
+                    MinHumidity = d.MinHumidity,
+                    AvgHumidity = d.AvgHumidity,
+                    MaxHumidity = d.MaxHumidity
                 };
             }).ToList();
             
-            _logger.LogInformation("GetHourlyTemperatureDataAsync - Načteno {Count} hodinových záznamů", result.Count);
+            _logger.LogInformation("GetHourlyHumidityDataAsync - Načteno {Count} hodinových záznamů vlhkosti", result.Count);
             return result;
         }
 
-        private async Task<List<TemperatureDataPoint>> GetDailyTemperatureDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        private async Task<List<HumidityDataPoint>> GetDailyHumidityDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
         {
-            _logger.LogInformation("GetDailyTemperatureDataAsync - Začátek načítání denních dat");
+            _logger.LogInformation("GetDailyHumidityDataAsync - Začátek načítání denních dat vlhkosti");
             
             // Kontrola, zda existují nějaká data pro dané období
             var dataExists = await context.WeatherHistory
@@ -140,9 +140,9 @@ namespace GrznarAi.Web.Services.Weather
                 
             if (!dataExists)
             {
-                _logger.LogWarning("GetDailyTemperatureDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                _logger.LogWarning("GetDailyHumidityDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
                     startDateUtc, endDateUtc);
-                return new List<TemperatureDataPoint>();
+                return new List<HumidityDataPoint>();
             }
             
             // Získáme data z databáze
@@ -154,7 +154,7 @@ namespace GrznarAi.Web.Services.Weather
             var localData = weatherData.Select(h => new 
             {
                 LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
-                h.TemperatureOut
+                h.HumidityOut
             }).ToList();
             
             // Seskupíme podle lokálních dnů
@@ -170,32 +170,32 @@ namespace GrznarAi.Web.Services.Weather
                     g.Key.Year,
                     g.Key.Month,
                     g.Key.Day,
-                    MinTemperature = g.Min(x => x.TemperatureOut),
-                    AvgTemperature = g.Average(x => x.TemperatureOut),
-                    MaxTemperature = g.Max(x => x.TemperatureOut)
+                    MinHumidity = g.Min(x => x.HumidityOut),
+                    AvgHumidity = g.Average(x => x.HumidityOut),
+                    MaxHumidity = g.Max(x => x.HumidityOut)
                 })
                 .OrderBy(d => d.Year)
                 .ThenBy(d => d.Month)
                 .ThenBy(d => d.Day)
                 .ToList();
 
-            // Poté transformujeme agregovaná data na TemperatureDataPoint
-            var result = groupedData.Select(d => new TemperatureDataPoint
+            // Poté transformujeme agregovaná data na HumidityDataPoint
+            var result = groupedData.Select(d => new HumidityDataPoint
             {
                 Date = new DateTime(d.Year, d.Month, d.Day),
                 DisplayTime = new DateTime(d.Year, d.Month, d.Day).ToString("dd.MM"),
-                MinTemperature = d.MinTemperature,
-                AvgTemperature = d.AvgTemperature,
-                MaxTemperature = d.MaxTemperature
+                MinHumidity = d.MinHumidity,
+                AvgHumidity = d.AvgHumidity,
+                MaxHumidity = d.MaxHumidity
             }).ToList();
             
-            _logger.LogInformation("GetDailyTemperatureDataAsync - Načteno {Count} denních záznamů", result.Count);
+            _logger.LogInformation("GetDailyHumidityDataAsync - Načteno {Count} denních záznamů vlhkosti", result.Count);
             return result;
         }
 
-        private async Task<List<TemperatureDataPoint>> GetWeeklyTemperatureDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        private async Task<List<HumidityDataPoint>> GetWeeklyHumidityDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
         {
-            _logger.LogInformation("GetWeeklyTemperatureDataAsync - Začátek načítání týdenních dat");
+            _logger.LogInformation("GetWeeklyHumidityDataAsync - Začátek načítání týdenních dat vlhkosti");
             
             // Kontrola, zda existují nějaká data pro dané období
             var dataExists = await context.WeatherHistory
@@ -203,9 +203,9 @@ namespace GrznarAi.Web.Services.Weather
                 
             if (!dataExists)
             {
-                _logger.LogWarning("GetWeeklyTemperatureDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                _logger.LogWarning("GetWeeklyHumidityDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
                     startDateUtc, endDateUtc);
-                return new List<TemperatureDataPoint>();
+                return new List<HumidityDataPoint>();
             }
             
             // Konverze UTC času zpět na lokální pro správné týdenní zobrazení
@@ -213,7 +213,7 @@ namespace GrznarAi.Web.Services.Weather
             var endDateLocal = TimeZoneInfo.ConvertTimeFromUtc(endDateUtc, _localTimeZone);
             
             // Pro týdenní agregaci vytvoříme vlastní logiku pro seskupení po týdnech
-            var result = new List<TemperatureDataPoint>();
+            var result = new List<HumidityDataPoint>();
             
             // Připravíme kalendářní týdny v lokálním čase
             var currentDate = startDateLocal.Date;
@@ -222,7 +222,7 @@ namespace GrznarAi.Web.Services.Weather
                 var weekStart = currentDate;
                 var weekEnd = weekStart.AddDays(6) > endDateLocal ? endDateLocal : weekStart.AddDays(6);
 
-                _logger.LogInformation("GetWeeklyTemperatureDataAsync - Načítání dat pro týden: {WeekStart:dd.MM.yyyy} až {WeekEnd:dd.MM.yyyy}", 
+                _logger.LogInformation("GetWeeklyHumidityDataAsync - Načítání dat pro týden: {WeekStart:dd.MM.yyyy} až {WeekEnd:dd.MM.yyyy}", 
                     weekStart, weekEnd);
                 
                 // Konverze zpět na UTC pro dotaz do databáze
@@ -236,23 +236,23 @@ namespace GrznarAi.Web.Services.Weather
                     
                 if (weatherData.Any())
                 {
-                    var minTemp = weatherData.Min(x => x.TemperatureOut);
-                    var avgTemp = weatherData.Average(x => x.TemperatureOut);
-                    var maxTemp = weatherData.Max(x => x.TemperatureOut);
+                    var minHumidity = weatherData.Min(x => x.HumidityOut);
+                    var avgHumidity = weatherData.Average(x => x.HumidityOut);
+                    var maxHumidity = weatherData.Max(x => x.HumidityOut);
                     
-                    result.Add(new TemperatureDataPoint
+                    result.Add(new HumidityDataPoint
                     {
                         Date = weekStart,
                         DisplayTime = $"{weekStart:dd.MM} - {weekEnd:dd.MM}",
-                        MinTemperature = minTemp,
-                        AvgTemperature = avgTemp,
-                        MaxTemperature = maxTemp
+                        MinHumidity = minHumidity,
+                        AvgHumidity = avgHumidity,
+                        MaxHumidity = maxHumidity
                     });
-                    _logger.LogInformation("GetWeeklyTemperatureDataAsync - Data pro týden byla načtena");
+                    _logger.LogInformation("GetWeeklyHumidityDataAsync - Data pro týden byla načtena");
                 }
                 else
                 {
-                    _logger.LogWarning("GetWeeklyTemperatureDataAsync - Žádná data pro týden: {WeekStart:dd.MM.yyyy} až {WeekEnd:dd.MM.yyyy}", 
+                    _logger.LogWarning("GetWeeklyHumidityDataAsync - Žádná data pro týden: {WeekStart:dd.MM.yyyy} až {WeekEnd:dd.MM.yyyy}", 
                         weekStart, weekEnd);
                 }
                 
@@ -260,13 +260,13 @@ namespace GrznarAi.Web.Services.Weather
                 currentDate = currentDate.AddDays(7);
             }
 
-            _logger.LogInformation("GetWeeklyTemperatureDataAsync - Načteno {Count} týdenních záznamů", result.Count);
+            _logger.LogInformation("GetWeeklyHumidityDataAsync - Načteno {Count} týdenních záznamů vlhkosti", result.Count);
             return result;
         }
 
-        private async Task<List<TemperatureDataPoint>> GetMonthlyTemperatureDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        private async Task<List<HumidityDataPoint>> GetMonthlyHumidityDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
         {
-            _logger.LogInformation("GetMonthlyTemperatureDataAsync - Začátek načítání měsíčních dat");
+            _logger.LogInformation("GetMonthlyHumidityDataAsync - Začátek načítání měsíčních dat vlhkosti");
             
             // Kontrola, zda existují nějaká data pro dané období
             var dataExists = await context.WeatherHistory
@@ -274,9 +274,9 @@ namespace GrznarAi.Web.Services.Weather
                 
             if (!dataExists)
             {
-                _logger.LogWarning("GetMonthlyTemperatureDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                _logger.LogWarning("GetMonthlyHumidityDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
                     startDateUtc, endDateUtc);
-                return new List<TemperatureDataPoint>();
+                return new List<HumidityDataPoint>();
             }
             
             // Získáme data z databáze
@@ -288,7 +288,7 @@ namespace GrznarAi.Web.Services.Weather
             var localData = weatherData.Select(h => new 
             {
                 LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
-                h.TemperatureOut
+                h.HumidityOut
             }).ToList();
             
             // Seskupíme podle lokálních měsíců
@@ -302,25 +302,25 @@ namespace GrznarAi.Web.Services.Weather
                 {
                     g.Key.Year,
                     g.Key.Month,
-                    MinTemperature = g.Min(x => x.TemperatureOut),
-                    AvgTemperature = g.Average(x => x.TemperatureOut),
-                    MaxTemperature = g.Max(x => x.TemperatureOut)
+                    MinHumidity = g.Min(x => x.HumidityOut),
+                    AvgHumidity = g.Average(x => x.HumidityOut),
+                    MaxHumidity = g.Max(x => x.HumidityOut)
                 })
                 .OrderBy(d => d.Year)
                 .ThenBy(d => d.Month)
                 .ToList();
 
-            // Poté transformujeme agregovaná data na TemperatureDataPoint
-            var result = groupedData.Select(d => new TemperatureDataPoint
+            // Poté transformujeme agregovaná data na HumidityDataPoint
+            var result = groupedData.Select(d => new HumidityDataPoint
             {
                 Date = new DateTime(d.Year, d.Month, 1),
                 DisplayTime = new DateTime(d.Year, d.Month, 1).ToString("MM.yyyy"),
-                MinTemperature = d.MinTemperature,
-                AvgTemperature = d.AvgTemperature,
-                MaxTemperature = d.MaxTemperature
+                MinHumidity = d.MinHumidity,
+                AvgHumidity = d.AvgHumidity,
+                MaxHumidity = d.MaxHumidity
             }).ToList();
             
-            _logger.LogInformation("GetMonthlyTemperatureDataAsync - Načteno {Count} měsíčních záznamů", result.Count);
+            _logger.LogInformation("GetMonthlyHumidityDataAsync - Načteno {Count} měsíčních záznamů vlhkosti", result.Count);
             return result;
         }
     }

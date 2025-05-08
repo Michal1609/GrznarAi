@@ -16,6 +16,7 @@ using GrznarAi.Web.Models;
 using Serilog;
 using GrznarAi.Web.Core.Options;
 using Radzen;
+using GrznarAi.Web.Services.Weather;
 
 var log = new LoggerConfiguration()
     .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
@@ -121,6 +122,8 @@ builder.Services.AddScoped<GoogleAnalyticsService>();
 // Registrujeme IWeatherHistoryService
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IWeatherHistoryService, WeatherHistoryService>();
+builder.Services.AddScoped<ITemperatureHistoryService, TemperatureHistoryService>();
+builder.Services.AddScoped<IHumidityHistoryService, HumidityHistoryService>();
 
 // Registrujeme IMeteoHistoryService - upraveno pro podporu kešování
 builder.Services.AddScoped<IMeteoHistoryService, MeteoHistoryService>();

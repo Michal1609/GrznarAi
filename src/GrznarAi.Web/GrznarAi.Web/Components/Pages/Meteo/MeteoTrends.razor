@@ -3,6 +3,7 @@
 @using GrznarAi.Web.Services.Weather
 @using System.Globalization
 @inject ITemperatureHistoryService TemperatureHistoryService
+@inject IHumidityHistoryService HumidityHistoryService
 @inject ILogger<MeteoTrends> Logger
 @inject IJSRuntime JSRuntime
 
@@ -240,6 +241,7 @@
     private DateTime WeekStartDate => SelectedDate.AddDays(-(int)SelectedDate.DayOfWeek + (int)DayOfWeek.Monday);
     private DateTime WeekEndDate => WeekStartDate.AddDays(6);
     private List<TemperatureDataPoint> TemperatureData = new();
+    private List<HumidityDataPoint> HumidityData = new();
     private bool IsLoading = false;
     private bool ChartNeedsRendering = false;
 
@@ -254,7 +256,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (ChartNeedsRendering && TemperatureData?.Count > 0)
+        if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0)
         {
             ChartNeedsRendering = false;
             await RenderChartAsync();
@@ -299,10 +301,10 @@
             if (humidityElementExists)
             {
                 // Připravíme data pro graf vlhkosti
-                var categories = TemperatureData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
-                var minHumidityData = TemperatureData.Select(d => d.MinHumidity).ToArray();
-                var avgHumidityData = TemperatureData.Select(d => d.AvgHumidity).ToArray();
-                var maxHumidityData = TemperatureData.Select(d => d.MaxHumidity).ToArray();
+                var categories = HumidityData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                var minHumidityData = HumidityData.Select(d => d.MinHumidity).ToArray();
+                var avgHumidityData = HumidityData.Select(d => d.AvgHumidity).ToArray();
+                var maxHumidityData = HumidityData.Select(d => d.MaxHumidity).ToArray();
 
                 Logger.LogInformation("Vykresluji graf vlhkosti s {Count} body", categories.Length);
                 
@@ -366,7 +368,12 @@
             }
 
             Logger.LogInformation("Načítám data pro {Period} od {Start} do {End}", SelectedPeriod, startDate, endDate);
+            
+            // Načtení dat o teplotě
             TemperatureData = await TemperatureHistoryService.GetTemperatureDataAsync(startDate, endDate, aggregationType);
+            
+            // Načtení dat o vlhkosti
+            HumidityData = await HumidityHistoryService.GetHumidityDataAsync(startDate, endDate, aggregationType);
             
             if (TemperatureData.Count > 0)
             {
@@ -388,10 +395,20 @@
                     TemperatureSummary = new TemperatureSummaryData(0, 0, 0);
                 }
 
+                Logger.LogInformation("Načteno {Count} záznamů teploty pro období {Period}", TemperatureData.Count, SelectedPeriod);
+            }
+            else
+            {
+                TemperatureSummary = new TemperatureSummaryData(0, 0, 0);
+                Logger.LogWarning("Nebyla načtena žádná data teploty pro období {Period}", SelectedPeriod);
+            }
+            
+            if (HumidityData.Count > 0)
+            {
                 // Počítání statistik pro vlhkost
-                var validMinHumidity = TemperatureData.Where(d => d.MinHumidity.HasValue).Select(d => d.MinHumidity.Value).ToList();
-                var validAvgHumidity = TemperatureData.Where(d => d.AvgHumidity.HasValue).Select(d => d.AvgHumidity.Value).ToList();
-                var validMaxHumidity = TemperatureData.Where(d => d.MaxHumidity.HasValue).Select(d => d.MaxHumidity.Value).ToList();
+                var validMinHumidity = HumidityData.Where(d => d.MinHumidity.HasValue).Select(d => d.MinHumidity.Value).ToList();
+                var validAvgHumidity = HumidityData.Where(d => d.AvgHumidity.HasValue).Select(d => d.AvgHumidity.Value).ToList();
+                var validMaxHumidity = HumidityData.Where(d => d.MaxHumidity.HasValue).Select(d => d.MaxHumidity.Value).ToList();
                 
                 if (validMinHumidity.Any() && validAvgHumidity.Any() && validMaxHumidity.Any())
                 {
@@ -406,15 +423,15 @@
                     HumiditySummary = new TemperatureSummaryData(0, 0, 0);
                 }
                 
-                Logger.LogInformation("Načteno {Count} záznamů pro období {Period}", TemperatureData.Count, SelectedPeriod);
-                ChartNeedsRendering = true;
+                Logger.LogInformation("Načteno {Count} záznamů vlhkosti pro období {Period}", HumidityData.Count, SelectedPeriod);
             }
             else
             {
-                TemperatureSummary = new TemperatureSummaryData(0, 0, 0);
                 HumiditySummary = new TemperatureSummaryData(0, 0, 0);
-                Logger.LogWarning("Nebyla načtena žádná data pro období {Period}", SelectedPeriod);
+                Logger.LogWarning("Nebyla načtena žádná data vlhkosti pro období {Period}", SelectedPeriod);
             }
+            
+            ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0;
         }
         catch (Exception ex)
         {

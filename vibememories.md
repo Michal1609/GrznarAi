@@ -2184,3 +2184,100 @@ Pro lepší vizualizaci meteorologických dat byla stránka MeteoTrends rozší�
 - Oddělené grafy umožňují lepší čitelnost a analýzu obou datových sad
 - Jednotná vizuální identita a chování mezi oběma grafy
 - Efektivní znovupoužití kódu díky podobné struktuře komponent
+
+## Rozdělení služeb pro data o teplotě a vlhkosti v MeteoTrends
+
+### Změna architektury zpracování dat pro MeteoTrends
+
+V rámci zlepšení architektury aplikace byly provedeny následující změny v modulu pro zobrazování meteo trendů (`/meteo/trends`):
+
+1. **Oddělení datových služeb:**
+   * Původní služba `TemperatureHistoryService` zpracovávala jak data o teplotě, tak o vlhkosti vzduchu
+   * Nově byly vytvořeny specializované služby pro každý typ dat:
+     * `TemperatureHistoryService` - zpracovává pouze data o teplotě
+     * `HumidityHistoryService` - zpracovává pouze data o vlhkosti vzduchu
+
+2. **Nové datové třídy a rozhraní:**
+   * `TemperatureDataPoint` - obsahuje časové údaje a hodnoty teploty (min, avg, max)
+   * `HumidityDataPoint` - obsahuje časové údaje a hodnoty vlhkosti (min, avg, max)
+   * `ITemperatureHistoryService` - rozhraní pro získávání dat o teplotě
+   * `IHumidityHistoryService` - rozhraní pro získávání dat o vlhkosti
+
+3. **Úprava komponenty MeteoTrends.razor:**
+   * Komponenta nyní používá obě specializované služby
+   * Implementuje oddělené načítání dat pro teplotu a vlhkost
+   * Rendering grafů zobrazuje data ze správných zdrojů
+
+4. **Výhody nové architektury:**
+   * Dodržení SRP (Single Responsibility Principle) - každá služba má svůj jasný účel
+   * Jednodušší údržba a rozšiřování kódu
+   * Lepší možnosti testování
+   * Flexibilita při budoucím přidávání dalších meteo dat (srážky, tlak, atd.)
+
+### Technické detaily implementace
+
+1. **Registrace služeb v DI kontejneru (Program.cs):**
+   ```csharp
+   builder.Services.AddScoped<ITemperatureHistoryService, TemperatureHistoryService>();
+   builder.Services.AddScoped<IHumidityHistoryService, HumidityHistoryService>();
+   ```
+
+2. **Struktura datových modelů:**
+   ```csharp
+   // Pro teplotu
+   public class TemperatureDataPoint
+   {
+       public DateTime Date { get; set; }
+       public object DisplayTime { get; set; }
+       public float? MinTemperature { get; set; }
+       public float? AvgTemperature { get; set; }
+       public float? MaxTemperature { get; set; }
+   }
+
+   // Pro vlhkost
+   public class HumidityDataPoint
+   {
+       public DateTime Date { get; set; }
+       public object DisplayTime { get; set; }
+       public float? MinHumidity { get; set; }
+       public float? AvgHumidity { get; set; }
+       public float? MaxHumidity { get; set; }
+   }
+   ```
+
+3. **Změny v MeteoTrends.razor:**
+   * Injektování obou služeb:
+     ```csharp
+     @inject ITemperatureHistoryService TemperatureHistoryService
+     @inject IHumidityHistoryService HumidityHistoryService
+     ```
+   * Příprava dvou kolekcí dat:
+     ```csharp
+     private List<TemperatureDataPoint> TemperatureData = new();
+     private List<HumidityDataPoint> HumidityData = new();
+     ```
+   * Paralelní načítání dat:
+     ```csharp
+     // Načtení dat o teplotě
+     TemperatureData = await TemperatureHistoryService.GetTemperatureDataAsync(startDate, endDate, aggregationType);
+     
+     // Načtení dat o vlhkosti
+     HumidityData = await HumidityHistoryService.GetHumidityDataAsync(startDate, endDate, aggregationType);
+     ```
+
+4. **Zobrazení grafů:**
+   ```csharp
+   // Pro teplotní graf
+   var categories = TemperatureData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+   var minTemperatureData = TemperatureData.Select(d => d.MinTemperature).ToArray();
+   var avgTemperatureData = TemperatureData.Select(d => d.AvgTemperature).ToArray();
+   var maxTemperatureData = TemperatureData.Select(d => d.MaxTemperature).ToArray();
+
+   // Pro graf vlhkosti
+   var categories = HumidityData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+   var minHumidityData = HumidityData.Select(d => d.MinHumidity).ToArray();
+   var avgHumidityData = HumidityData.Select(d => d.AvgHumidity).ToArray();
+   var maxHumidityData = HumidityData.Select(d => d.MaxHumidity).ToArray();
+   ```
+
+Tato architektonická změna přispívá k lepší organizaci kódu a jasněji rozděluje zodpovědnosti mezi jednotlivé komponenty systému.

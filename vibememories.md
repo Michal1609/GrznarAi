@@ -2281,3 +2281,110 @@ V rámci zlepšení architektury aplikace byly provedeny následující změny v
    ```
 
 Tato architektonická změna přispívá k lepší organizaci kódu a jasněji rozděluje zodpovědnosti mezi jednotlivé komponenty systému.
+
+## Implementace grafu atmosférického tlaku na stránce Meteo Trends
+
+Stránka Meteo Trends byla rozšířena o graf atmosférického tlaku, který doplňuje existující grafy teploty a vlhkosti. Implementace zahrnovala:
+
+### 1. Vytvoření služby pro atmosférický tlak
+- Byla vytvořena nová služba `PressureHistoryService` implementující rozhraní `IPressureHistoryService`
+- Služba poskytuje data o atmosférickém tlaku ve stejném formátu jako existující služby pro teplotu a vlhkost
+- Implementovány metody pro agregaci dat podle různých časových období (hodinově, denně, měsíčně)
+- Data jsou získávána z existující tabulky `WeatherHistory`, sloupec `Bar`, který už obsahoval informace o atmosférickém tlaku
+
+```csharp
+public class PressureDataPoint
+{
+    public DateTime Date { get; set; }
+    public object DisplayTime { get; set; }
+    public float? MinPressure { get; set; }
+    public float? AvgPressure { get; set; }
+    public float? MaxPressure { get; set; }
+}
+
+public interface IPressureHistoryService
+{
+    Task<List<PressureDataPoint>> GetPressureDataAsync(DateTime startDate, DateTime endDate, string aggregationType);
+}
+```
+
+### 2. Registrace služby v DI kontejneru
+- Služba byla zaregistrována v Program.cs
+
+```csharp
+builder.Services.AddScoped<IPressureHistoryService, PressureHistoryService>();
+```
+
+### 3. Implementace JavaScriptové funkce pro vykreslení grafu
+- Byl vytvořen nový soubor `wwwroot/js/meteo/pressure-chart.js`
+- Implementována funkce `renderPressureChart` podle vzoru existujících grafů
+- Funkce využívá knihovnu ApexCharts pro vykreslení grafu
+- Hodnoty jsou zobrazeny v jednotkách hPa (hektopascal)
+
+```javascript
+window.renderPressureChart = function (elementId, categories, minData, avgData, maxData) {
+    // ... kód pro vykreslení grafu s ApexCharts ...
+    // Konfigurace specifická pro atmosférický tlak
+    yaxis: {
+        title: {
+            text: 'Tlak (hPa)'
+        },
+        min: function(min) { return Math.floor(min - 1); },
+        max: function(max) { return Math.ceil(max + 1); },
+        decimalsInFloat: 1
+    },
+    tooltip: {
+        shared: true,
+        intersect: false,
+        y: {
+            formatter: function (value) { 
+                if (value === null || value === undefined) {
+                    return 'N/A';
+                }
+                return value.toFixed(1) + ' hPa'; 
+            }
+        }
+    },
+    // ... další konfigurace ...
+};
+```
+
+### 4. Úprava stránky MeteoTrends.razor
+- Přidání injectu nové služby `@inject IPressureHistoryService PressureHistoryService`
+- Rozšíření datového modelu o property pro data tlaku `private List<PressureDataPoint> PressureData = new();`
+- Přidání nové property pro souhrnné statistiky tlaku `private TemperatureSummaryData PressureSummary = new(0, 0, 0);`
+- Implementace načítání dat o tlaku v metodě `RefreshData()` 
+- Rozšíření metody `RenderChartAsync()` o volání JavaScriptové funkce pro vykreslení grafu tlaku
+- Přidání UI prvků pro zobrazení grafu a statistik tlaku
+
+```html
+<div class="chart-container mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5>Graf atmosférického tlaku</h5>
+        <div class="pressure-summary">
+            <span class="badge text-bg-info me-2">Min: @PressureSummary.Min.ToString("F1") hPa</span>
+            <span class="badge text-bg-warning me-2">Avg: @PressureSummary.Avg.ToString("F1") hPa</span>
+            <span class="badge text-bg-danger">Max: @PressureSummary.Max.ToString("F1") hPa</span>
+        </div>
+    </div>
+    <div id="pressure-chart" style="height: 400px;"></div>
+</div>
+```
+
+### 5. Úprava App.razor
+- Přidání skriptové reference na nový JavaScript soubor pro graf tlaku
+
+```html
+<!-- Meteo charts -->
+<script src="js/meteo/temperature-chart.js"></script>
+<script src="js/meteo/humidity-chart.js"></script>
+<script src="js/meteo/pressure-chart.js"></script>
+```
+
+### Výsledek
+Nyní stránka Meteo Trends zobrazuje tři grafy:
+1. Graf teploty
+2. Graf vlhkosti
+3. Graf atmosférického tlaku
+
+Každý graf zobrazuje minimální, průměrné a maximální hodnoty pro vybrané časové období (den, týden, měsíc, rok). Uživatel může přepínat mezi různými časovými obdobími a procházet historická data.

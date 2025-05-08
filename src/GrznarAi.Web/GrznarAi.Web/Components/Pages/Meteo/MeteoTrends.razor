@@ -4,6 +4,7 @@
 @using System.Globalization
 @inject ITemperatureHistoryService TemperatureHistoryService
 @inject IHumidityHistoryService HumidityHistoryService
+@inject IPressureHistoryService PressureHistoryService
 @inject ILogger<MeteoTrends> Logger
 @inject IJSRuntime JSRuntime
 
@@ -127,6 +128,18 @@
                             </div>
                             <div id="humidity-chart" style="height: 400px;"></div>
                         </div>
+                        
+                        <div class="chart-container mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Graf atmosférického tlaku</h5>
+                                <div class="pressure-summary">
+                                    <span class="badge text-bg-info me-2">Min: @PressureSummary.Min.ToString("F1") hPa</span>
+                                    <span class="badge text-bg-warning me-2">Avg: @PressureSummary.Avg.ToString("F1") hPa</span>
+                                    <span class="badge text-bg-danger">Max: @PressureSummary.Max.ToString("F1") hPa</span>
+                                </div>
+                            </div>
+                            <div id="pressure-chart" style="height: 400px;"></div>
+                        </div>
                     }
                     else
                     {
@@ -242,12 +255,14 @@
     private DateTime WeekEndDate => WeekStartDate.AddDays(6);
     private List<TemperatureDataPoint> TemperatureData = new();
     private List<HumidityDataPoint> HumidityData = new();
+    private List<PressureDataPoint> PressureData = new();
     private bool IsLoading = false;
     private bool ChartNeedsRendering = false;
 
     private record TemperatureSummaryData(float Min, float Avg, float Max);
     private TemperatureSummaryData TemperatureSummary = new(0, 0, 0);
     private TemperatureSummaryData HumiditySummary = new(0, 0, 0);
+    private TemperatureSummaryData PressureSummary = new(0, 0, 0);
 
     protected override async Task OnInitializedAsync()
     {
@@ -256,7 +271,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0)
+        if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0 && PressureData?.Count > 0)
         {
             ChartNeedsRendering = false;
             await RenderChartAsync();
@@ -320,6 +335,33 @@
             {
                 Logger.LogWarning("Element grafu 'humidity-chart' nenalezen, graf vlhkosti nebude vykreslen");
             }
+            
+            // Ověříme, zda existuje DOM element pro graf atmosférického tlaku
+            var pressureElementExists = await JSRuntime.InvokeAsync<bool>("eval", 
+                "document.getElementById('pressure-chart') !== null");
+                
+            if (pressureElementExists)
+            {
+                // Připravíme data pro graf atmosférického tlaku
+                var categories = PressureData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                var minPressureData = PressureData.Select(d => d.MinPressure).ToArray();
+                var avgPressureData = PressureData.Select(d => d.AvgPressure).ToArray();
+                var maxPressureData = PressureData.Select(d => d.MaxPressure).ToArray();
+
+                Logger.LogInformation("Vykresluji graf atmosférického tlaku s {Count} body", categories.Length);
+                
+                // Zavoláme funkci pro vykreslení grafu atmosférického tlaku
+                await JSRuntime.InvokeVoidAsync("renderPressureChart", 
+                    "pressure-chart", 
+                    categories, 
+                    minPressureData, 
+                    avgPressureData, 
+                    maxPressureData);
+            }
+            else
+            {
+                Logger.LogWarning("Element grafu 'pressure-chart' nenalezen, graf atmosférického tlaku nebude vykreslen");
+            }
         }
         catch (Exception ex)
         {
@@ -374,6 +416,9 @@
             
             // Načtení dat o vlhkosti
             HumidityData = await HumidityHistoryService.GetHumidityDataAsync(startDate, endDate, aggregationType);
+            
+            // Načtení dat o atmosférickém tlaku
+            PressureData = await PressureHistoryService.GetPressureDataAsync(startDate, endDate, aggregationType);
             
             if (TemperatureData.Count > 0)
             {
@@ -431,7 +476,35 @@
                 Logger.LogWarning("Nebyla načtena žádná data vlhkosti pro období {Period}", SelectedPeriod);
             }
             
-            ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0;
+            if (PressureData.Count > 0)
+            {
+                // Počítání statistik pro atmosférický tlak
+                var validMinPressure = PressureData.Where(d => d.MinPressure.HasValue).Select(d => d.MinPressure.Value).ToList();
+                var validAvgPressure = PressureData.Where(d => d.AvgPressure.HasValue).Select(d => d.AvgPressure.Value).ToList();
+                var validMaxPressure = PressureData.Where(d => d.MaxPressure.HasValue).Select(d => d.MaxPressure.Value).ToList();
+                
+                if (validMinPressure.Any() && validAvgPressure.Any() && validMaxPressure.Any())
+                {
+                    PressureSummary = new TemperatureSummaryData(
+                        validMinPressure.Min(),
+                        validAvgPressure.Average(),
+                        validMaxPressure.Max()
+                    );
+                }
+                else
+                {
+                    PressureSummary = new TemperatureSummaryData(0, 0, 0);
+                }
+                
+                Logger.LogInformation("Načteno {Count} záznamů atmosférického tlaku pro období {Period}", PressureData.Count, SelectedPeriod);
+            }
+            else
+            {
+                PressureSummary = new TemperatureSummaryData(0, 0, 0);
+                Logger.LogWarning("Nebyla načtena žádná data atmosférického tlaku pro období {Period}", SelectedPeriod);
+            }
+            
+            ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0 && PressureData.Count > 0;
         }
         catch (Exception ex)
         {
@@ -453,6 +526,8 @@
         try
         {
             await JSRuntime.InvokeVoidAsync("eval", "if(window.temperatureChart) { window.temperatureChart.destroy(); window.temperatureChart = null; }");
+            await JSRuntime.InvokeVoidAsync("eval", "if(window.humidityChart) { window.humidityChart.destroy(); window.humidityChart = null; }");
+            await JSRuntime.InvokeVoidAsync("eval", "if(window.pressureChart) { window.pressureChart.destroy(); window.pressureChart = null; }");
         }
         catch (Exception ex)
         {

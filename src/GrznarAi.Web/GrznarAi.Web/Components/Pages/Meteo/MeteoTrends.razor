@@ -5,6 +5,7 @@
 @inject ITemperatureHistoryService TemperatureHistoryService
 @inject IHumidityHistoryService HumidityHistoryService
 @inject IPressureHistoryService PressureHistoryService
+@inject IWindSpeedHistoryService WindSpeedHistoryService
 @inject ILogger<MeteoTrends> Logger
 @inject IJSRuntime JSRuntime
 
@@ -140,6 +141,19 @@
                             </div>
                             <div id="pressure-chart" style="height: 400px;"></div>
                         </div>
+                        
+                        <div class="chart-container mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Graf rychlosti větru</h5>
+                                <div class="wind-speed-summary">
+                                    <span class="badge text-bg-info me-2">Min: @((WindSpeedSummary.Min * 3.6).ToString("F1")) km/h</span>
+                                    <span class="badge text-bg-warning me-2">Avg: @((WindSpeedSummary.Avg * 3.6).ToString("F1")) km/h</span>
+                                    <span class="badge text-bg-danger me-2">Max: @((WindSpeedSummary.Max * 3.6).ToString("F1")) km/h</span>
+                                    <span class="badge text-bg-purple">Nárazy: @((GustSpeedSummary * 3.6).ToString("F1")) km/h</span>
+                                </div>
+                            </div>
+                            <div id="wind-speed-chart" style="height: 400px;"></div>
+                        </div>
                     }
                     else
                     {
@@ -246,6 +260,11 @@
             padding: 0.5rem;
         }
     }
+    
+    .badge.text-bg-purple {
+        background-color: #9b59b6;
+        color: white;
+    }
 </style>
 
 @code {
@@ -256,6 +275,7 @@
     private List<TemperatureDataPoint> TemperatureData = new();
     private List<HumidityDataPoint> HumidityData = new();
     private List<PressureDataPoint> PressureData = new();
+    private List<WindSpeedDataPoint> WindSpeedData = new();
     private bool IsLoading = false;
     private bool ChartNeedsRendering = false;
 
@@ -263,6 +283,8 @@
     private TemperatureSummaryData TemperatureSummary = new(0, 0, 0);
     private TemperatureSummaryData HumiditySummary = new(0, 0, 0);
     private TemperatureSummaryData PressureSummary = new(0, 0, 0);
+    private TemperatureSummaryData WindSpeedSummary = new(0, 0, 0);
+    private float GustSpeedSummary = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -271,7 +293,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0 && PressureData?.Count > 0)
+        if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0 && PressureData?.Count > 0 && WindSpeedData?.Count > 0)
         {
             ChartNeedsRendering = false;
             await RenderChartAsync();
@@ -362,6 +384,35 @@
             {
                 Logger.LogWarning("Element grafu 'pressure-chart' nenalezen, graf atmosférického tlaku nebude vykreslen");
             }
+            
+            // Ověříme, zda existuje DOM element pro graf rychlosti větru
+            var windSpeedElementExists = await JSRuntime.InvokeAsync<bool>("eval", 
+                "document.getElementById('wind-speed-chart') !== null");
+                
+            if (windSpeedElementExists)
+            {
+                // Připravíme data pro graf rychlosti větru
+                var categories = WindSpeedData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                var minWindSpeedData = WindSpeedData.Select(d => d.MinWindSpeed).ToArray();
+                var avgWindSpeedData = WindSpeedData.Select(d => d.AvgWindSpeed).ToArray();
+                var maxWindSpeedData = WindSpeedData.Select(d => d.MaxWindSpeed).ToArray();
+                var gustWindSpeedData = WindSpeedData.Select(d => d.GustWindSpeed).ToArray();
+
+                Logger.LogInformation("Vykresluji graf rychlosti větru s {Count} body", categories.Length);
+                
+                // Zavoláme funkci pro vykreslení grafu rychlosti větru
+                await JSRuntime.InvokeVoidAsync("renderWindSpeedChart", 
+                    "wind-speed-chart", 
+                    categories, 
+                    minWindSpeedData, 
+                    avgWindSpeedData, 
+                    maxWindSpeedData,
+                    gustWindSpeedData);
+            }
+            else
+            {
+                Logger.LogWarning("Element grafu 'wind-speed-chart' nenalezen, graf rychlosti větru nebude vykreslen");
+            }
         }
         catch (Exception ex)
         {
@@ -419,6 +470,9 @@
             
             // Načtení dat o atmosférickém tlaku
             PressureData = await PressureHistoryService.GetPressureDataAsync(startDate, endDate, aggregationType);
+            
+            // Načtení dat o rychlosti větru
+            WindSpeedData = await WindSpeedHistoryService.GetWindSpeedDataAsync(startDate, endDate, aggregationType);
             
             if (TemperatureData.Count > 0)
             {
@@ -504,7 +558,40 @@
                 Logger.LogWarning("Nebyla načtena žádná data atmosférického tlaku pro období {Period}", SelectedPeriod);
             }
             
-            ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0 && PressureData.Count > 0;
+            if (WindSpeedData.Count > 0)
+            {
+                // Počítání statistik pro rychlost větru
+                var validMinWindSpeed = WindSpeedData.Where(d => d.MinWindSpeed.HasValue).Select(d => d.MinWindSpeed.Value).ToList();
+                var validAvgWindSpeed = WindSpeedData.Where(d => d.AvgWindSpeed.HasValue).Select(d => d.AvgWindSpeed.Value).ToList();
+                var validMaxWindSpeed = WindSpeedData.Where(d => d.MaxWindSpeed.HasValue).Select(d => d.MaxWindSpeed.Value).ToList();
+                var validGustWindSpeed = WindSpeedData.Where(d => d.GustWindSpeed.HasValue).Select(d => d.GustWindSpeed.Value).ToList();
+                
+                if (validMinWindSpeed.Any() && validAvgWindSpeed.Any() && validMaxWindSpeed.Any())
+                {
+                    WindSpeedSummary = new TemperatureSummaryData(
+                        validMinWindSpeed.Min(),
+                        validAvgWindSpeed.Average(),
+                        validMaxWindSpeed.Max()
+                    );
+                    
+                    GustSpeedSummary = validGustWindSpeed.Any() ? validGustWindSpeed.Max() : 0;
+                }
+                else
+                {
+                    WindSpeedSummary = new TemperatureSummaryData(0, 0, 0);
+                    GustSpeedSummary = 0;
+                }
+                
+                Logger.LogInformation("Načteno {Count} záznamů rychlosti větru pro období {Period}", WindSpeedData.Count, SelectedPeriod);
+            }
+            else
+            {
+                WindSpeedSummary = new TemperatureSummaryData(0, 0, 0);
+                GustSpeedSummary = 0;
+                Logger.LogWarning("Nebyla načtena žádná data rychlosti větru pro období {Period}", SelectedPeriod);
+            }
+            
+            ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0 && PressureData.Count > 0 && WindSpeedData.Count > 0;
         }
         catch (Exception ex)
         {
@@ -528,6 +615,7 @@
             await JSRuntime.InvokeVoidAsync("eval", "if(window.temperatureChart) { window.temperatureChart.destroy(); window.temperatureChart = null; }");
             await JSRuntime.InvokeVoidAsync("eval", "if(window.humidityChart) { window.humidityChart.destroy(); window.humidityChart = null; }");
             await JSRuntime.InvokeVoidAsync("eval", "if(window.pressureChart) { window.pressureChart.destroy(); window.pressureChart = null; }");
+            await JSRuntime.InvokeVoidAsync("eval", "if(window.windSpeedChart) { window.windSpeedChart.destroy(); window.windSpeedChart = null; }");
         }
         catch (Exception ex)
         {

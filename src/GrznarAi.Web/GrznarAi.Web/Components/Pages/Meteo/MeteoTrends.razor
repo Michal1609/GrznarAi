@@ -16,91 +16,81 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5>Teplotni historie</h5>
-                    <div class="d-flex align-items-center">
-                        @if (TemperatureData?.Count > 0)
-                        {
-                            <div class="me-2">
-                                <span class="badge rounded-pill text-bg-info">Min: @($"{TemperatureSummary.Min:F1} °C")</span>
-                            </div>
-                            <div class="me-2">
-                                <span class="badge rounded-pill text-bg-warning">Avg: @($"{TemperatureSummary.Avg:F1} °C")</span>
-                            </div>
-                            <div class="me-2">
-                                <span class="badge rounded-pill text-bg-danger">Max: @($"{TemperatureSummary.Max:F1} °C")</span>
-                            </div>
-                        }
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn @(SelectedPeriod == "day" ? "btn-primary" : "btn-outline-primary")" @onclick="ChangePeriodDay">Den</button>
-                            <button type="button" class="btn @(SelectedPeriod == "week" ? "btn-primary" : "btn-outline-primary")" @onclick="ChangePeriodWeek">Tyden</button>
-                            <button type="button" class="btn @(SelectedPeriod == "month" ? "btn-primary" : "btn-outline-primary")" @onclick="ChangePeriodMonth">Mesic</button>
-                            <button type="button" class="btn @(SelectedPeriod == "year" ? "btn-primary" : "btn-outline-primary")" @onclick="ChangePeriodYear">Rok</button>
-                        </div>
-                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            @switch (SelectedPeriod)
-                            {
-                                case "day":
-                                    <div class="form-group">
-                                        <label>Vyberte den:</label>
-                                        <input type="date" class="form-control" @bind="SelectedDate" @bind:format="yyyy-MM-dd" @bind:after="RefreshData" />
+                    <!-- Přepínače období s ikonami -->
+                    <div class="period-tabs mb-4">
+                        <button class="period-btn @(SelectedPeriod == "day" ? "active" : "")" @onclick="ChangePeriodDay">
+                            <i class="bi bi-calendar-day"></i> Den
+                        </button>
+                        <button class="period-btn @(SelectedPeriod == "week" ? "active" : "")" @onclick="ChangePeriodWeek">
+                            <i class="bi bi-calendar-week"></i> Týden
+                        </button>
+                        <button class="period-btn @(SelectedPeriod == "month" ? "active" : "")" @onclick="ChangePeriodMonth">
+                            <i class="bi bi-calendar-month"></i> Měsíc
+                        </button>
+                        <button class="period-btn @(SelectedPeriod == "year" ? "active" : "")" @onclick="ChangePeriodYear">
+                            <i class="bi bi-calendar-range"></i> Rok
+                        </button>
+                    </div>
+
+                    <!-- Datumový výběr -->
+                    <div class="date-selector mb-4">
+                        @switch (SelectedPeriod)
+                        {
+                            case "day":
+                                <div class="date-nav-container">
+                                    <button class="date-nav-btn" @onclick="PreviousDay">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </button>
+                                    <div class="date-display">
+                                        <input type="date" class="form-control date-input" @bind="SelectedDate" @bind:format="yyyy-MM-dd" @bind:after="RefreshData" />
                                     </div>
-                                    break;
-                                case "week":
-                                    <div class="form-group">
-                                        <label>Vyberte tyden:</label>
-                                        <div class="d-flex">
-                                            <button class="btn btn-outline-secondary" @onclick="PreviousWeek">
-                                                <i class="bi bi-chevron-left"></i>
-                                            </button>
-                                            <div class="form-control text-center">
-                                                @($"{WeekStartDate:dd.MM.yyyy} - {WeekEndDate:dd.MM.yyyy}")
-                                            </div>
-                                            <button class="btn btn-outline-secondary" @onclick="NextWeek">
-                                                <i class="bi bi-chevron-right"></i>
-                                            </button>
-                                        </div>
+                                    <button class="date-nav-btn" @onclick="NextDay">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                break;
+                            case "week":
+                                <div class="date-nav-container">
+                                    <button class="date-nav-btn" @onclick="PreviousWeek">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </button>
+                                    <div class="date-display">
+                                        @($"{WeekStartDate:dd.MM.yyyy} - {WeekEndDate:dd.MM.yyyy}")
                                     </div>
-                                    break;
-                                case "month":
-                                    <div class="form-group">
-                                        <label>Vyberte mesic:</label>
-                                        <div class="d-flex">
-                                            <button class="btn btn-outline-secondary" @onclick="PreviousMonth">
-                                                <i class="bi bi-chevron-left"></i>
-                                            </button>
-                                            <div class="form-control text-center">
-                                                @(new DateTime(SelectedDate.Year, SelectedDate.Month, 1).ToString("MMMM yyyy", CultureInfo.CreateSpecificCulture("cs-CZ")))
-                                            </div>
-                                            <button class="btn btn-outline-secondary" @onclick="NextMonth">
-                                                <i class="bi bi-chevron-right"></i>
-                                            </button>
-                                        </div>
+                                    <button class="date-nav-btn" @onclick="NextWeek">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                break;
+                            case "month":
+                                <div class="date-nav-container">
+                                    <button class="date-nav-btn" @onclick="PreviousMonth">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </button>
+                                    <div class="date-display">
+                                        @(new DateTime(SelectedDate.Year, SelectedDate.Month, 1).ToString("MMMM yyyy", CultureInfo.CreateSpecificCulture("cs-CZ")))
                                     </div>
-                                    break;
-                                case "year":
-                                    <div class="form-group">
-                                        <label>Vyberte rok:</label>
-                                        <div class="d-flex">
-                                            <button class="btn btn-outline-secondary" @onclick="PreviousYear">
-                                                <i class="bi bi-chevron-left"></i>
-                                            </button>
-                                            <div class="form-control text-center">
-                                                @SelectedDate.Year
-                                            </div>
-                                            <button class="btn btn-outline-secondary" @onclick="NextYear">
-                                                <i class="bi bi-chevron-right"></i>
-                                            </button>
-                                        </div>
+                                    <button class="date-nav-btn" @onclick="NextMonth">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                break;
+                            case "year":
+                                <div class="date-nav-container">
+                                    <button class="date-nav-btn" @onclick="PreviousYear">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </button>
+                                    <div class="date-display">
+                                        @SelectedDate.Year
                                     </div>
-                                    break;
-                            }
-                        </div>
-                        <div class="col-md-6">
-                            <!-- Odstraníme statistiku odsud, protože jsme ji přesunuli do hlavičky -->
-                        </div>
+                                    <button class="date-nav-btn" @onclick="NextYear">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                break;
+                        }
                     </div>
 
                     @if (IsLoading)
@@ -113,7 +103,29 @@
                     }
                     else if (TemperatureData?.Count > 0)
                     {
-                        <div id="temperature-chart" style="height: 400px;"></div>
+                        <div class="chart-container mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Teplotní graf</h5>
+                                <div class="temperature-summary">
+                                    <span class="badge text-bg-info me-2">Min: @TemperatureSummary.Min.ToString("F1") °C</span>
+                                    <span class="badge text-bg-warning me-2">Avg: @TemperatureSummary.Avg.ToString("F1") °C</span>
+                                    <span class="badge text-bg-danger">Max: @TemperatureSummary.Max.ToString("F1") °C</span>
+                                </div>
+                            </div>
+                            <div id="temperature-chart" style="height: 400px;"></div>
+                        </div>
+
+                        <div class="chart-container mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Graf vlhkosti</h5>
+                                <div class="humidity-summary">
+                                    <span class="badge text-bg-info me-2">Min: @HumiditySummary.Min.ToString("F1") %</span>
+                                    <span class="badge text-bg-warning me-2">Avg: @HumiditySummary.Avg.ToString("F1") %</span>
+                                    <span class="badge text-bg-danger">Max: @HumiditySummary.Max.ToString("F1") %</span>
+                                </div>
+                            </div>
+                            <div id="humidity-chart" style="height: 400px;"></div>
+                        </div>
                     }
                     else
                     {
@@ -127,6 +139,101 @@
     </div>
 </div>
 
+<style>
+    /* Styly pro přepínače období */
+    .period-tabs {
+        display: flex;
+        margin-bottom: 1rem;
+        border-radius: 0.25rem;
+        overflow: hidden;
+        background-color: #f8f9fa;
+    }
+    
+    .period-btn {
+        flex: 1;
+        border: none;
+        padding: 0.75rem 0.5rem;
+        background-color: transparent;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .period-btn i {
+        font-size: 1.1rem;
+    }
+    
+    .period-btn.active {
+        background-color: #ff8c00;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .period-btn:hover:not(.active) {
+        background-color: #e9ecef;
+    }
+    
+    /* Styly pro výběr data */
+    .date-nav-container {
+        display: flex;
+        align-items: center;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .date-display {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem 1rem;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        margin: 0 0.5rem;
+        font-weight: 500;
+    }
+    
+    .date-nav-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        color: #495057;
+        transition: all 0.2s ease;
+    }
+    
+    .date-nav-btn:hover {
+        background-color: #e9ecef;
+    }
+    
+    .date-input {
+        border: none;
+        text-align: center;
+        padding: 0;
+        height: auto;
+    }
+    
+    /* Responzivní úpravy */
+    @@media (max-width: 576px) {
+        .period-btn {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .date-display {
+            font-size: 0.9rem;
+            padding: 0.5rem;
+        }
+    }
+</style>
+
 @code {
     private string SelectedPeriod = "day";
     private DateTime SelectedDate = DateTime.Today;
@@ -138,6 +245,7 @@
 
     private record TemperatureSummaryData(float Min, float Avg, float Max);
     private TemperatureSummaryData TemperatureSummary = new(0, 0, 0);
+    private TemperatureSummaryData HumiditySummary = new(0, 0, 0);
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,31 +265,59 @@
     {
         try
         {
-            // Nejprve ověříme, zda existuje DOM element pro graf
-            var elementExists = await JSRuntime.InvokeAsync<bool>("eval", 
+            // Nejprve ověříme, zda existuje DOM element pro graf teploty
+            var tempElementExists = await JSRuntime.InvokeAsync<bool>("eval", 
                 "document.getElementById('temperature-chart') !== null");
             
-            if (!elementExists)
+            if (tempElementExists)
             {
-                Logger.LogWarning("Element grafu 'temperature-chart' nenalezen, graf nebude vykreslen");
-                return;
+                // Připravíme data pro teplotní graf
+                var categories = TemperatureData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                var minTemperatureData = TemperatureData.Select(d => d.MinTemperature).ToArray();
+                var avgTemperatureData = TemperatureData.Select(d => d.AvgTemperature).ToArray();
+                var maxTemperatureData = TemperatureData.Select(d => d.MaxTemperature).ToArray();
+
+                Logger.LogInformation("Vykresluji teplotní graf s {Count} body", categories.Length);
+                
+                // Zavoláme funkci pro vykreslení teplotního grafu
+                await JSRuntime.InvokeVoidAsync("renderTemperatureChart", 
+                    "temperature-chart", 
+                    categories, 
+                    minTemperatureData, 
+                    avgTemperatureData, 
+                    maxTemperatureData);
             }
-
-            // Připravíme data pro graf
-            var categories = TemperatureData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
-            var minTemperatureData = TemperatureData.Select(d => d.MinTemperature).ToArray();
-            var avgTemperatureData = TemperatureData.Select(d => d.AvgTemperature).ToArray();
-            var maxTemperatureData = TemperatureData.Select(d => d.MaxTemperature).ToArray();
-
-            Logger.LogInformation("Vykresluji graf s {Count} body", categories.Length);
+            else
+            {
+                Logger.LogWarning("Element grafu 'temperature-chart' nenalezen, teplotní graf nebude vykreslen");
+            }
             
-            // Zavoláme funkci pro vykreslení grafu
-            await JSRuntime.InvokeVoidAsync("renderTemperatureChart", 
-                "temperature-chart", 
-                categories, 
-                minTemperatureData, 
-                avgTemperatureData, 
-                maxTemperatureData);
+            // Pak ověříme, zda existuje DOM element pro graf vlhkosti
+            var humidityElementExists = await JSRuntime.InvokeAsync<bool>("eval", 
+                "document.getElementById('humidity-chart') !== null");
+                
+            if (humidityElementExists)
+            {
+                // Připravíme data pro graf vlhkosti
+                var categories = TemperatureData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                var minHumidityData = TemperatureData.Select(d => d.MinHumidity).ToArray();
+                var avgHumidityData = TemperatureData.Select(d => d.AvgHumidity).ToArray();
+                var maxHumidityData = TemperatureData.Select(d => d.MaxHumidity).ToArray();
+
+                Logger.LogInformation("Vykresluji graf vlhkosti s {Count} body", categories.Length);
+                
+                // Zavoláme funkci pro vykreslení grafu vlhkosti
+                await JSRuntime.InvokeVoidAsync("renderHumidityChart", 
+                    "humidity-chart", 
+                    categories, 
+                    minHumidityData, 
+                    avgHumidityData, 
+                    maxHumidityData);
+            }
+            else
+            {
+                Logger.LogWarning("Element grafu 'humidity-chart' nenalezen, graf vlhkosti nebude vykreslen");
+            }
         }
         catch (Exception ex)
         {
@@ -251,6 +387,24 @@
                 {
                     TemperatureSummary = new TemperatureSummaryData(0, 0, 0);
                 }
+
+                // Počítání statistik pro vlhkost
+                var validMinHumidity = TemperatureData.Where(d => d.MinHumidity.HasValue).Select(d => d.MinHumidity.Value).ToList();
+                var validAvgHumidity = TemperatureData.Where(d => d.AvgHumidity.HasValue).Select(d => d.AvgHumidity.Value).ToList();
+                var validMaxHumidity = TemperatureData.Where(d => d.MaxHumidity.HasValue).Select(d => d.MaxHumidity.Value).ToList();
+                
+                if (validMinHumidity.Any() && validAvgHumidity.Any() && validMaxHumidity.Any())
+                {
+                    HumiditySummary = new TemperatureSummaryData(
+                        validMinHumidity.Min(),
+                        validAvgHumidity.Average(),
+                        validMaxHumidity.Max()
+                    );
+                }
+                else
+                {
+                    HumiditySummary = new TemperatureSummaryData(0, 0, 0);
+                }
                 
                 Logger.LogInformation("Načteno {Count} záznamů pro období {Period}", TemperatureData.Count, SelectedPeriod);
                 ChartNeedsRendering = true;
@@ -258,6 +412,7 @@
             else
             {
                 TemperatureSummary = new TemperatureSummaryData(0, 0, 0);
+                HumiditySummary = new TemperatureSummaryData(0, 0, 0);
                 Logger.LogWarning("Nebyla načtena žádná data pro období {Period}", SelectedPeriod);
             }
         }
@@ -298,6 +453,20 @@
     private Task ChangePeriodMonth() => ChangePeriod("month");
     
     private Task ChangePeriodYear() => ChangePeriod("year");
+
+    // Nová metoda pro posun o den zpět
+    private async Task PreviousDay()
+    {
+        SelectedDate = SelectedDate.AddDays(-1);
+        await RefreshData();
+    }
+
+    // Nová metoda pro posun o den vpřed
+    private async Task NextDay()
+    {
+        SelectedDate = SelectedDate.AddDays(1);
+        await RefreshData();
+    }
 
     private async Task PreviousWeek()
     {

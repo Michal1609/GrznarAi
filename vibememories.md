@@ -2150,3 +2150,37 @@ V rámci dalšího vylepšení stránky MeteoTrends byla upravena implementace z
 - Výpočet hodnot v C# poskytuje lepší typovou kontrolu a možnost využití LINQ pro agregační funkce
 
 Tato úprava zajišťuje konzistentnější a uživatelsky přívětivější zobrazení statistických hodnot v grafech MeteoTrends. Změna je součástí průběžných vylepšení uživatelského rozhraní a vizuálního rozložení meteorologických grafů v aplikaci.
+
+## Přidání grafu vlhkosti k teplotním datům v MeteoTrends
+
+Pro lepší vizualizaci meteorologických dat byla stránka MeteoTrends rozšířena o dodatečný graf pro sledování vlhkosti:
+
+### Implementované změny
+
+1. **Rozšíření třídy TemperatureDataPoint**
+   - Přidání vlastností `MinHumidity`, `AvgHumidity` a `MaxHumidity` pro uchování údajů o vlhkosti
+   - Všechny metody v `TemperatureHistoryService` byly upraveny, aby agregovaly a zpracovávaly data o vlhkosti
+
+2. **Přidání JavaScript komponenty pro vlhkost**
+   - Vytvoření nového souboru `wwwroot/js/meteo/humidity-chart.js`
+   - Implementace funkce `renderHumidityChart` analogické k existující funkci pro teplotní graf
+   - Konfigurace specifická pro zobrazení vlhkosti (jednotky %, rozsah 0-100%, atd.)
+
+3. **Přepracování adresářové struktury**
+   - Všechny JavaScript soubory související s meteo grafy byly přesunuty do dedikované složky `wwwroot/js/meteo/`
+   - Teplotní graf přejmenován z `apexcharts-wrapper.js` na `temperature-chart.js`
+
+4. **Aktualizace komponenty MeteoTrends.razor**
+   - Přidání druhého grafu pro zobrazení hodnot vlhkosti
+   - Implementace vlastnosti `HumiditySummary` pro uchování statistických hodnot
+   - Úprava metody `RenderChartAsync()` pro vykreslení obou grafů nezávisle
+
+5. **Vylepšení zpracování dat**
+   - Statistiky pro vlhkost (Min, Avg, Max) se zobrazují v barevných štítcích nad grafem
+   - Oba grafy reagují na změny období (den, týden, měsíc, rok) a aktualizují se s novými daty
+
+### Výhody nového řešení
+- Uživatelé mohou nyní sledovat korelaci mezi teplotou a vlhkostí ve stejném časovém období
+- Oddělené grafy umožňují lepší čitelnost a analýzu obou datových sad
+- Jednotná vizuální identita a chování mezi oběma grafy
+- Efektivní znovupoužití kódu díky podobné struktuře komponent

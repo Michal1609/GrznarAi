@@ -15,6 +15,9 @@ namespace GrznarAi.Web.Services.Weather
         public float? MinTemperature { get; set; }
         public float? AvgTemperature { get; set; }
         public float? MaxTemperature { get; set; }
+        public float? MinHumidity { get; set; }
+        public float? AvgHumidity { get; set; }
+        public float? MaxHumidity { get; set; }
     }
 
     public interface ITemperatureHistoryService
@@ -100,7 +103,10 @@ namespace GrznarAi.Web.Services.Weather
                     g.Key.Hour,
                     MinTemperature = g.Min(x => x.TemperatureOut),
                     AvgTemperature = g.Average(x => x.TemperatureOut),
-                    MaxTemperature = g.Max(x => x.TemperatureOut)
+                    MaxTemperature = g.Max(x => x.TemperatureOut),
+                    MinHumidity = g.Min(x => x.HumidityOut),
+                    AvgHumidity = g.Average(x => x.HumidityOut),
+                    MaxHumidity = g.Max(x => x.HumidityOut)
                 })
                 .OrderBy(d => d.Year)
                 .ThenBy(d => d.Month)
@@ -122,7 +128,10 @@ namespace GrznarAi.Web.Services.Weather
                     DisplayTime = localDate.ToString("HH:00"),
                     MinTemperature = d.MinTemperature,
                     AvgTemperature = d.AvgTemperature,
-                    MaxTemperature = d.MaxTemperature
+                    MaxTemperature = d.MaxTemperature,
+                    MinHumidity = d.MinHumidity,
+                    AvgHumidity = d.AvgHumidity,
+                    MaxHumidity = d.MaxHumidity
                 };
             }).ToList();
             
@@ -154,7 +163,8 @@ namespace GrznarAi.Web.Services.Weather
             var localData = weatherData.Select(h => new 
             {
                 LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
-                h.TemperatureOut
+                h.TemperatureOut,
+                h.HumidityOut
             }).ToList();
             
             // Seskupíme podle lokálních dnů
@@ -172,7 +182,10 @@ namespace GrznarAi.Web.Services.Weather
                     g.Key.Day,
                     MinTemperature = g.Min(x => x.TemperatureOut),
                     AvgTemperature = g.Average(x => x.TemperatureOut),
-                    MaxTemperature = g.Max(x => x.TemperatureOut)
+                    MaxTemperature = g.Max(x => x.TemperatureOut),
+                    MinHumidity = g.Min(x => x.HumidityOut),
+                    AvgHumidity = g.Average(x => x.HumidityOut),
+                    MaxHumidity = g.Max(x => x.HumidityOut)
                 })
                 .OrderBy(d => d.Year)
                 .ThenBy(d => d.Month)
@@ -186,7 +199,10 @@ namespace GrznarAi.Web.Services.Weather
                 DisplayTime = new DateTime(d.Year, d.Month, d.Day).ToString("dd.MM"),
                 MinTemperature = d.MinTemperature,
                 AvgTemperature = d.AvgTemperature,
-                MaxTemperature = d.MaxTemperature
+                MaxTemperature = d.MaxTemperature,
+                MinHumidity = d.MinHumidity,
+                AvgHumidity = d.AvgHumidity,
+                MaxHumidity = d.MaxHumidity
             }).ToList();
             
             _logger.LogInformation("GetDailyTemperatureDataAsync - Načteno {Count} denních záznamů", result.Count);
@@ -239,6 +255,9 @@ namespace GrznarAi.Web.Services.Weather
                     var minTemp = weatherData.Min(x => x.TemperatureOut);
                     var avgTemp = weatherData.Average(x => x.TemperatureOut);
                     var maxTemp = weatherData.Max(x => x.TemperatureOut);
+                    var minHumidity = weatherData.Min(x => x.HumidityOut);
+                    var avgHumidity = weatherData.Average(x => x.HumidityOut);
+                    var maxHumidity = weatherData.Max(x => x.HumidityOut);
                     
                     result.Add(new TemperatureDataPoint
                     {
@@ -246,7 +265,10 @@ namespace GrznarAi.Web.Services.Weather
                         DisplayTime = $"{weekStart:dd.MM} - {weekEnd:dd.MM}",
                         MinTemperature = minTemp,
                         AvgTemperature = avgTemp,
-                        MaxTemperature = maxTemp
+                        MaxTemperature = maxTemp,
+                        MinHumidity = minHumidity,
+                        AvgHumidity = avgHumidity,
+                        MaxHumidity = maxHumidity
                     });
                     _logger.LogInformation("GetWeeklyTemperatureDataAsync - Data pro týden byla načtena");
                 }
@@ -288,7 +310,8 @@ namespace GrznarAi.Web.Services.Weather
             var localData = weatherData.Select(h => new 
             {
                 LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
-                h.TemperatureOut
+                h.TemperatureOut,
+                h.HumidityOut
             }).ToList();
             
             // Seskupíme podle lokálních měsíců
@@ -304,7 +327,10 @@ namespace GrznarAi.Web.Services.Weather
                     g.Key.Month,
                     MinTemperature = g.Min(x => x.TemperatureOut),
                     AvgTemperature = g.Average(x => x.TemperatureOut),
-                    MaxTemperature = g.Max(x => x.TemperatureOut)
+                    MaxTemperature = g.Max(x => x.TemperatureOut),
+                    MinHumidity = g.Min(x => x.HumidityOut),
+                    AvgHumidity = g.Average(x => x.HumidityOut),
+                    MaxHumidity = g.Max(x => x.HumidityOut)
                 })
                 .OrderBy(d => d.Year)
                 .ThenBy(d => d.Month)
@@ -317,7 +343,10 @@ namespace GrznarAi.Web.Services.Weather
                 DisplayTime = new DateTime(d.Year, d.Month, 1).ToString("MM.yyyy"),
                 MinTemperature = d.MinTemperature,
                 AvgTemperature = d.AvgTemperature,
-                MaxTemperature = d.MaxTemperature
+                MaxTemperature = d.MaxTemperature,
+                MinHumidity = d.MinHumidity,
+                AvgHumidity = d.AvgHumidity,
+                MaxHumidity = d.MaxHumidity
             }).ToList();
             
             _logger.LogInformation("GetMonthlyTemperatureDataAsync - Načteno {Count} měsíčních záznamů", result.Count);

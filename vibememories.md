@@ -1607,7 +1607,7 @@ Na stránce `/meteo/trends` byl implementován interaktivní teplotní graf pomo
 * **Aktualizace knihovny:** Při aktualizaci ApexCharts na novou verzi je potřeba aktualizovat CDN URL v `MainLayout.razor`.
 * **Přidání nových grafů:** Pro přidání nových typů grafů je potřeba vytvořit novou funkci v `apexcharts-integration.js` a příslušnou metodu pro přípravu dat v Blazor komponentě.
 
-## Mechanismus MeteoTrends grafů 
+## Mechanismus MeteoTrendů grafů 
 
 ### Přehled implementace grafů na stránce MeteoTrends
 
@@ -1992,3 +1992,114 @@ catch (Exception ex)
 ```
 
 Tyto optimalizace výrazně snížily spotřebu paměti při načítání meteorologických dat, zlepšily stabilitu aplikace a poskytly lepší uživatelskou zkušenost při řešení chyb a problémů.
+
+# Project Documentation - GrznarAI
+
+## Meteo Trends Page
+
+The MeteoTrends page (/meteo/trends) shows temperature and other weather metrics history in various time periods (day, week, month, year) using interactive ApexCharts graphs.
+
+### Features:
+- Temperature display with MIN, AVG, MAX values
+- Period switching (day, week, month, year)
+- Date navigation controls
+- Summary statistics display
+- Responsive design
+
+### Implementation:
+- Uses ApexCharts loaded from CDN (https://cdn.jsdelivr.net/npm/apexcharts)
+- Data is loaded from database via dedicated service classes
+- The page supports different aggregation types:
+  - Hourly data for day view
+  - Daily data for week and month views
+  - Monthly data for year view
+- Uses @rendermode InteractiveServer to enable interactive features
+- All buttons and interactive elements require InteractiveServer mode to function
+- Handles UTC to local time conversion for all data points from the database 
+- Proper two-stage data processing for compatibility with EF Core
+- Responsive layout with specific optimizations for mobile view 
+- The chart automatically adapts its title and axis labels based on the selected period
+
+### Services:
+- TemperatureHistoryService - provides temperature data with aggregation and has no time limitations
+  - Converts UTC database timestamps to local time in all data retrieval methods
+  - Uses TimeZoneInfo.Local to automatically detect user's time zone
+  - Implements proper error handling and logging
+
+### JavaScript:
+- apexcharts-wrapper.js - custom wrapper for ApexCharts functionality
+  - Automatically detects data type and adjusts chart appearance
+  - Handles responsive layout changes
+  - Provides tooltips and interactive features
+
+### Data Structure:
+- TemperatureDataPoint class includes:
+  - Date (DateTime)
+  - DisplayTime (formatted string for display)
+  - MinTemperature (float?)
+  - AvgTemperature (float?)
+  - MaxTemperature (float?)
+
+## Oprava chyby "Cannot read properties of null (reading 'parentNode')" v MeteoTrends
+
+### Popis problému
+Stránka MeteoTrends (/meteo/trends) vykazovala chybu při přepínání mezi obdobími (den, týden, měsíc, rok). Chyba se projevovala v konzoli prohlížeče jako:
+
+```
+TypeError: Cannot read properties of null (reading 'parentNode')
+    at t.value (https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js:14:40895)
+    at window.renderTemperatureChart (https://localhost:7075/js/apexcharts-wrapper.js:9:33)
+```
+
+Tato chyba nastávala, když ApexCharts se pokoušel přistoupit k rodičovskému elementu, který nebyl k dispozici - typicky při přepínání mezi různými obdobími, kdy byl element grafu již odstraněn z DOM nebo ještě nebyl inicializován.
+
+### Implementované řešení
+
+1. **Úprava JavaScript funkce renderTemperatureChart v apexcharts-wrapper.js:**
+   - Přidána kontrola existence elementu grafu před jeho použitím
+   - Implementováno bezpečné ničení předchozího grafu pomocí try-catch
+   - Přidána inicializace `window.temperatureChart = null` po zničení grafu
+   - Přidán try-catch blok kolem celého vykreslování grafu pro lepší zachycení chyb
+
+2. **Vylepšení Blazor komponenty MeteoTrends.razor:**
+   - Přidána vlastnost `ChartNeedsRendering` pro řízení procesu vykreslování grafu
+   - Implementována verifikace existence DOM elementu před vykreslením grafu
+   - Přidáno explicitní ničení grafu pomocí JavaScript před změnou období
+   - Optimalizována frekvence překreslování grafu - pouze když jsou data aktualizována
+   - Přepínací metody pro období změněny z `async Task` na `Task` s explicitním čekáním pouze na `ChangePeriod`
+
+3. **Vylepšené řízení chyb:**
+   - Přidáno logování pomocí `ILogger` místo `Console.WriteLine`
+   - Implementována kontrola podmínky, kdy by mohlo dojít k více simultánním vykreslením grafu
+   - Přidána ochrana proti kaskádovému selhání při změně období
+
+Tyto změny zajišťují, že ApexCharts nyní bezpečně detekuje chybějící elementy a správně čistí předchozí instance grafů před vytvořením nových. Komponenta je nyní stabilnější při přepínání období a předchází chybám souvisejícím s manipulací DOM elementů.
+
+## Modernizace statistik v MeteoTrends
+
+V komponentě MeteoTrends (/meteo/trends) byla vylepšena vizualizace statistických hodnot (Min, Avg, Max) teplotních údajů:
+
+### Původní implementace
+- Statistiky byly zobrazeny v samostatné kartě pod výběrem období
+- Každá hodnota byla zobrazena ve vlastním sloupci s popisným textem
+
+### Nová implementace
+- Statistické hodnoty jsou nyní zobrazeny přímo v záhlaví karty vedle názvu grafu a tlačítek pro výběr období
+- Pro zobrazení hodnot se používají barevné "badges" (štítky) odpovídající barvám v grafu:
+  - Min: modrý štítek (`text-bg-info`)
+  - Avg: žlutý/oranžový štítek (`text-bg-warning`)
+  - Max: červený štítek (`text-bg-danger`)
+- Hodnoty jsou formátovány na 1 desetinné místo s jednotkou °C
+
+### Výhody nového řešení
+- Efektivnější využití prostoru v UI - statistiky jsou nyní kompaktní a viditelné ihned
+- Vizuální konzistence s grafem - barvy štítků odpovídají barvám křivek v grafu
+- Lepší přístupnost - důležité hodnoty jsou viditelné bez nutnosti posouvání stránky
+
+### Technické detaily implementace
+- Použití flexbox layoutu pro zarovnání prvků v hlavičce (`d-flex justify-content-between align-items-center`)
+- Implementace pomocí Bootstrap 5 badge komponent s barevnými variantami
+- Responzivní design - štítky se správně přizpůsobují na všech zařízeních
+- Podmíněné zobrazení - statistiky se zobrazí pouze pokud existují data (`@if (TemperatureData?.Count > 0)`)
+
+Tato úprava je součástí širších snah o modernizaci a zlepšení použitelnosti meterologických komponent v aplikaci.

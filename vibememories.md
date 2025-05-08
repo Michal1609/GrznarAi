@@ -1997,394 +1997,70 @@ Tyto optimalizace výrazně snížily spotřebu paměti při načítání meteor
 
 ## Meteo Trends Page
 
-The MeteoTrends page (/meteo/trends) shows temperature and other weather metrics history in various time periods (day, week, month, year) using interactive ApexCharts graphs.
-
-### Features:
-- Temperature display with MIN, AVG, MAX values
-- Period switching (day, week, month, year)
-- Date navigation controls
-- Summary statistics display
-- Responsive design
-
-### Implementation:
-- Uses ApexCharts loaded from CDN (https://cdn.jsdelivr.net/npm/apexcharts)
-- Data is loaded from database via dedicated service classes
-- The page supports different aggregation types:
-  - Hourly data for day view
-  - Daily data for week and month views
-  - Monthly data for year view
-- Uses @rendermode InteractiveServer to enable interactive features
-- All buttons and interactive elements require InteractiveServer mode to function
-- Handles UTC to local time conversion for all data points from the database 
-- Proper two-stage data processing for compatibility with EF Core
-- Responsive layout with specific optimizations for mobile view 
-- The chart automatically adapts its title and axis labels based on the selected period
-
-### Services:
-- TemperatureHistoryService - provides temperature data with aggregation and has no time limitations
-  - Converts UTC database timestamps to local time in all data retrieval methods
-  - Uses TimeZoneInfo.Local to automatically detect user's time zone
-  - Implements proper error handling and logging
-
-### JavaScript:
-- Reorganizovaná struktura JavaScript souborů pro lepší organizaci kódu:
-  - Vytvořena dedikovaná složka `wwwroot/js/meteo/` pro JavaScript související s meteorologickými grafy
-  - `temperature-chart.js` - přesunut z původního `apexcharts-wrapper.js`, specializovaný na teplotní grafy
-  - Připraveno pro další typy grafů, které budou mít vlastní JavaScript soubory ve stejné složce
-- Funkcionalita grafu:
-  - Automatická detekce typu dat a přizpůsobení vzhledu grafu
-  - Responzivní layout pro různé velikosti obrazovky
-  - Tooltips a interaktivní funkce pro lepší uživatelskou zkušenost
-  - Optimalizované zpracování chyb při změně období
-
-### Data Structure:
-- TemperatureDataPoint class includes:
-  - Date (DateTime)
-  - DisplayTime (formatted string for display)
-  - MinTemperature (float?)
-  - AvgTemperature (float?)
-  - MaxTemperature (float?)
-
-## Oprava chyby "Cannot read properties of null (reading 'parentNode')" v MeteoTrends
-
-### Popis problému
-Stránka MeteoTrends (/meteo/trends) vykazovala chybu při přepínání mezi obdobími (den, týden, měsíc, rok). Chyba se projevovala v konzoli prohlížeče jako:
-
-```
-TypeError: Cannot read properties of null (reading 'parentNode')
-    at t.value (https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js:14:40895)
-    at window.renderTemperatureChart (https://localhost:7075/js/meteo/temperature-chart.js:9:33)
-```
-
-Tato chyba nastávala, když ApexCharts se pokoušel přistoupit k rodičovskému elementu, který nebyl k dispozici - typicky při přepínání mezi různými obdobími, kdy byl element grafu již odstraněn z DOM nebo ještě nebyl inicializován.
-
-### Implementované řešení
-
-1. **Úprava JavaScript funkce renderTemperatureChart v temperature-chart.js:**
-   - Přidána kontrola existence elementu grafu před jeho použitím
-   - Implementováno bezpečné ničení předchozího grafu pomocí try-catch
-   - Přidána inicializace `window.temperatureChart = null` po zničení grafu
-   - Přidán try-catch blok kolem celého vykreslování grafu pro lepší zachycení chyb
-
-2. **Vylepšení Blazor komponenty MeteoTrends.razor:**
-   - Přidána vlastnost `ChartNeedsRendering` pro řízení procesu vykreslování grafu
-   - Implementována verifikace existence DOM elementu před vykreslením grafu
-   - Přidáno explicitní ničení grafu pomocí JavaScript před změnou období
-   - Optimalizována frekvence překreslování grafu - pouze když jsou data aktualizována
-   - Přepínací metody pro období změněny z `async Task` na `Task` s explicitním čekáním pouze na `ChangePeriod`
-
-3. **Vylepšené řízení chyb:**
-   - Přidáno logování pomocí `ILogger` místo `Console.WriteLine`
-   - Implementována kontrola podmínky, kdy by mohlo dojít k více simultánním vykreslením grafu
-   - Přidána ochrana proti kaskádovému selhání při změně období
-
-Tyto změny zajišťují, že ApexCharts nyní bezpečně detekuje chybějící elementy a správně čistí předchozí instance grafů před vytvořením nových. Komponenta je nyní stabilnější při přepínání období a předchází chybám souvisejícím s manipulací DOM elementů.
-
-## Modernizace statistik v MeteoTrends
-
-V komponentě MeteoTrends (/meteo/trends) byla vylepšena vizualizace statistických hodnot (Min, Avg, Max) teplotních údajů:
-
-### Původní implementace
-- Statistiky byly zobrazeny v samostatné kartě pod výběrem období
-- Každá hodnota byla zobrazena ve vlastním sloupci s popisným textem
-
-### Nová implementace
-- Statistické hodnoty jsou nyní zobrazeny přímo v záhlaví karty vedle názvu grafu a tlačítek pro výběr období
-- Pro zobrazení hodnot se používají barevné "badges" (štítky) odpovídající barvám v grafu:
-  - Min: modrý štítek (`text-bg-info`)
-  - Avg: žlutý/oranžový štítek (`text-bg-warning`)
-  - Max: červený štítek (`text-bg-danger`)
-- Hodnoty jsou formátovány na 1 desetinné místo s jednotkou °C
-
-### Výhody nového řešení
-- Efektivnější využití prostoru v UI - statistiky jsou nyní kompaktní a viditelné ihned
-- Vizuální konzistence s grafem - barvy štítků odpovídají barvám křivek v grafu
-- Lepší přístupnost - důležité hodnoty jsou viditelné bez nutnosti posouvání stránky
-
-### Technické detaily implementace
-- Použití flexbox layoutu pro zarovnání prvků v hlavičce (`d-flex justify-content-between align-items-center`)
-- Implementace pomocí Bootstrap 5 badge komponent s barevnými variantami
-- Responzivní design - štítky se správně přizpůsobují na všech zařízeních
-- Podmíněné zobrazení - statistiky se zobrazí pouze pokud existují data (`@if (TemperatureData?.Count > 0)`)
-
-Tato úprava je součástí širších snah o modernizaci a zlepšení použitelnosti meterologických komponent v aplikaci.
-
-## Přemístění statistik v grafu MeteoTrends nad graf
-
-V rámci dalšího vylepšení stránky MeteoTrends byla upravena implementace zobrazení statistických hodnot (Min, Avg, Max) v teplotním grafu:
-
-### Původní implementace
-- Statistické hodnoty byly nejprve implementovány jako podtitulek (`subtitle`) grafu přímo nad ovládacími prvky grafu
-- Později byly změněny na samostatný DOM element vytvořený JavaScriptem a vložený pod graf
-- V obou případech byly hodnoty generovány v JavaScriptu, což znesnadňovalo jejich přizpůsobení nebo lokalizaci
-
-### Nová implementace
-- Statistické hodnoty jsou nyní zobrazeny přímo v HTML šabloně nad grafem
-- Používá se struktura podobná ostatním grafům v aplikaci:
-  ```html
-  <div class="chart-container mb-4">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5>Teplotní graf</h5>
-          <div class="temperature-summary">
-              <span class="badge text-bg-info me-2">Min: @TemperatureSummary.Min.ToString("F1") °C</span>
-              <span class="badge text-bg-warning me-2">Avg: @TemperatureSummary.Avg.ToString("F1") °C</span>
-              <span class="badge text-bg-danger">Max: @TemperatureSummary.Max.ToString("F1") °C</span>
-          </div>
-      </div>
-      <div id="temperature-chart" style="height: 400px;"></div>
-  </div>
-  ```
-- Z JavaScript kódu byla odstraněna funkce pro přidávání statistických hodnot, statistiky jsou nyní plně spravovány v Blazor komponentě
-
-### Výhody nového řešení
-- Konzistentnější vzhled s ostatními grafy v aplikaci
-- Lepší integrace s Blazor modelem (hodnoty v `@TemperatureSummary`)
-- Možnost snadnější lokalizace textů (např. "Min:", "Avg:", "Max:")
-- Statistiky jsou vždy viditelné nad grafem, což zlepšuje uživatelskou zkušenost
-- Zjednodušení JavaScript kódu a odstranění zbytečné logiky
-
-### Technické detaily
-- Výpočet statistických hodnot probíhá v C# kódu v rámci `RefreshData()` metody
-- Pro formátování hodnot se používá `ToString("F1")` (jedno desetinné místo)
-- Statistiky jsou nyní součástí stejného DOM elementu jako graf, což zjednodušuje manipulaci s celým grafem
-- Výpočet hodnot v C# poskytuje lepší typovou kontrolu a možnost využití LINQ pro agregační funkce
-
-Tato úprava zajišťuje konzistentnější a uživatelsky přívětivější zobrazení statistických hodnot v grafech MeteoTrends. Změna je součástí průběžných vylepšení uživatelského rozhraní a vizuálního rozložení meteorologických grafů v aplikaci.
-
-## Přidání grafu vlhkosti k teplotním datům v MeteoTrends
-
-Pro lepší vizualizaci meteorologických dat byla stránka MeteoTrends rozšířena o dodatečný graf pro sledování vlhkosti:
-
-### Implementované změny
-
-1. **Rozšíření třídy TemperatureDataPoint**
-   - Přidání vlastností `MinHumidity`, `AvgHumidity` a `MaxHumidity` pro uchování údajů o vlhkosti
-   - Všechny metody v `TemperatureHistoryService` byly upraveny, aby agregovaly a zpracovávaly data o vlhkosti
-
-2. **Přidání JavaScript komponenty pro vlhkost**
-   - Vytvoření nového souboru `wwwroot/js/meteo/humidity-chart.js`
-   - Implementace funkce `renderHumidityChart` analogické k existující funkci pro teplotní graf
-   - Konfigurace specifická pro zobrazení vlhkosti (jednotky %, rozsah 0-100%, atd.)
-
-3. **Přepracování adresářové struktury**
-   - Všechny JavaScript soubory související s meteo grafy byly přesunuty do dedikované složky `wwwroot/js/meteo/`
-   - Teplotní graf přejmenován z `apexcharts-wrapper.js` na `temperature-chart.js`
-
-4. **Aktualizace komponenty MeteoTrends.razor**
-   - Přidání druhého grafu pro zobrazení hodnot vlhkosti
-   - Implementace vlastnosti `HumiditySummary` pro uchování statistických hodnot
-   - Úprava metody `RenderChartAsync()` pro vykreslení obou grafů nezávisle
-
-5. **Vylepšení zpracování dat**
-   - Statistiky pro vlhkost (Min, Avg, Max) se zobrazují v barevných štítcích nad grafem
-   - Oba grafy reagují na změny období (den, týden, měsíc, rok) a aktualizují se s novými daty
-
-### Výhody nového řešení
-- Uživatelé mohou nyní sledovat korelaci mezi teplotou a vlhkostí ve stejném časovém období
-- Oddělené grafy umožňují lepší čitelnost a analýzu obou datových sad
-- Jednotná vizuální identita a chování mezi oběma grafy
-- Efektivní znovupoužití kódu díky podobné struktuře komponent
-
-## Rozdělení služeb pro data o teplotě a vlhkosti v MeteoTrends
-
-### Změna architektury zpracování dat pro MeteoTrends
-
-V rámci zlepšení architektury aplikace byly provedeny následující změny v modulu pro zobrazování meteo trendů (`/meteo/trends`):
-
-1. **Oddělení datových služeb:**
-   * Původní služba `TemperatureHistoryService` zpracovávala jak data o teplotě, tak o vlhkosti vzduchu
-   * Nově byly vytvořeny specializované služby pro každý typ dat:
-     * `TemperatureHistoryService` - zpracovává pouze data o teplotě
-     * `HumidityHistoryService` - zpracovává pouze data o vlhkosti vzduchu
-
-2. **Nové datové třídy a rozhraní:**
-   * `TemperatureDataPoint` - obsahuje časové údaje a hodnoty teploty (min, avg, max)
-   * `HumidityDataPoint` - obsahuje časové údaje a hodnoty vlhkosti (min, avg, max)
-   * `ITemperatureHistoryService` - rozhraní pro získávání dat o teplotě
-   * `IHumidityHistoryService` - rozhraní pro získávání dat o vlhkosti
-
-3. **Úprava komponenty MeteoTrends.razor:**
-   * Komponenta nyní používá obě specializované služby
-   * Implementuje oddělené načítání dat pro teplotu a vlhkost
-   * Rendering grafů zobrazuje data ze správných zdrojů
-
-4. **Výhody nové architektury:**
-   * Dodržení SRP (Single Responsibility Principle) - každá služba má svůj jasný účel
-   * Jednodušší údržba a rozšiřování kódu
-   * Lepší možnosti testování
-   * Flexibilita při budoucím přidávání dalších meteo dat (srážky, tlak, atd.)
-
-### Technické detaily implementace
-
-1. **Registrace služeb v DI kontejneru (Program.cs):**
-   ```csharp
-   builder.Services.AddScoped<ITemperatureHistoryService, TemperatureHistoryService>();
-   builder.Services.AddScoped<IHumidityHistoryService, HumidityHistoryService>();
-   ```
-
-2. **Struktura datových modelů:**
-   ```csharp
-   // Pro teplotu
-   public class TemperatureDataPoint
-   {
-       public DateTime Date { get; set; }
-       public object DisplayTime { get; set; }
-       public float? MinTemperature { get; set; }
-       public float? AvgTemperature { get; set; }
-       public float? MaxTemperature { get; set; }
-   }
-
-   // Pro vlhkost
-   public class HumidityDataPoint
-   {
-       public DateTime Date { get; set; }
-       public object DisplayTime { get; set; }
-       public float? MinHumidity { get; set; }
-       public float? AvgHumidity { get; set; }
-       public float? MaxHumidity { get; set; }
-   }
-   ```
-
-3. **Změny v MeteoTrends.razor:**
-   * Injektování obou služeb:
-     ```csharp
-     @inject ITemperatureHistoryService TemperatureHistoryService
-     @inject IHumidityHistoryService HumidityHistoryService
-     ```
-   * Příprava dvou kolekcí dat:
-     ```csharp
-     private List<TemperatureDataPoint> TemperatureData = new();
-     private List<HumidityDataPoint> HumidityData = new();
-     ```
-   * Paralelní načítání dat:
-     ```csharp
-     // Načtení dat o teplotě
-     TemperatureData = await TemperatureHistoryService.GetTemperatureDataAsync(startDate, endDate, aggregationType);
-     
-     // Načtení dat o vlhkosti
-     HumidityData = await HumidityHistoryService.GetHumidityDataAsync(startDate, endDate, aggregationType);
-     ```
-
-4. **Zobrazení grafů:**
-   ```csharp
-   // Pro teplotní graf
-   var categories = TemperatureData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
-   var minTemperatureData = TemperatureData.Select(d => d.MinTemperature).ToArray();
-   var avgTemperatureData = TemperatureData.Select(d => d.AvgTemperature).ToArray();
-   var maxTemperatureData = TemperatureData.Select(d => d.MaxTemperature).ToArray();
-
-   // Pro graf vlhkosti
-   var categories = HumidityData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
-   var minHumidityData = HumidityData.Select(d => d.MinHumidity).ToArray();
-   var avgHumidityData = HumidityData.Select(d => d.AvgHumidity).ToArray();
-   var maxHumidityData = HumidityData.Select(d => d.MaxHumidity).ToArray();
-   ```
-
-Tato architektonická změna přispívá k lepší organizaci kódu a jasněji rozděluje zodpovědnosti mezi jednotlivé komponenty systému.
-
-## Implementace grafu atmosférického tlaku na stránce Meteo Trends
-
-Stránka Meteo Trends byla rozšířena o graf atmosférického tlaku, který doplňuje existující grafy teploty a vlhkosti. Implementace zahrnovala:
-
-### 1. Vytvoření služby pro atmosférický tlak
-- Byla vytvořena nová služba `PressureHistoryService` implementující rozhraní `IPressureHistoryService`
-- Služba poskytuje data o atmosférickém tlaku ve stejném formátu jako existující služby pro teplotu a vlhkost
-- Implementovány metody pro agregaci dat podle různých časových období (hodinově, denně, měsíčně)
-- Data jsou získávána z existující tabulky `WeatherHistory`, sloupec `Bar`, který už obsahoval informace o atmosférickém tlaku
-
-```csharp
-public class PressureDataPoint
-{
-    public DateTime Date { get; set; }
-    public object DisplayTime { get; set; }
-    public float? MinPressure { get; set; }
-    public float? AvgPressure { get; set; }
-    public float? MaxPressure { get; set; }
-}
-
-public interface IPressureHistoryService
-{
-    Task<List<PressureDataPoint>> GetPressureDataAsync(DateTime startDate, DateTime endDate, string aggregationType);
-}
-```
-
-### 2. Registrace služby v DI kontejneru
-- Služba byla zaregistrována v Program.cs
-
-```csharp
-builder.Services.AddScoped<IPressureHistoryService, PressureHistoryService>();
-```
-
-### 3. Implementace JavaScriptové funkce pro vykreslení grafu
-- Byl vytvořen nový soubor `wwwroot/js/meteo/pressure-chart.js`
-- Implementována funkce `renderPressureChart` podle vzoru existujících grafů
-- Funkce využívá knihovnu ApexCharts pro vykreslení grafu
-- Hodnoty jsou zobrazeny v jednotkách hPa (hektopascal)
-
-```javascript
-window.renderPressureChart = function (elementId, categories, minData, avgData, maxData) {
-    // ... kód pro vykreslení grafu s ApexCharts ...
-    // Konfigurace specifická pro atmosférický tlak
-    yaxis: {
-        title: {
-            text: 'Tlak (hPa)'
-        },
-        min: function(min) { return Math.floor(min - 1); },
-        max: function(max) { return Math.ceil(max + 1); },
-        decimalsInFloat: 1
-    },
-    tooltip: {
-        shared: true,
-        intersect: false,
-        y: {
-            formatter: function (value) { 
-                if (value === null || value === undefined) {
-                    return 'N/A';
-                }
-                return value.toFixed(1) + ' hPa'; 
-            }
-        }
-    },
-    // ... další konfigurace ...
-};
-```
-
-### 4. Úprava stránky MeteoTrends.razor
-- Přidání injectu nové služby `@inject IPressureHistoryService PressureHistoryService`
-- Rozšíření datového modelu o property pro data tlaku `private List<PressureDataPoint> PressureData = new();`
-- Přidání nové property pro souhrnné statistiky tlaku `private TemperatureSummaryData PressureSummary = new(0, 0, 0);`
-- Implementace načítání dat o tlaku v metodě `RefreshData()` 
-- Rozšíření metody `RenderChartAsync()` o volání JavaScriptové funkce pro vykreslení grafu tlaku
-- Přidání UI prvků pro zobrazení grafu a statistik tlaku
-
-```html
-<div class="chart-container mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5>Graf atmosférického tlaku</h5>
-        <div class="pressure-summary">
-            <span class="badge text-bg-info me-2">Min: @PressureSummary.Min.ToString("F1") hPa</span>
-            <span class="badge text-bg-warning me-2">Avg: @PressureSummary.Avg.ToString("F1") hPa</span>
-            <span class="badge text-bg-danger">Max: @PressureSummary.Max.ToString("F1") hPa</span>
-        </div>
-    </div>
-    <div id="pressure-chart" style="height: 400px;"></div>
-</div>
-```
-
-### 5. Úprava App.razor
-- Přidání skriptové reference na nový JavaScript soubor pro graf tlaku
-
-```html
-<!-- Meteo charts -->
-<script src="js/meteo/temperature-chart.js"></script>
-<script src="js/meteo/humidity-chart.js"></script>
-<script src="js/meteo/pressure-chart.js"></script>
-```
-
-### Výsledek
-Nyní stránka Meteo Trends zobrazuje tři grafy:
-1. Graf teploty
-2. Graf vlhkosti
-3. Graf atmosférického tlaku
-
-Každý graf zobrazuje minimální, průměrné a maximální hodnoty pro vybrané časové období (den, týden, měsíc, rok). Uživatel může přepínat mezi různými časovými obdobími a procházet historická data.
+The MeteoTrends page (/meteo/trends) shows historical weather data in graphical format. It provides:
+
+- Temperature graph (min, avg, max)
+- Humidity graph (min, avg, max)
+- Pressure graph (min, avg, max)
+- Wind speed graph (min, avg, max, gusts)
+
+The page allows filtering data by different time periods:
+- Day
+- Week
+- Month
+- Year
+
+Data is loaded from the database table WeatherHistory using specialized services:
+- TemperatureHistoryService
+- HumidityHistoryService
+- PressureHistoryService
+- WindSpeedHistoryService
+
+Each service provides data aggregation for different time periods, converting UTC database times to local times.
+
+The graphs are rendered using ApexCharts through JavaScript functions in the meteo directory:
+- temperature-chart.js
+- humidity-chart.js
+- pressure-chart.js
+- wind-speed-chart.js
+
+The wind speed graph shows four lines:
+- Minimum wind speed (from WindSpeedAvg)
+- Average wind speed (from WindSpeedAvg)
+- Maximum wind speed (from WindSpeedAvg)
+- Wind gusts (from WindSpeedHi)
+
+## Meteo Trends
+
+The MeteoTrends page (/meteo/trends) shows historical weather data in graphical format. It provides:
+
+- Temperature graph (min, avg, max)
+- Humidity graph (min, avg, max)
+- Pressure graph (min, avg, max)
+- Wind speed graph (min, avg, max, gusts)
+
+The page allows filtering data by different time periods:
+- Day
+- Week
+- Month
+- Year
+
+Data is loaded from the database table WeatherHistory using specialized services:
+- TemperatureHistoryService
+- HumidityHistoryService
+- PressureHistoryService
+- WindSpeedHistoryService
+
+Each service provides data aggregation for different time periods, converting UTC database times to local times.
+
+The graphs are rendered using ApexCharts through JavaScript functions in the meteo directory:
+- temperature-chart.js
+- humidity-chart.js
+- pressure-chart.js
+- wind-speed-chart.js
+
+The wind speed graph shows four lines:
+- Minimum wind speed (from WindSpeedAvg)
+- Average wind speed (from WindSpeedAvg)
+- Maximum wind speed (from WindSpeedAvg)
+- Wind gusts (from WindSpeedHi)

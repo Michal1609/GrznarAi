@@ -27,7 +27,7 @@ namespace GrznarAi.Web.Api.Middleware
         public async Task InvokeAsync(HttpContext context, IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             // Ověřujeme pouze požadavky směřující na API endpointy
-            if (!context.Request.Path.StartsWithSegments("/api"))
+            if (!context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/api/testtimer"))
             {
                 await _next(context);
                 return;

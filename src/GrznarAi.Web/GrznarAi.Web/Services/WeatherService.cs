@@ -91,17 +91,7 @@ namespace GrznarAi.Web.Services
                 
                 // Volat API
                 using var httpClient = _httpClientFactory.CreateClient();
-                var response = await httpClient.GetAsync(url);
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogError($"Chyba při volání Weather API. StatusCode: {response.StatusCode}");
-                    return null;
-                }
-                
-                // Deserializovat odpověď
-                var content = await response.Content.ReadAsStringAsync();
-                var weatherData = JsonSerializer.Deserialize<WeatherData>(content, _jsonOptions);
+                var weatherData = await httpClient.GetFromJsonAsync<WeatherData>(url, _jsonOptions);               
                 
                 if (weatherData?.Code != 0)
                 {

@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using Serilog;
 
 namespace GrznarAi.Web.Services
 {
@@ -19,7 +21,9 @@ namespace GrznarAi.Web.Services
         private readonly ILogger<BackgroundTaskService> _logger;
         private readonly List<(string Name, Func<IServiceProvider, Task> Action, TimeSpan Interval, DateTime LastRun)> _tasks;
         private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(1); // Kontrola co minutu
-        
+        private readonly Serilog.Core.Logger _log = new LoggerConfiguration().WriteTo.File("logGC.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
         // Veřejná property pro zapnutí/vypnutí stahování dat z Ecowitt API
         public bool IsEcowittDataFetchEnabled 
         { 
@@ -172,6 +176,30 @@ namespace GrznarAi.Web.Services
                             _tasks[i] = (task.Name, task.Action, task.Interval, now);
                         }
                     }
+                }
+
+                if (DateTime.UtcNow.Minute % 5 == 0)
+                {
+
+                    var proc = Process.GetCurrentProcess();
+                    var gc = GC.GetGCMemoryInfo();
+
+                    _log.Information("""
+                    📦 Paměťový stav:
+                    - PrivateMemory: {0} MB
+                    - WorkingSet: {1} MB
+                    - GCHeap: {2} MB
+                    - Total Committed by GC: {3} MB
+                    - GC HighMemoryLoadThreshold: {4}%
+                    - GC Allocation Budget: {5} MB
+
+                    """,
+                        proc.PrivateMemorySize64 / 1024 / 1024,
+                        proc.WorkingSet64 / 1024 / 1024,
+                        GC.GetTotalMemory(false) / 1024 / 1024,
+                        gc.TotalCommittedBytes / 1024 / 1024,
+                        gc.HighMemoryLoadThresholdBytes * 100.0 / gc.TotalAvailableMemoryBytes,
+                        gc.MemoryLoadBytes / 1024 / 1024);
                 }
 
                 // Počkáme na další kontrolu

@@ -181,6 +181,28 @@ else
     app.UseHsts();
 }
 
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    log.Warning("Aplikace se vypíná.");
+});
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    log.Information("Aplikace se spustila.");
+});
+
+AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+{
+    var ex = args.ExceptionObject as Exception;
+    log.Fatal(ex, "Nezachycená výjimka na úrovni AppDomain");
+};
+
+TaskScheduler.UnobservedTaskException += (sender, args) =>
+{
+    log.Fatal(args.Exception, "Nezachycená výjimka v tasku");
+    args.SetObserved();
+};
+
 log.Information("UseHttpsRedirection...");
 app.UseHttpsRedirection();
 

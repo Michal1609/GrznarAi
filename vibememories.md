@@ -2027,10 +2027,15 @@ The MeteoTrends page (/meteo/trends) shows temperature and other weather metrics
   - Implements proper error handling and logging
 
 ### JavaScript:
-- apexcharts-wrapper.js - custom wrapper for ApexCharts functionality
-  - Automatically detects data type and adjusts chart appearance
-  - Handles responsive layout changes
-  - Provides tooltips and interactive features
+- Reorganizovaná struktura JavaScript souborů pro lepší organizaci kódu:
+  - Vytvořena dedikovaná složka `wwwroot/js/meteo/` pro JavaScript související s meteorologickými grafy
+  - `temperature-chart.js` - přesunut z původního `apexcharts-wrapper.js`, specializovaný na teplotní grafy
+  - Připraveno pro další typy grafů, které budou mít vlastní JavaScript soubory ve stejné složce
+- Funkcionalita grafu:
+  - Automatická detekce typu dat a přizpůsobení vzhledu grafu
+  - Responzivní layout pro různé velikosti obrazovky
+  - Tooltips a interaktivní funkce pro lepší uživatelskou zkušenost
+  - Optimalizované zpracování chyb při změně období
 
 ### Data Structure:
 - TemperatureDataPoint class includes:
@@ -2048,14 +2053,14 @@ Stránka MeteoTrends (/meteo/trends) vykazovala chybu při přepínání mezi ob
 ```
 TypeError: Cannot read properties of null (reading 'parentNode')
     at t.value (https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js:14:40895)
-    at window.renderTemperatureChart (https://localhost:7075/js/apexcharts-wrapper.js:9:33)
+    at window.renderTemperatureChart (https://localhost:7075/js/meteo/temperature-chart.js:9:33)
 ```
 
 Tato chyba nastávala, když ApexCharts se pokoušel přistoupit k rodičovskému elementu, který nebyl k dispozici - typicky při přepínání mezi různými obdobími, kdy byl element grafu již odstraněn z DOM nebo ještě nebyl inicializován.
 
 ### Implementované řešení
 
-1. **Úprava JavaScript funkce renderTemperatureChart v apexcharts-wrapper.js:**
+1. **Úprava JavaScript funkce renderTemperatureChart v temperature-chart.js:**
    - Přidána kontrola existence elementu grafu před jeho použitím
    - Implementováno bezpečné ničení předchozího grafu pomocí try-catch
    - Přidána inicializace `window.temperatureChart = null` po zničení grafu
@@ -2103,3 +2108,45 @@ V komponentě MeteoTrends (/meteo/trends) byla vylepšena vizualizace statistick
 - Podmíněné zobrazení - statistiky se zobrazí pouze pokud existují data (`@if (TemperatureData?.Count > 0)`)
 
 Tato úprava je součástí širších snah o modernizaci a zlepšení použitelnosti meterologických komponent v aplikaci.
+
+## Přemístění statistik v grafu MeteoTrends nad graf
+
+V rámci dalšího vylepšení stránky MeteoTrends byla upravena implementace zobrazení statistických hodnot (Min, Avg, Max) v teplotním grafu:
+
+### Původní implementace
+- Statistické hodnoty byly nejprve implementovány jako podtitulek (`subtitle`) grafu přímo nad ovládacími prvky grafu
+- Později byly změněny na samostatný DOM element vytvořený JavaScriptem a vložený pod graf
+- V obou případech byly hodnoty generovány v JavaScriptu, což znesnadňovalo jejich přizpůsobení nebo lokalizaci
+
+### Nová implementace
+- Statistické hodnoty jsou nyní zobrazeny přímo v HTML šabloně nad grafem
+- Používá se struktura podobná ostatním grafům v aplikaci:
+  ```html
+  <div class="chart-container mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5>Teplotní graf</h5>
+          <div class="temperature-summary">
+              <span class="badge text-bg-info me-2">Min: @TemperatureSummary.Min.ToString("F1") °C</span>
+              <span class="badge text-bg-warning me-2">Avg: @TemperatureSummary.Avg.ToString("F1") °C</span>
+              <span class="badge text-bg-danger">Max: @TemperatureSummary.Max.ToString("F1") °C</span>
+          </div>
+      </div>
+      <div id="temperature-chart" style="height: 400px;"></div>
+  </div>
+  ```
+- Z JavaScript kódu byla odstraněna funkce pro přidávání statistických hodnot, statistiky jsou nyní plně spravovány v Blazor komponentě
+
+### Výhody nového řešení
+- Konzistentnější vzhled s ostatními grafy v aplikaci
+- Lepší integrace s Blazor modelem (hodnoty v `@TemperatureSummary`)
+- Možnost snadnější lokalizace textů (např. "Min:", "Avg:", "Max:")
+- Statistiky jsou vždy viditelné nad grafem, což zlepšuje uživatelskou zkušenost
+- Zjednodušení JavaScript kódu a odstranění zbytečné logiky
+
+### Technické detaily
+- Výpočet statistických hodnot probíhá v C# kódu v rámci `RefreshData()` metody
+- Pro formátování hodnot se používá `ToString("F1")` (jedno desetinné místo)
+- Statistiky jsou nyní součástí stejného DOM elementu jako graf, což zjednodušuje manipulaci s celým grafem
+- Výpočet hodnot v C# poskytuje lepší typovou kontrolu a možnost využití LINQ pro agregační funkce
+
+Tato úprava zajišťuje konzistentnější a uživatelsky přívětivější zobrazení statistických hodnot v grafech MeteoTrends. Změna je součástí průběžných vylepšení uživatelského rozhraní a vizuálního rozložení meteorologických grafů v aplikaci.

@@ -2107,3 +2107,57 @@ Problém byl v tom, že přestože služba byla správně vytvořena, nebyla reg
 1. Přidání registrace služby do `Program.cs` spolu s ostatními meteorologickými službami:
    ```csharp
    builder.Services.AddScoped<IWindDirectionHistoryService, WindDirectionHistoryService>();
+```
+
+## Implementace grafu slunečního záření na stránce /meteo/trends
+
+Na stránku meteorologických trendů byl přidán nový graf pro sluneční záření s následujícími funkcemi:
+
+### 1. Datový model a služba
+- Vytvořena nová třída `SolarRadiationDataPoint` s vlastnostmi pro minimální, průměrné a maximální sluneční záření a dobu slunečního svitu
+- Implementováno rozhraní `ISolarRadiationHistoryService` a třída `SolarRadiationHistoryService` pro načítání dat z databáze
+- Přidána konstanta `SUNSHINE_THRESHOLD = 120.0f` pro určení hodnoty slunečního záření, od které se počítá doba slunečního svitu
+- Implementovány metody agregace pro různá časová období (hodina, den, měsíc)
+
+### 2. Vizualizace dat
+- Implementován kombinovaný graf pro sluneční záření a slunečního svitu
+- Dvě čáry (spline) zobrazují průměrné a maximální sluneční záření ve W/m²
+- Sloupcový graf (bar) zobrazuje počet hodin slunečního svitu v daném období
+- Přidáno shrnutí statistik s minimální, průměrnou a maximální hodnotou záření a celkovou dobou slunečního svitu
+
+### 3. Integrace s existující aplikací
+- Služba `SolarRadiationHistoryService` registrována v DI kontejneru v souboru Program.cs
+- Přidání načítání dat v metodě `RefreshData()` komponenty MeteoTrends.razor
+- Rozšíření metody `RenderChartAsync()` o vykreslení grafu slunečního záření
+- Upravena metoda `ChangePeriod()` pro zničení grafu při změně časového období
+
+### 4. Calculation of Sunshine Hours
+Doba slunečního svitu je vypočítána na základě počtu měření, která přesahují práh 120 W/m²:
+- Pro hodinovou agregaci: (počet záznamů nad prahem / celkový počet záznamů)
+- Pro denní agregaci: (počet záznamů nad prahem / celkový počet záznamů) * 24
+- Pro měsíční agregaci: (počet záznamů nad prahem / celkový počet záznamů) * počet dní v měsíci * 24
+
+Tato nová funkce umožňuje uživatelům sledovat intenzitu slunečního záření a dobu slunečního svitu v různých časových obdobích, což je užitečné pro analýzu energetického potenciálu a životních podmínek rostlin.
+
+## Oprava grafu slunečního záření na stránce /meteo/trends
+
+Na stránce meteorologických trendů byl opraven graf slunečního záření s následujícími úpravami:
+
+### 1. Vytvoření samostatného JavaScript souboru
+- Vytvořen dedicated soubor `/js/meteo/solar-radiation-chart.js` s implementací funkce `renderSolarRadiationChart`
+- Odstraněn společný soubor apexcharts-integration.js, který způsoboval konflikty
+
+### 2. Oprava vizualizace dat
+- Opraveno zobrazení hodin slunečního svitu jako sloupcový graf (typ 'column')
+- Správná konfigurace typů grafů pro jednotlivé série (['line', 'line', 'column'])
+- Úprava tooltipů podle typu dat (W/m² pro sluneční záření, hodiny pro sluneční svit)
+- Použití dvou os Y - primární pro záření (W/m²) a sekundární pro hodiny slunečního svitu
+
+### 3. Řešení chyby
+- Opraven problém "Cannot read properties of undefined (reading 'length')" v apexcharts.min.js
+- Zavedena validace vstupních parametrů a výchozí hodnoty pro chybějící parametry
+- Vylepšené ošetření chyb při inicializaci a vykreslování grafu
+- Opraveno nastavení sekundární osy Y s použitím správné property `yaxis: 2` pro třetí sérii dat
+- Vyřešen problém "Cannot read properties of undefined (reading 'min')" ošetřením null hodnot v datech
+- Přidány definice minimálních hodnot pro osy Y a další bezpečnostní prvky pro zobrazení grafu
+- Vylepšena diagnostika pomocí podrobnějšího logování počtu datových bodů

@@ -128,6 +128,7 @@ builder.Services.AddScoped<IPressureHistoryService, PressureHistoryService>();
 builder.Services.AddScoped<IWindSpeedHistoryService, WindSpeedHistoryService>();
 builder.Services.AddScoped<IWindDirectionHistoryService, WindDirectionHistoryService>();
 builder.Services.AddScoped<IRainHistoryService, RainHistoryService>();
+builder.Services.AddScoped<ISolarRadiationHistoryService, SolarRadiationHistoryService>();
 
 // Registrujeme IMeteoHistoryService - upraveno pro podporu kešování
 builder.Services.AddScoped<IMeteoHistoryService, MeteoHistoryService>();

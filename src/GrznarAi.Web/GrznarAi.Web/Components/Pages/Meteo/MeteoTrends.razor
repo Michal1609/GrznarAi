@@ -8,6 +8,7 @@
 @inject IWindSpeedHistoryService WindSpeedHistoryService
 @inject IWindDirectionHistoryService WindDirectionHistoryService
 @inject IRainHistoryService RainHistoryService
+@inject ISolarRadiationHistoryService SolarRadiationHistoryService
 @inject ILogger<MeteoTrends> Logger
 @inject IJSRuntime JSRuntime
 
@@ -169,6 +170,19 @@
                         
                         <div class="chart-container mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Graf slunečního záření</h5>
+                                <div class="solar-radiation-summary">
+                                    <span class="badge text-bg-info me-2">Min: @(SolarRadiationSummary.Min.ToString("F1")) W/m²</span>
+                                    <span class="badge text-bg-warning me-2">Avg: @(SolarRadiationSummary.Avg.ToString("F1")) W/m²</span>
+                                    <span class="badge text-bg-danger me-2">Max: @(SolarRadiationSummary.Max.ToString("F1")) W/m²</span>
+                                    <span class="badge text-bg-success">Slunečno: @(SunshineHoursTotal.ToString("F1")) h</span>
+                                </div>
+                            </div>
+                            <div id="solar-radiation-chart" style="height: 400px;"></div>
+                        </div>
+                        
+                        <div class="chart-container mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5>Graf směru větru (stupně)</h5>
                                 <div class="wind-direction-summary">
                                     <span class="badge text-bg-primary me-2">Avg: @(WindDirectionAvg.ToString("F1"))°</span>
@@ -300,6 +314,7 @@
     private List<WindSpeedDataPoint> WindSpeedData = new();
     private List<WindDirectionDataPoint> WindDirectionData = new();
     private List<RainDataPoint> RainData = new();
+    private List<SolarRadiationDataPoint> SolarRadiationData = new();
     private bool IsLoading = false;
     private bool ChartNeedsRendering = false;
 
@@ -308,9 +323,11 @@
     private TemperatureSummaryData HumiditySummary = new(0, 0, 0);
     private TemperatureSummaryData PressureSummary = new(0, 0, 0);
     private TemperatureSummaryData WindSpeedSummary = new(0, 0, 0);
+    private TemperatureSummaryData SolarRadiationSummary = new(0, 0, 0);
     private float GustSpeedSummary = 0;
     private float WindDirectionAvg = 0;
     private float RainMax = 0;
+    private float SunshineHoursTotal = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -321,7 +338,7 @@
     {
         if (firstRender)
         {
-            // Načteme JavaScript soubor pro graf směru větru
+            // Načteme JavaScript soubory pro grafy
             await JSRuntime.InvokeVoidAsync("eval", 
                 @"
                     var script = document.createElement('script');
@@ -331,11 +348,16 @@
                     var rainScript = document.createElement('script');
                     rainScript.src = '/js/meteo/rain-chart.js';
                     document.head.appendChild(rainScript);
+                    
+                    var solarRadiationScript = document.createElement('script');
+                    solarRadiationScript.src = '/js/meteo/solar-radiation-chart.js';
+                    document.head.appendChild(solarRadiationScript);
                 ");
         }
         
         if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0 && 
-            PressureData?.Count > 0 && WindSpeedData?.Count > 0 && WindDirectionData?.Count > 0 && RainData?.Count > 0)
+            PressureData?.Count > 0 && WindSpeedData?.Count > 0 && WindDirectionData?.Count > 0 && 
+            RainData?.Count > 0 && SolarRadiationData?.Count > 0)
         {
             ChartNeedsRendering = false;
             await RenderChartAsync();
@@ -501,6 +523,38 @@
             {
                 Logger.LogWarning("Element grafu 'rain-chart' nenalezen, graf srážek nebude vykreslen");
             }
+            
+            // Ověříme, zda existuje DOM element pro graf slunečního záření
+            var solarRadiationElementExists = await JSRuntime.InvokeAsync<bool>("eval", 
+                "document.getElementById('solar-radiation-chart') !== null");
+                
+            if (solarRadiationElementExists)
+            {
+                // Připravíme data pro graf slunečního záření
+                var categories = SolarRadiationData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                
+                // Zajistíme, že všechny hodnoty budou validní (ne null)
+                var avgSolarRadiationData = SolarRadiationData.Select(d => d.AvgSolarRadiation.HasValue ? d.AvgSolarRadiation.Value : 0).ToArray();
+                var maxSolarRadiationData = SolarRadiationData.Select(d => d.MaxSolarRadiation.HasValue ? d.MaxSolarRadiation.Value : 0).ToArray();
+                var sunshineHoursData = SolarRadiationData.Select(d => d.SunshineHours.HasValue ? d.SunshineHours.Value : 0).ToArray();
+
+                Logger.LogInformation("Vykresluji graf slunečního záření s {Count} body, data avg: {AvgCount}, max: {MaxCount}, sunshine: {SunshineCount}", 
+                    categories.Length, avgSolarRadiationData.Length, maxSolarRadiationData.Length, sunshineHoursData.Length);
+                
+                // Zavoláme funkci pro vykreslení grafu slunečního záření
+                await JSRuntime.InvokeVoidAsync("renderSolarRadiationChart", 
+                    "solar-radiation-chart", 
+                    categories, 
+                    new object[] { avgSolarRadiationData, maxSolarRadiationData, sunshineHoursData },
+                    new string[] { "Průměrné záření", "Maximální záření", "Hodiny slunečního svitu" },
+                    "Čas",
+                    "W/m²",
+                    new string[] { "line", "line", "column" });
+            }
+            else
+            {
+                Logger.LogWarning("Element grafu 'solar-radiation-chart' nenalezen, graf slunečního záření nebude vykreslen");
+            }
         }
         catch (Exception ex)
         {
@@ -567,6 +621,9 @@
             
             // Načtení dat o srážkách
             RainData = await RainHistoryService.GetRainDataAsync(startDate, endDate, aggregationType);
+            
+            // Načtení dat o slunečním záření
+            SolarRadiationData = await SolarRadiationHistoryService.GetSolarRadiationDataAsync(startDate, endDate, aggregationType);
             
             if (TemperatureData.Count > 0)
             {
@@ -729,8 +786,42 @@
                 Logger.LogWarning("Nebyla načtena žádná data srážek pro období {Period}", SelectedPeriod);
             }
             
+            if (SolarRadiationData.Count > 0)
+            {
+                // Počítání statistik pro sluneční záření
+                var validMinSolarRadiation = SolarRadiationData.Where(d => d.MinSolarRadiation.HasValue).Select(d => d.MinSolarRadiation.Value).ToList();
+                var validAvgSolarRadiation = SolarRadiationData.Where(d => d.AvgSolarRadiation.HasValue).Select(d => d.AvgSolarRadiation.Value).ToList();
+                var validMaxSolarRadiation = SolarRadiationData.Where(d => d.MaxSolarRadiation.HasValue).Select(d => d.MaxSolarRadiation.Value).ToList();
+                var validSunshineHours = SolarRadiationData.Where(d => d.SunshineHours.HasValue).Select(d => d.SunshineHours.Value).ToList();
+                
+                if (validMinSolarRadiation.Any() && validAvgSolarRadiation.Any() && validMaxSolarRadiation.Any())
+                {
+                    SolarRadiationSummary = new TemperatureSummaryData(
+                        validMinSolarRadiation.Min(),
+                        validAvgSolarRadiation.Average(),
+                        validMaxSolarRadiation.Max()
+                    );
+                    
+                    SunshineHoursTotal = validSunshineHours.Sum();
+                }
+                else
+                {
+                    SolarRadiationSummary = new TemperatureSummaryData(0, 0, 0);
+                    SunshineHoursTotal = 0;
+                }
+                
+                Logger.LogInformation("Načteno {Count} záznamů slunečního záření pro období {Period}", SolarRadiationData.Count, SelectedPeriod);
+            }
+            else
+            {
+                SolarRadiationSummary = new TemperatureSummaryData(0, 0, 0);
+                SunshineHoursTotal = 0;
+                Logger.LogWarning("Nebyla načtena žádná data slunečního záření pro období {Period}", SelectedPeriod);
+            }
+            
             ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0 && PressureData.Count > 0 && 
-                                 WindSpeedData.Count > 0 && WindDirectionData.Count > 0 && RainData.Count > 0;
+                                 WindSpeedData.Count > 0 && WindDirectionData.Count > 0 && RainData.Count > 0 && 
+                                 SolarRadiationData.Count > 0;
         }
         catch (Exception ex)
         {
@@ -755,6 +846,9 @@
             await JSRuntime.InvokeVoidAsync("eval", "if(window.humidityChart) { window.humidityChart.destroy(); window.humidityChart = null; }");
             await JSRuntime.InvokeVoidAsync("eval", "if(window.pressureChart) { window.pressureChart.destroy(); window.pressureChart = null; }");
             await JSRuntime.InvokeVoidAsync("eval", "if(window.windSpeedChart) { window.windSpeedChart.destroy(); window.windSpeedChart = null; }");
+            await JSRuntime.InvokeVoidAsync("eval", "if(window.windDirectionChart) { window.windDirectionChart.destroy(); window.windDirectionChart = null; }");
+            await JSRuntime.InvokeVoidAsync("eval", "if(window.rainChart) { window.rainChart.destroy(); window.rainChart = null; }");
+            await JSRuntime.InvokeVoidAsync("eval", "if(window.solarRadiationChart) { window.solarRadiationChart.destroy(); window.solarRadiationChart = null; }");
         }
         catch (Exception ex)
         {

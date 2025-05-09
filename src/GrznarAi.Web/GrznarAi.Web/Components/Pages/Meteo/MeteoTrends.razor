@@ -629,7 +629,7 @@
                 case "week":
                     startDate = WeekStartDate;
                     endDate = WeekEndDate.AddDays(1).AddSeconds(-1);
-                    aggregationType = "daily";
+                    aggregationType = "6hour";
                     break;
                 case "month":
                     startDate = new DateTime(SelectedDate.Year, SelectedDate.Month, 1);
@@ -648,7 +648,8 @@
                     break;
             }
 
-            Logger.LogInformation("Načítám data pro {Period} od {Start} do {End}", SelectedPeriod, startDate, endDate);
+            Logger.LogInformation("Načítám data pro {Period} od {Start} do {End} s agregací {Aggregation}", 
+                SelectedPeriod, startDate, endDate, aggregationType);
             
             // Načtení dat o teplotě
             TemperatureData = await TemperatureHistoryService.GetTemperatureDataAsync(startDate, endDate, aggregationType);

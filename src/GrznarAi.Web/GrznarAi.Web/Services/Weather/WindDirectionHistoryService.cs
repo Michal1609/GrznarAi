@@ -42,43 +42,27 @@ namespace GrznarAi.Web.Services.Weather
             _logger.LogInformation("GetWindDirectionDataAsync - Načítání dat směru větru: {StartDate} až {EndDate}, typ agregace: {AggregationType}", 
                 startDate, endDate, aggregationType);
 
-            try
-            {
-                // Konverze vstupních parametrů na UTC pro dotazy do databáze
-                DateTime startDateUtc = DateTime.SpecifyKind(startDate, DateTimeKind.Local).ToUniversalTime();
-                DateTime endDateUtc = DateTime.SpecifyKind(endDate, DateTimeKind.Local).ToUniversalTime();
+            // Konverze vstupních parametrů na UTC pro dotazy do databáze
+            DateTime startDateUtc = DateTime.SpecifyKind(startDate, DateTimeKind.Local).ToUniversalTime();
+            DateTime endDateUtc = DateTime.SpecifyKind(endDate, DateTimeKind.Local).ToUniversalTime();
 
-                _logger.LogInformation("GetWindDirectionDataAsync - Konvertované UTC časy: {StartDateUtc} až {EndDateUtc}", 
-                    startDateUtc, endDateUtc);
-                
-                using var context = await _contextFactory.CreateDbContextAsync();
-                
-                var result = new List<WindDirectionDataPoint>();
-                
-                switch (aggregationType.ToLower())
-                {
-                    case "hourly":
-                        result = await AggregateHourlyWindDirectionDataAsync(context, startDateUtc, endDateUtc);
-                        break;
-                    case "daily":
-                        result = await AggregateDailyWindDirectionDataAsync(context, startDateUtc, endDateUtc);
-                        break;
-                    case "monthly":
-                        result = await AggregateMonthlyWindDirectionDataAsync(context, startDateUtc, endDateUtc);
-                        break;
-                    default:
-                        _logger.LogWarning("Neznámý typ agregace: {AggregationType}, použije se hodinová agregace", aggregationType);
-                        result = await AggregateHourlyWindDirectionDataAsync(context, startDateUtc, endDateUtc);
-                        break;
-                }
-                
-                return result;
-            }
-            catch (Exception ex)
+            _logger.LogInformation("GetWindDirectionDataAsync - Konvertované UTC časy: {StartDateUtc} až {EndDateUtc}", 
+                startDateUtc, endDateUtc);
+            
+            using var context = await _contextFactory.CreateDbContextAsync();
+            
+            // Podle typu agregace zvolíme způsob, jakým budou data seskupena
+            var result = aggregationType switch
             {
-                _logger.LogError(ex, "Chyba při načítání dat směru větru: {Message}", ex.Message);
-                return new List<WindDirectionDataPoint>();
-            }
+                "hourly" => await AggregateHourlyWindDirectionDataAsync(context, startDateUtc, endDateUtc),
+                "6hour" => await Aggregate6HourWindDirectionDataAsync(context, startDateUtc, endDateUtc),
+                "daily" => await AggregateDailyWindDirectionDataAsync(context, startDateUtc, endDateUtc),
+                "weekly" => await AggregateWeeklyWindDirectionDataAsync(context, startDateUtc, endDateUtc),
+                "monthly" => await AggregateMonthlyWindDirectionDataAsync(context, startDateUtc, endDateUtc),
+                _ => await AggregateHourlyWindDirectionDataAsync(context, startDateUtc, endDateUtc)
+            };
+            
+            return result;
         }
 
         private async Task<List<WindDirectionDataPoint>> AggregateHourlyWindDirectionDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
@@ -180,6 +164,98 @@ namespace GrznarAi.Web.Services.Weather
                 })
                 .OrderBy(r => r.Date)
                 .ToList();
+
+            return result;
+        }
+
+        private async Task<List<WindDirectionDataPoint>> Aggregate6HourWindDirectionDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            // Načteme data a zpracujeme je na klientské straně
+            var data = await context.WeatherHistory
+                .Where(w => w.Date >= startDateUtc && w.Date <= endDateUtc && w.WindDirection.HasValue)
+                .ToListAsync();
+
+            // Nejprve konvertujeme UTC časy na lokální časy
+            var localData = data.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                h.WindDirection
+            }).ToList();
+
+            // Seskupíme data v paměti podle lokálního času a 6hodinových bloků
+            var result = localData
+                .GroupBy(w => new
+                {
+                    Year = w.LocalDate.Year,
+                    Month = w.LocalDate.Month,
+                    Day = w.LocalDate.Day,
+                    SixHourBlock = w.LocalDate.Hour / 6
+                })
+                .Select(g =>
+                {
+                    // Vypočítáme začátek 6hodinového bloku
+                    int startHour = g.Key.SixHourBlock * 6;
+                    var blockDate = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day, startHour, 0, 0);
+
+                    return new WindDirectionDataPoint
+                    {
+                        Date = blockDate,
+                        DisplayTime = $"{blockDate:dd.MM} {startHour:00}:00-{startHour+5:00}:59",
+                        // Pro směr větru můžeme použít průměr pro vizualizaci převládajícího směru v daném časovém úseku
+                        WindDirection = g.Average(w => w.WindDirection)
+                    };
+                })
+                .OrderBy(r => r.Date)
+                .ToList();
+
+            return result;
+        }
+
+        private async Task<List<WindDirectionDataPoint>> AggregateWeeklyWindDirectionDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            // Načteme data a zpracujeme je na klientské straně
+            var data = await context.WeatherHistory
+                .Where(w => w.Date >= startDateUtc && w.Date <= endDateUtc && w.WindDirection.HasValue)
+                .ToListAsync();
+
+            // Konverze UTC času zpět na lokální pro správné týdenní zobrazení
+            var startDateLocal = TimeZoneInfo.ConvertTimeFromUtc(startDateUtc, _localTimeZone);
+            var endDateLocal = TimeZoneInfo.ConvertTimeFromUtc(endDateUtc, _localTimeZone);
+            
+            // Pro týdenní agregaci vytvoříme vlastní logiku pro seskupení po týdnech
+            var result = new List<WindDirectionDataPoint>();
+            
+            // Připravíme kalendářní týdny v lokálním čase
+            var currentDate = startDateLocal.Date;
+            while (currentDate <= endDateLocal)
+            {
+                var weekStart = currentDate;
+                var weekEnd = weekStart.AddDays(6) > endDateLocal ? endDateLocal : weekStart.AddDays(6);
+
+                _logger.LogInformation("AggregateWeeklyWindDirectionDataAsync - Načítání dat pro týden: {WeekStart:dd.MM.yyyy} až {WeekEnd:dd.MM.yyyy}", 
+                    weekStart, weekEnd);
+                
+                // Konverze zpět na UTC pro dotaz do databáze
+                var weekStartUtc = DateTime.SpecifyKind(weekStart, DateTimeKind.Local).ToUniversalTime();
+                var weekEndUtc = DateTime.SpecifyKind(weekEnd.AddHours(23).AddMinutes(59).AddSeconds(59), DateTimeKind.Local).ToUniversalTime();
+
+                // Filtrujeme data pro tento týden
+                var weekData = data.Where(w => w.Date >= weekStartUtc && w.Date <= weekEndUtc).ToList();
+                    
+                if (weekData.Any())
+                {
+                    result.Add(new WindDirectionDataPoint
+                    {
+                        Date = weekStart,
+                        DisplayTime = $"{weekStart:dd.MM} - {weekEnd:dd.MM}",
+                        // Pro směr větru použijeme průměr
+                        WindDirection = weekData.Average(w => w.WindDirection)
+                    });
+                }
+                
+                // Posuneme se na další týden
+                currentDate = currentDate.AddDays(7);
+            }
 
             return result;
         }

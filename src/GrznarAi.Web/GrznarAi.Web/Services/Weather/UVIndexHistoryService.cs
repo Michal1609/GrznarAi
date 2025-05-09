@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace GrznarAi.Web.Services.Weather
 {
@@ -69,26 +70,18 @@ namespace GrznarAi.Web.Services.Weather
                     item.Date = TimeZoneInfo.ConvertTimeFromUtc(item.Date, _localTimeZone);
                 }
 
-                // Agregace dat podle zvoleného typu
-                var uvIndexData = new List<UVIndexDataPoint>();
-
-                switch (aggregationType.ToLower())
+                // Podle typu agregace zvolíme způsob, jakým budou data seskupena
+                var result = aggregationType switch
                 {
-                    case "hourly":
-                        uvIndexData = AggregateByHour(weatherData);
-                        break;
-                    case "daily":
-                        uvIndexData = AggregateByDay(weatherData);
-                        break;
-                    case "monthly":
-                        uvIndexData = await AggregateMonthlyUVIndexDataAsync(context, startDateUtc, endDateUtc);
-                        break;
-                    default:
-                        uvIndexData = AggregateByHour(weatherData);
-                        break;
-                }
+                    "hourly" => await GetHourlyUVIndexDataAsync(context, startDateUtc, endDateUtc),
+                    "6hour" => await Get6HourUVIndexDataAsync(context, startDateUtc, endDateUtc),
+                    "daily" => await GetDailyUVIndexDataAsync(context, startDateUtc, endDateUtc),
+                    "weekly" => await GetWeeklyUVIndexDataAsync(context, startDateUtc, endDateUtc),
+                    "monthly" => await GetMonthlyUVIndexDataAsync(context, startDateUtc, endDateUtc),
+                    _ => await GetHourlyUVIndexDataAsync(context, startDateUtc, endDateUtc)
+                };
 
-                return uvIndexData;
+                return result;
             }
             catch (Exception ex)
             {
@@ -162,6 +155,346 @@ namespace GrznarAi.Web.Services.Weather
                 .OrderBy(r => r.Date)
                 .ToList();
 
+            return result;
+        }
+
+        private async Task<List<UVIndexDataPoint>> GetHourlyUVIndexDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("GetHourlyUVIndexDataAsync - Začátek načítání hodinových dat UV indexu");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("GetHourlyUVIndexDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<UVIndexDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+                
+            // Nyní konvertujeme UTC časy na lokální časy
+            var localData = weatherData.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                UVIndex = h.Uvi ?? 0 // Oprava: použití Uvi místo UVIndex a zajištění nenulové hodnoty
+            }).ToList();
+            
+            // Vypočítáme hodinové bloky - 0-1, 1-2, ..., 23-24
+            var groupedData = localData
+                .GroupBy(h => new 
+                {
+                    Year = h.LocalDate.Year,
+                    Month = h.LocalDate.Month,
+                    Day = h.LocalDate.Day,
+                    Hour = h.LocalDate.Hour
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    g.Key.Hour,
+                    AvgUVIndex = g.Average(x => x.UVIndex),
+                    MaxUVIndex = g.Max(x => x.UVIndex)
+                })
+                .OrderBy(d => d.Year)
+                .ThenBy(d => d.Month)
+                .ThenBy(d => d.Day)
+                .ThenBy(d => d.Hour)
+                .ToList();
+
+            // Transformujeme agregovaná data na UVIndexDataPoint
+            var result = groupedData.Select(d =>
+            {
+                // Vypočítáme začátek hodinového bloku
+                int startHour = d.Hour;
+                var blockDate = new DateTime(d.Year, d.Month, d.Day, startHour, 0, 0);
+                
+                return new UVIndexDataPoint
+                {
+                    Date = blockDate,
+                    // Formát: DD.MM HH:00-HH:00
+                    DisplayTime = $"{blockDate:dd.MM} {startHour:00}:00-{startHour+1:00}:59",
+                    AvgUVIndex = (float)d.AvgUVIndex, // Explicitní přetypování na float
+                    MaxUVIndex = (float)d.MaxUVIndex  // Explicitní přetypování na float
+                };
+            }).ToList();
+            
+            _logger.LogInformation("GetHourlyUVIndexDataAsync - Načteno {Count} hodinových záznamů UV indexu", result.Count);
+            return result;
+        }
+
+        private async Task<List<UVIndexDataPoint>> Get6HourUVIndexDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("Get6HourUVIndexDataAsync - Začátek načítání 6hodinových dat UV indexu");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("Get6HourUVIndexDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<UVIndexDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+                
+            // Nyní konvertujeme UTC časy na lokální časy
+            var localData = weatherData.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                UVIndex = h.Uvi ?? 0 // Oprava: použití Uvi místo UVIndex a zajištění nenulové hodnoty
+            }).ToList();
+            
+            // Vypočítáme 6hodinové bloky - 0-5, 6-11, 12-17, 18-23
+            var groupedData = localData
+                .GroupBy(h => new 
+                {
+                    Year = h.LocalDate.Year,
+                    Month = h.LocalDate.Month,
+                    Day = h.LocalDate.Day,
+                    SixHourBlock = h.LocalDate.Hour / 6
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    g.Key.SixHourBlock,
+                    AvgUVIndex = g.Average(x => x.UVIndex),
+                    MaxUVIndex = g.Max(x => x.UVIndex)
+                })
+                .OrderBy(d => d.Year)
+                .ThenBy(d => d.Month)
+                .ThenBy(d => d.Day)
+                .ThenBy(d => d.SixHourBlock)
+                .ToList();
+
+            // Transformujeme agregovaná data na UVIndexDataPoint
+            var result = groupedData.Select(d =>
+            {
+                // Vypočítáme začátek 6hodinového bloku
+                int startHour = d.SixHourBlock * 6;
+                var blockDate = new DateTime(d.Year, d.Month, d.Day, startHour, 0, 0);
+                
+                return new UVIndexDataPoint
+                {
+                    Date = blockDate,
+                    // Formát: DD.MM HH:00-HH:00
+                    DisplayTime = $"{blockDate:dd.MM} {startHour:00}:00-{startHour+5:00}:59",
+                    AvgUVIndex = (float)d.AvgUVIndex, // Explicitní přetypování na float
+                    MaxUVIndex = (float)d.MaxUVIndex  // Explicitní přetypování na float
+                };
+            }).ToList();
+            
+            _logger.LogInformation("Get6HourUVIndexDataAsync - Načteno {Count} 6hodinových záznamů UV indexu", result.Count);
+            return result;
+        }
+
+        private async Task<List<UVIndexDataPoint>> GetDailyUVIndexDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("GetDailyUVIndexDataAsync - Začátek načítání denních dat UV indexu");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("GetDailyUVIndexDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<UVIndexDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+                
+            // Nyní konvertujeme UTC časy na lokální časy
+            var localData = weatherData.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                UVIndex = h.Uvi ?? 0 // Oprava: použití Uvi místo UVIndex a zajištění nenulové hodnoty
+            }).ToList();
+            
+            // Vypočítáme denní bloky - 1-7
+            var groupedData = localData
+                .GroupBy(h => new 
+                {
+                    Year = h.LocalDate.Year,
+                    Month = h.LocalDate.Month,
+                    Day = h.LocalDate.Day
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    AvgUVIndex = g.Average(x => x.UVIndex),
+                    MaxUVIndex = g.Max(x => x.UVIndex)
+                })
+                .OrderBy(d => d.Year)
+                .ThenBy(d => d.Month)
+                .ThenBy(d => d.Day)
+                .ToList();
+
+            // Transformujeme agregovaná data na UVIndexDataPoint
+            var result = groupedData.Select(d =>
+            {
+                var blockDate = new DateTime(d.Year, d.Month, d.Day);
+                
+                return new UVIndexDataPoint
+                {
+                    Date = blockDate,
+                    // Formát: DD.MM
+                    DisplayTime = blockDate.ToString("dd.MM"),
+                    AvgUVIndex = (float)d.AvgUVIndex, // Explicitní přetypování na float
+                    MaxUVIndex = (float)d.MaxUVIndex  // Explicitní přetypování na float
+                };
+            }).ToList();
+            
+            _logger.LogInformation("GetDailyUVIndexDataAsync - Načteno {Count} denních záznamů UV indexu", result.Count);
+            return result;
+        }
+
+        private async Task<List<UVIndexDataPoint>> GetWeeklyUVIndexDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("GetWeeklyUVIndexDataAsync - Začátek načítání týdenních dat UV indexu");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("GetWeeklyUVIndexDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<UVIndexDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+            
+            // Konverze UTC času zpět na lokální pro správné týdenní zobrazení
+            var startDateLocal = TimeZoneInfo.ConvertTimeFromUtc(startDateUtc, _localTimeZone);
+            var endDateLocal = TimeZoneInfo.ConvertTimeFromUtc(endDateUtc, _localTimeZone);
+            
+            // Pro týdenní agregaci vytvoříme vlastní logiku pro seskupení po týdnech
+            var result = new List<UVIndexDataPoint>();
+            
+            // Připravíme kalendářní týdny v lokálním čase
+            var currentDate = startDateLocal.Date;
+            while (currentDate <= endDateLocal)
+            {
+                var weekStart = currentDate;
+                var weekEnd = weekStart.AddDays(6) > endDateLocal ? endDateLocal : weekStart.AddDays(6);
+
+                _logger.LogInformation("GetWeeklyUVIndexDataAsync - Načítání dat pro týden: {WeekStart} až {WeekEnd}", 
+                    weekStart.ToString("dd.MM.yyyy"), weekEnd.ToString("dd.MM.yyyy"));
+                
+                // Konverze zpět na UTC pro dotaz do databáze
+                var weekStartUtc = DateTime.SpecifyKind(weekStart, DateTimeKind.Local).ToUniversalTime();
+                var weekEndUtc = DateTime.SpecifyKind(weekEnd.AddHours(23).AddMinutes(59).AddSeconds(59), DateTimeKind.Local).ToUniversalTime();
+
+                // Filtrujeme data pro tento týden
+                var weekData = weatherData
+                    .Where(h => h.Date >= weekStartUtc && h.Date <= weekEndUtc)
+                    .ToList();
+                    
+                if (weekData.Any())
+                {
+                    result.Add(new UVIndexDataPoint
+                    {
+                        Date = weekStart,
+                        DisplayTime = $"{weekStart:dd.MM} - {weekEnd:dd.MM}",
+                        AvgUVIndex = (float)weekData.Average(x => x.Uvi ?? 0),
+                        MaxUVIndex = (float)weekData.Max(x => x.Uvi ?? 0)
+                    });
+                }
+                
+                // Posuneme se na další týden
+                currentDate = currentDate.AddDays(7);
+            }
+            
+            _logger.LogInformation("GetWeeklyUVIndexDataAsync - Načteno {Count} týdenních záznamů UV indexu", result.Count);
+            return result;
+        }
+
+        private async Task<List<UVIndexDataPoint>> GetMonthlyUVIndexDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("GetMonthlyUVIndexDataAsync - Začátek načítání měsíčních dat UV indexu");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("GetMonthlyUVIndexDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<UVIndexDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+                
+            // Nyní konvertujeme UTC časy na lokální časy
+            var localData = weatherData.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                UVIndex = h.Uvi ?? 0 // Oprava: použití Uvi místo UVIndex a zajištění nenulové hodnoty
+            }).ToList();
+            
+            // Vypočítáme měsíční bloky - 1-12
+            var groupedData = localData
+                .GroupBy(h => new 
+                {
+                    Year = h.LocalDate.Year,
+                    Month = h.LocalDate.Month
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    AvgUVIndex = g.Average(x => x.UVIndex),
+                    MaxUVIndex = g.Max(x => x.UVIndex)
+                })
+                .OrderBy(d => d.Year)
+                .ThenBy(d => d.Month)
+                .ToList();
+
+            // Transformujeme agregovaná data na UVIndexDataPoint
+            var result = groupedData.Select(d =>
+            {
+                var blockDate = new DateTime(d.Year, d.Month, 1);
+                
+                return new UVIndexDataPoint
+                {
+                    Date = blockDate,
+                    // Formát: MM.YYYY
+                    DisplayTime = blockDate.ToString("MM.yyyy"),
+                    AvgUVIndex = (float)d.AvgUVIndex, // Explicitní přetypování na float
+                    MaxUVIndex = (float)d.MaxUVIndex  // Explicitní přetypování na float
+                };
+            }).ToList();
+            
+            _logger.LogInformation("GetMonthlyUVIndexDataAsync - Načteno {Count} měsíčních záznamů UV indexu", result.Count);
             return result;
         }
     }

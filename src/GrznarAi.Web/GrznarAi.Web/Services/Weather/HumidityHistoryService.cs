@@ -57,6 +57,7 @@ namespace GrznarAi.Web.Services.Weather
             var result = aggregationType switch
             {
                 "hourly" => await GetHourlyHumidityDataAsync(context, startDateUtc, endDateUtc),
+                "6hour" => await Get6HourHumidityDataAsync(context, startDateUtc, endDateUtc),
                 "daily" => await GetDailyHumidityDataAsync(context, startDateUtc, endDateUtc),
                 "weekly" => await GetWeeklyHumidityDataAsync(context, startDateUtc, endDateUtc),
                 "monthly" => await GetMonthlyHumidityDataAsync(context, startDateUtc, endDateUtc),
@@ -321,6 +322,80 @@ namespace GrznarAi.Web.Services.Weather
             }).ToList();
             
             _logger.LogInformation("GetMonthlyHumidityDataAsync - Načteno {Count} měsíčních záznamů vlhkosti", result.Count);
+            return result;
+        }
+
+        private async Task<List<HumidityDataPoint>> Get6HourHumidityDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("Get6HourHumidityDataAsync - Začátek načítání 6hodinových dat vlhkosti");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("Get6HourHumidityDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<HumidityDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+                
+            // Nyní konvertujeme UTC časy na lokální časy
+            var localData = weatherData.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                h.HumidityOut
+            }).ToList();
+            
+            // Vypočítáme 6hodinové bloky - 0-5, 6-11, 12-17, 18-23
+            var groupedData = localData
+                .GroupBy(h => new 
+                {
+                    Year = h.LocalDate.Year,
+                    Month = h.LocalDate.Month,
+                    Day = h.LocalDate.Day,
+                    SixHourBlock = h.LocalDate.Hour / 6
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    g.Key.SixHourBlock,
+                    MinHumidity = g.Min(x => x.HumidityOut),
+                    AvgHumidity = g.Average(x => x.HumidityOut),
+                    MaxHumidity = g.Max(x => x.HumidityOut)
+                })
+                .OrderBy(d => d.Year)
+                .ThenBy(d => d.Month)
+                .ThenBy(d => d.Day)
+                .ThenBy(d => d.SixHourBlock)
+                .ToList();
+
+            // Transformujeme agregovaná data na HumidityDataPoint
+            var result = groupedData.Select(d =>
+            {
+                // Vypočítáme začátek 6hodinového bloku
+                int startHour = d.SixHourBlock * 6;
+                var blockDate = new DateTime(d.Year, d.Month, d.Day, startHour, 0, 0);
+                
+                return new HumidityDataPoint
+                {
+                    Date = blockDate,
+                    // Formát: DD.MM HH:00-HH:00
+                    DisplayTime = $"{blockDate:dd.MM} {startHour:00}:00-{startHour+5:00}:59",
+                    MinHumidity = d.MinHumidity,
+                    AvgHumidity = d.AvgHumidity,
+                    MaxHumidity = d.MaxHumidity
+                };
+            }).ToList();
+            
+            _logger.LogInformation("Get6HourHumidityDataAsync - Načteno {Count} 6hodinových záznamů vlhkosti", result.Count);
             return result;
         }
     }

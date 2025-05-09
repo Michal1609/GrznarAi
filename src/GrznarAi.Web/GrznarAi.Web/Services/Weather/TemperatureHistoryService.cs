@@ -57,6 +57,7 @@ namespace GrznarAi.Web.Services.Weather
             var result = aggregationType switch
             {
                 "hourly" => await GetHourlyTemperatureDataAsync(context, startDateUtc, endDateUtc),
+                "6hour" => await Get6HourTemperatureDataAsync(context, startDateUtc, endDateUtc),
                 "daily" => await GetDailyTemperatureDataAsync(context, startDateUtc, endDateUtc),
                 "weekly" => await GetWeeklyTemperatureDataAsync(context, startDateUtc, endDateUtc),
                 "monthly" => await GetMonthlyTemperatureDataAsync(context, startDateUtc, endDateUtc),
@@ -321,6 +322,80 @@ namespace GrznarAi.Web.Services.Weather
             }).ToList();
             
             _logger.LogInformation("GetMonthlyTemperatureDataAsync - Načteno {Count} měsíčních záznamů", result.Count);
+            return result;
+        }
+
+        private async Task<List<TemperatureDataPoint>> Get6HourTemperatureDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("Get6HourTemperatureDataAsync - Začátek načítání 6hodinových dat");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("Get6HourTemperatureDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<TemperatureDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+                
+            // Nyní konvertujeme UTC časy na lokální časy
+            var localData = weatherData.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                h.TemperatureOut
+            }).ToList();
+            
+            // Vypočítáme 6hodinové bloky - 0-5, 6-11, 12-17, 18-23
+            var groupedData = localData
+                .GroupBy(h => new 
+                {
+                    Year = h.LocalDate.Year,
+                    Month = h.LocalDate.Month,
+                    Day = h.LocalDate.Day,
+                    SixHourBlock = h.LocalDate.Hour / 6
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    g.Key.SixHourBlock,
+                    MinTemperature = g.Min(x => x.TemperatureOut),
+                    AvgTemperature = g.Average(x => x.TemperatureOut),
+                    MaxTemperature = g.Max(x => x.TemperatureOut)
+                })
+                .OrderBy(d => d.Year)
+                .ThenBy(d => d.Month)
+                .ThenBy(d => d.Day)
+                .ThenBy(d => d.SixHourBlock)
+                .ToList();
+
+            // Transformujeme agregovaná data na TemperatureDataPoint
+            var result = groupedData.Select(d =>
+            {
+                // Vypočítáme začátek 6hodinového bloku
+                int startHour = d.SixHourBlock * 6;
+                var blockDate = new DateTime(d.Year, d.Month, d.Day, startHour, 0, 0);
+                
+                return new TemperatureDataPoint
+                {
+                    Date = blockDate,
+                    // Formát: DD.MM HH:00-HH:00
+                    DisplayTime = $"{blockDate:dd.MM} {startHour:00}:00-{startHour+5:00}:59",
+                    MinTemperature = d.MinTemperature,
+                    AvgTemperature = d.AvgTemperature,
+                    MaxTemperature = d.MaxTemperature
+                };
+            }).ToList();
+            
+            _logger.LogInformation("Get6HourTemperatureDataAsync - Načteno {Count} 6hodinových záznamů", result.Count);
             return result;
         }
     }

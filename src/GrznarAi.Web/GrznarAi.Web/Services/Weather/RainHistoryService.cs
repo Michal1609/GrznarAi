@@ -55,6 +55,7 @@ namespace GrznarAi.Web.Services.Weather
             var result = aggregationType switch
             {
                 "hourly" => await GetHourlyRainDataAsync(context, startDateUtc, endDateUtc),
+                "6hour" => await Get6HourRainDataAsync(context, startDateUtc, endDateUtc),
                 "daily" => await GetDailyRainDataAsync(context, startDateUtc, endDateUtc),
                 "weekly" => await GetWeeklyRainDataAsync(context, startDateUtc, endDateUtc),
                 "monthly" => await GetMonthlyRainDataAsync(context, startDateUtc, endDateUtc),
@@ -303,6 +304,77 @@ namespace GrznarAi.Web.Services.Weather
             }).ToList();
             
             _logger.LogInformation("GetMonthlyRainDataAsync - Načteno {Count} měsíčních záznamů", result.Count);
+            return result;
+        }
+
+        private async Task<List<RainDataPoint>> Get6HourRainDataAsync(ApplicationDbContext context, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            _logger.LogInformation("Get6HourRainDataAsync - Začátek načítání 6hodinových dat srážek");
+            
+            // Kontrola, zda existují nějaká data pro dané období
+            var dataExists = await context.WeatherHistory
+                .AnyAsync(h => h.Date >= startDateUtc && h.Date <= endDateUtc);
+                
+            if (!dataExists)
+            {
+                _logger.LogWarning("Get6HourRainDataAsync - Žádná data v databázi pro dané období: {StartDate} až {EndDate}", 
+                    startDateUtc, endDateUtc);
+                return new List<RainDataPoint>();
+            }
+            
+            // Získáme data z databáze
+            var weatherData = await context.WeatherHistory
+                .Where(h => h.Date >= startDateUtc && h.Date <= endDateUtc)
+                .ToListAsync();
+                
+            // Nyní konvertujeme UTC časy na lokální časy
+            var localData = weatherData.Select(h => new 
+            {
+                LocalDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(h.Date, DateTimeKind.Utc), _localTimeZone),
+                h.Rain
+            }).ToList();
+            
+            // Vypočítáme 6hodinové bloky - 0-5, 6-11, 12-17, 18-23
+            var groupedData = localData
+                .GroupBy(h => new 
+                {
+                    Year = h.LocalDate.Year,
+                    Month = h.LocalDate.Month,
+                    Day = h.LocalDate.Day,
+                    SixHourBlock = h.LocalDate.Hour / 6
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    g.Key.SixHourBlock,
+                    // Pro srážky děláme součet
+                    Rain = g.Sum(x => x.Rain)
+                })
+                .OrderBy(d => d.Year)
+                .ThenBy(d => d.Month)
+                .ThenBy(d => d.Day)
+                .ThenBy(d => d.SixHourBlock)
+                .ToList();
+
+            // Transformujeme agregovaná data na RainDataPoint
+            var result = groupedData.Select(d =>
+            {
+                // Vypočítáme začátek 6hodinového bloku
+                int startHour = d.SixHourBlock * 6;
+                var blockDate = new DateTime(d.Year, d.Month, d.Day, startHour, 0, 0);
+                
+                return new RainDataPoint
+                {
+                    Date = blockDate,
+                    // Formát: DD.MM HH:00-HH:00
+                    DisplayTime = $"{blockDate:dd.MM} {startHour:00}:00-{startHour+5:00}:59",
+                    Rain = d.Rain
+                };
+            }).ToList();
+            
+            _logger.LogInformation("Get6HourRainDataAsync - Načteno {Count} 6hodinových záznamů srážek", result.Count);
             return result;
         }
     }

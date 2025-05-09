@@ -1,0 +1,8 @@
+2025-05-09 11:15:44.737 +02:00 [INF] 📦 Paměťový stav:
+- PrivateMemory: 54 MB
+- WorkingSet: 154 MB
+- GCHeap: 17 MB
+- Total Committed by GC: 19 MB
+- GC HighMemoryLoadThreshold: 95%
+- GC Allocation Budget: 31412 MB
+

@@ -149,7 +149,7 @@ namespace GrznarAi.Web.Services
                             MinTemperature = g.Min(r => r.TemperatureOut),
                             MaxTemperature = g.Max(r => r.TemperatureOut),
                             AvgTemperature = g.Average(r => r.TemperatureOut),
-                            TotalRainfall = g.Sum(r => r.Rain),
+                            TotalRainfall = g.Max(r => r.Rain),
                             AvgHumidity = g.Average(r => r.HumidityOut)
                         })
                         .AsNoTracking()

@@ -409,3 +409,8 @@ FodyWeavers.xsd
 **/obj/
 /src/GrznarAi.Web/GrznarAi.Web/appsettings.Production.json
 /src/GrznarAi.Web/GrznarAi.Web/GrznarAi.Web.csproj.user
+
+# Log files
+log*.txt
+*.log
+build_log.txt

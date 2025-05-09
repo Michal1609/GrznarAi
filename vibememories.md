@@ -2161,3 +2161,34 @@ Na stránce meteorologických trendů byl opraven graf slunečního záření s 
 - Vyřešen problém "Cannot read properties of undefined (reading 'min')" ošetřením null hodnot v datech
 - Přidány definice minimálních hodnot pro osy Y a další bezpečnostní prvky pro zobrazení grafu
 - Vylepšena diagnostika pomocí podrobnějšího logování počtu datových bodů
+
+## Implementace grafu UV indexu na stránce /meteo/trends
+
+Na stránku meteorologických trendů byl přidán nový graf pro UV index s následujícími funkcemi:
+
+### 1. Datový model a služba
+- Vytvořena nová třída `UVIndexDataPoint` s vlastnostmi pro průměrný a maximální UV index
+- Implementováno rozhraní `IUVIndexHistoryService` a třída `UVIndexHistoryService` pro načítání dat z databáze
+- Implementovány metody agregace pro různá časová období (hodina, den, měsíc)
+- Data jsou načítána z pole `Uvi` v tabulce `WeatherHistory`
+
+### 2. Vizualizace dat
+- Implementován graf pro UV index zobrazující pouze průměrné a maximální hodnoty (bez minimálních hodnot)
+- Použity linové grafy (line) pro zobrazení trendu UV indexu
+- Přidáno shrnutí statistik s průměrnou a maximální hodnotou UV indexu
+- Barvy grafu upraveny pro lepší vizualizaci: průměrné hodnoty jsou označeny žlutou barvou a maximální hodnoty červenou
+
+### 3. Integrace s existující aplikací
+- Služba `UVIndexHistoryService` registrována v DI kontejneru v souboru Program.cs
+- Přidán nový JavaScript soubor `/js/meteo/uv-index-chart.js` s implementací funkce `renderUVIndexChart`
+- Přidání načítání dat v metodě `RefreshData()` komponenty MeteoTrends.razor
+- Rozšíření metody `RenderChartAsync()` o vykreslení grafu UV indexu
+- Upravena metoda `ChangePeriod()` pro zničení grafu při změně časového období
+- Aktualizována podmínka `ChartNeedsRendering` pro zahrnutí UV indexu
+
+### 4. Vylepšení uživatelského rozhraní
+- Graf UV indexu je umístěn za grafem směru větru jako poslední graf na stránce
+- Pro přehlednost jsou zobrazeny pouze dvě metriky (AVG a MAX) místo obvyklých tří (MIN, AVG, MAX)
+- Tooltip zobrazuje hodnoty UV indexu s přesností na jedno desetinné místo
+
+Tato nová funkce umožňuje uživatelům sledovat úroveň UV záření v různých časových obdobích, což může být užitečné pro plánování venkovních aktivit a ochranu před škodlivými účinky UV záření.

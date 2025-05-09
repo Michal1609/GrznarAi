@@ -9,6 +9,7 @@
 @inject IWindDirectionHistoryService WindDirectionHistoryService
 @inject IRainHistoryService RainHistoryService
 @inject ISolarRadiationHistoryService SolarRadiationHistoryService
+@inject IUVIndexHistoryService UVIndexHistoryService
 @inject ILogger<MeteoTrends> Logger
 @inject IJSRuntime JSRuntime
 
@@ -190,6 +191,17 @@
                             </div>
                             <div id="wind-direction-chart" style="height: 400px;"></div>
                         </div>
+                        
+                        <div class="chart-container mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Graf UV indexu</h5>
+                                <div class="uv-index-summary">
+                                    <span class="badge text-bg-warning me-2">Avg: @(UVIndexSummary.Avg.ToString("F1"))</span>
+                                    <span class="badge text-bg-danger">Max: @(UVIndexSummary.Max.ToString("F1"))</span>
+                                </div>
+                            </div>
+                            <div id="uv-index-chart" style="height: 400px;"></div>
+                        </div>
                     }
                     else
                     {
@@ -315,6 +327,7 @@
     private List<WindDirectionDataPoint> WindDirectionData = new();
     private List<RainDataPoint> RainData = new();
     private List<SolarRadiationDataPoint> SolarRadiationData = new();
+    private List<UVIndexDataPoint> UVIndexData = new();
     private bool IsLoading = false;
     private bool ChartNeedsRendering = false;
 
@@ -324,6 +337,7 @@
     private TemperatureSummaryData PressureSummary = new(0, 0, 0);
     private TemperatureSummaryData WindSpeedSummary = new(0, 0, 0);
     private TemperatureSummaryData SolarRadiationSummary = new(0, 0, 0);
+    private TemperatureSummaryData UVIndexSummary = new(0, 0, 0);
     private float GustSpeedSummary = 0;
     private float WindDirectionAvg = 0;
     private float RainMax = 0;
@@ -352,12 +366,16 @@
                     var solarRadiationScript = document.createElement('script');
                     solarRadiationScript.src = '/js/meteo/solar-radiation-chart.js';
                     document.head.appendChild(solarRadiationScript);
+                    
+                    var uvIndexScript = document.createElement('script');
+                    uvIndexScript.src = '/js/meteo/uv-index-chart.js';
+                    document.head.appendChild(uvIndexScript);
                 ");
         }
         
         if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0 && 
             PressureData?.Count > 0 && WindSpeedData?.Count > 0 && WindDirectionData?.Count > 0 && 
-            RainData?.Count > 0 && SolarRadiationData?.Count > 0)
+            RainData?.Count > 0 && SolarRadiationData?.Count > 0 && UVIndexData?.Count > 0)
         {
             ChartNeedsRendering = false;
             await RenderChartAsync();
@@ -555,6 +573,34 @@
             {
                 Logger.LogWarning("Element grafu 'solar-radiation-chart' nenalezen, graf slunečního záření nebude vykreslen");
             }
+            
+            // Ověříme, zda existuje DOM element pro graf UV indexu
+            var uvIndexElementExists = await JSRuntime.InvokeAsync<bool>("eval", 
+                "document.getElementById('uv-index-chart') !== null");
+                
+            if (uvIndexElementExists)
+            {
+                // Připravíme data pro graf UV indexu
+                var categories = UVIndexData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                var avgUVIndexData = UVIndexData.Select(d => d.AvgUVIndex.HasValue ? d.AvgUVIndex.Value : 0).ToArray();
+                var maxUVIndexData = UVIndexData.Select(d => d.MaxUVIndex.HasValue ? d.MaxUVIndex.Value : 0).ToArray();
+
+                Logger.LogInformation("Vykresluji graf UV indexu s {Count} body", categories.Length);
+                
+                // Zavoláme funkci pro vykreslení grafu UV indexu
+                await JSRuntime.InvokeVoidAsync("renderUVIndexChart", 
+                    "uv-index-chart", 
+                    categories, 
+                    new object[] { avgUVIndexData, maxUVIndexData },
+                    new string[] { "Průměrný UV index", "Maximální UV index" },
+                    "Čas",
+                    "UV Index",
+                    new string[] { "line", "line" });
+            }
+            else
+            {
+                Logger.LogWarning("Element grafu 'uv-index-chart' nenalezen, graf UV indexu nebude vykreslen");
+            }
         }
         catch (Exception ex)
         {
@@ -624,6 +670,9 @@
             
             // Načtení dat o slunečním záření
             SolarRadiationData = await SolarRadiationHistoryService.GetSolarRadiationDataAsync(startDate, endDate, aggregationType);
+            
+            // Načtení dat o UV indexu
+            UVIndexData = await UVIndexHistoryService.GetUVIndexDataAsync(startDate, endDate, aggregationType);
             
             if (TemperatureData.Count > 0)
             {
@@ -819,9 +868,36 @@
                 Logger.LogWarning("Nebyla načtena žádná data slunečního záření pro období {Period}", SelectedPeriod);
             }
             
+            if (UVIndexData.Count > 0)
+            {
+                // Počítání statistik pro UV index
+                var validAvgUVIndex = UVIndexData.Where(d => d.AvgUVIndex.HasValue).Select(d => d.AvgUVIndex.Value).ToList();
+                var validMaxUVIndex = UVIndexData.Where(d => d.MaxUVIndex.HasValue).Select(d => d.MaxUVIndex.Value).ToList();
+                
+                if (validAvgUVIndex.Any() && validMaxUVIndex.Any())
+                {
+                    UVIndexSummary = new TemperatureSummaryData(
+                        0, // Nepoužíváme Min hodnotu
+                        validAvgUVIndex.Average(),
+                        validMaxUVIndex.Max()
+                    );
+                }
+                else
+                {
+                    UVIndexSummary = new TemperatureSummaryData(0, 0, 0);
+                }
+                
+                Logger.LogInformation("Načteno {Count} záznamů UV indexu pro období {Period}", UVIndexData.Count, SelectedPeriod);
+            }
+            else
+            {
+                UVIndexSummary = new TemperatureSummaryData(0, 0, 0);
+                Logger.LogWarning("Nebyla načtena žádná data UV indexu pro období {Period}", SelectedPeriod);
+            }
+            
             ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0 && PressureData.Count > 0 && 
                                  WindSpeedData.Count > 0 && WindDirectionData.Count > 0 && RainData.Count > 0 && 
-                                 SolarRadiationData.Count > 0;
+                                 SolarRadiationData.Count > 0 && UVIndexData.Count > 0;
         }
         catch (Exception ex)
         {
@@ -849,6 +925,7 @@
             await JSRuntime.InvokeVoidAsync("eval", "if(window.windDirectionChart) { window.windDirectionChart.destroy(); window.windDirectionChart = null; }");
             await JSRuntime.InvokeVoidAsync("eval", "if(window.rainChart) { window.rainChart.destroy(); window.rainChart = null; }");
             await JSRuntime.InvokeVoidAsync("eval", "if(window.solarRadiationChart) { window.solarRadiationChart.destroy(); window.solarRadiationChart = null; }");
+            await JSRuntime.InvokeVoidAsync("eval", "if(window.uvIndexChart) { window.uvIndexChart.destroy(); window.uvIndexChart = null; }");
         }
         catch (Exception ex)
         {

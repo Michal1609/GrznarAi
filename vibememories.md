@@ -2064,3 +2064,46 @@ The wind speed graph shows four lines:
 - Average wind speed (from WindSpeedAvg)
 - Maximum wind speed (from WindSpeedAvg)
 - Wind gusts (from WindSpeedHi)
+
+## Weather Module
+The weather module displays meteorological data including:
+- Temperature
+- Humidity
+- Atmospheric pressure
+- Wind speed
+- Wind direction (scatter plot graph showing degrees)
+
+### MeteoTrends Page
+Located at `/meteo/trends`, this page displays historical weather data with interactive charts.
+Features include:
+- Time period selection (day, week, month, year)
+- Interactive date navigation
+- Multiple chart types:
+  - Temperature chart (min, avg, max)
+  - Humidity chart (min, avg, max)
+  - Pressure chart (min, avg, max)
+  - Wind speed chart (min, avg, max, gusts)
+  - Wind direction chart (scatter plot showing directional data in degrees)
+
+The wind direction chart uses a scatter plot with points indicating the direction in degrees (0-360°), with labels for cardinal directions (N, NE, E, SE, S, SW, W, NW).
+
+## Technical Implementation
+- Wind direction data is sourced from the database column `WindDirection` in the `WeatherHistory` table
+- A dedicated `WindDirectionHistoryService` handles data retrieval and aggregation
+- The frontend visualization uses ApexCharts with a scatter plot type
+- Direction is displayed both in degrees and named directions (N, NE, E, etc.)
+
+## Oprava chyby neregistrované služby WindDirectionHistoryService
+
+Při přidání nového grafu pro směr větru byla vytvořena nová služba `WindDirectionHistoryService` implementující rozhraní `IWindDirectionHistoryService`. Při nasazení se však objevila chyba:
+
+```
+InvalidOperationException: Cannot provide a value for property 'WindDirectionHistoryService' on type 'GrznarAi.Web.Components.Pages.Meteo.MeteoTrends'. There is no registered service of type 'GrznarAi.Web.Services.Weather.IWindDirectionHistoryService'.
+```
+
+Problém byl v tom, že přestože služba byla správně vytvořena, nebyla registrována v kontejneru DI (Dependency Injection) v souboru `Program.cs`. 
+
+Řešení:
+1. Přidání registrace služby do `Program.cs` spolu s ostatními meteorologickými službami:
+   ```csharp
+   builder.Services.AddScoped<IWindDirectionHistoryService, WindDirectionHistoryService>();

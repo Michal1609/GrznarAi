@@ -63,8 +63,17 @@
                                     <button class="date-nav-btn" @onclick="PreviousWeek">
                                         <i class="bi bi-chevron-left"></i>
                                     </button>
-                                    <div class="date-display">
-                                        @($"{WeekStartDate:dd.MM.yyyy} - {WeekEndDate:dd.MM.yyyy}")
+                                    <div class="date-display date-picker-container">
+                                        <div class="date-picker-text" @onclick="ToggleWeekPicker">
+                                            @($"{WeekStartDate:dd.MM.yyyy} - {WeekEndDate:dd.MM.yyyy}")
+                                        </div>
+                                        @if (ShowWeekPicker)
+                                        {
+                                            <div class="date-picker-dropdown">
+                                                <input type="date" class="form-control date-input" @bind="WeekPickerDate" @bind:format="yyyy-MM-dd" />
+                                                <button class="btn btn-sm btn-primary mt-2" @onclick="SelectWeek">Vybrat týden</button>
+                                            </div>
+                                        }
                                     </div>
                                     <button class="date-nav-btn" @onclick="NextWeek">
                                         <i class="bi bi-chevron-right"></i>
@@ -76,8 +85,30 @@
                                     <button class="date-nav-btn" @onclick="PreviousMonth">
                                         <i class="bi bi-chevron-left"></i>
                                     </button>
-                                    <div class="date-display">
-                                        @(new DateTime(SelectedDate.Year, SelectedDate.Month, 1).ToString("MMMM yyyy", CultureInfo.CreateSpecificCulture("cs-CZ")))
+                                    <div class="date-display date-picker-container">
+                                        <div class="date-picker-text" @onclick="ToggleMonthPicker">
+                                            @(new DateTime(SelectedDate.Year, SelectedDate.Month, 1).ToString("MMMM yyyy", CultureInfo.CreateSpecificCulture("cs-CZ")))
+                                        </div>
+                                        @if (ShowMonthPicker)
+                                        {
+                                            <div class="date-picker-dropdown">
+                                                <div class="d-flex">
+                                                    <select class="form-select me-2" @bind="SelectedMonthValue">
+                                                        @for (int m = 1; m <= 12; m++)
+                                                        {
+                                                            <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM", CultureInfo.CreateSpecificCulture("cs-CZ")))</option>
+                                                        }
+                                                    </select>
+                                                    <select class="form-select" @bind="SelectedYearValue">
+                                                        @for (int y = 2021; y <= DateTime.Now.Year; y++)
+                                                        {
+                                                            <option value="@y">@y</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <button class="btn btn-sm btn-primary mt-2" @onclick="SelectMonth">Vybrat měsíc</button>
+                                            </div>
+                                        }
                                     </div>
                                     <button class="date-nav-btn" @onclick="NextMonth">
                                         <i class="bi bi-chevron-right"></i>
@@ -89,8 +120,22 @@
                                     <button class="date-nav-btn" @onclick="PreviousYear">
                                         <i class="bi bi-chevron-left"></i>
                                     </button>
-                                    <div class="date-display">
-                                        @SelectedDate.Year
+                                    <div class="date-display date-picker-container">
+                                        <div class="date-picker-text" @onclick="ToggleYearPicker">
+                                            @SelectedDate.Year
+                                        </div>
+                                        @if (ShowYearPicker)
+                                        {
+                                            <div class="date-picker-dropdown">
+                                                <select class="form-select" @bind="SelectedYearForYearView">
+                                                    @for (int y = 2021; y <= DateTime.Now.Year; y++)
+                                                    {
+                                                        <option value="@y">@y</option>
+                                                    }
+                                                </select>
+                                                <button class="btn btn-sm btn-primary mt-2" @onclick="SelectYear">Vybrat rok</button>
+                                            </div>
+                                        }
                                     </div>
                                     <button class="date-nav-btn" @onclick="NextYear">
                                         <i class="bi bi-chevron-right"></i>
@@ -223,6 +268,9 @@
         border-radius: 0.25rem;
         overflow: hidden;
         background-color: #f8f9fa;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
     }
     
     .period-btn {
@@ -270,6 +318,7 @@
         border-radius: 0.25rem;
         margin: 0 0.5rem;
         font-weight: 500;
+        position: relative;
     }
     
     .date-nav-btn {
@@ -294,6 +343,29 @@
         text-align: center;
         padding: 0;
         height: auto;
+    }
+    
+    /* Styly pro rozbalovací výběr data */
+    .date-picker-container {
+        position: relative;
+    }
+    
+    .date-picker-text {
+        cursor: pointer;
+    }
+    
+    .date-picker-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        margin-top: 0.25rem;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     /* Responzivní úpravy */
@@ -330,6 +402,15 @@
     private List<UVIndexDataPoint> UVIndexData = new();
     private bool IsLoading = false;
     private bool ChartNeedsRendering = false;
+    
+    // Proměnné pro výběr datumu
+    private bool ShowWeekPicker = false;
+    private bool ShowMonthPicker = false;
+    private bool ShowYearPicker = false;
+    private DateTime WeekPickerDate = DateTime.Today;
+    private int SelectedMonthValue = DateTime.Today.Month;
+    private int SelectedYearValue = DateTime.Today.Year;
+    private int SelectedYearForYearView = DateTime.Today.Year;
 
     private record TemperatureSummaryData(float Min, float Avg, float Max);
     private TemperatureSummaryData TemperatureSummary = new(0, 0, 0);
@@ -345,6 +426,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Instance = this;
         await RefreshData();
     }
 
@@ -370,6 +452,42 @@
                     var uvIndexScript = document.createElement('script');
                     uvIndexScript.src = '/js/meteo/uv-index-chart.js';
                     document.head.appendChild(uvIndexScript);
+                    
+                    // Přidáme event listener pro zavírání date pickerů při kliknutí mimo ně
+                    document.addEventListener('click', function(event) {
+                        var datePickers = document.querySelectorAll('.date-picker-dropdown');
+                        var datePickerContainers = document.querySelectorAll('.date-picker-container');
+                        var clickedInsidePicker = false;
+                        
+                        // Kontrola, zda klik byl uvnitř nějakého pickeru nebo jeho containeru
+                        for (var i = 0; i < datePickers.length; i++) {
+                            if (datePickers[i].contains(event.target)) {
+                                clickedInsidePicker = true;
+                                break;
+                            }
+                        }
+                        
+                        for (var i = 0; i < datePickerContainers.length; i++) {
+                            if (datePickerContainers[i].contains(event.target) && 
+                                event.target.classList.contains('date-picker-text')) {
+                                clickedInsidePicker = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!clickedInsidePicker) {
+                            // Pokud klik nebyl uvnitř pickeru, odešleme signál do Blazor
+                            DotNet.invokeMethodAsync('GrznarAi.Web', 'CloseDatePickers');
+                        }
+                    });
+                ");
+            
+            // Registrujeme JSInterop metodu pro zavírání pickerů
+            await JSRuntime.InvokeVoidAsync("eval", 
+                @"
+                window.CloseDatePickers = function() {
+                    DotNet.invokeMethodAsync('GrznarAi.Web', 'CloseDatePickers');
+                };
                 ");
         }
         
@@ -994,4 +1112,75 @@
         SelectedDate = SelectedDate.AddYears(1);
         await RefreshData();
     }
+
+    // Metody pro výběr týdne
+    private void ToggleWeekPicker()
+    {
+        ShowWeekPicker = !ShowWeekPicker;
+        ShowMonthPicker = false;
+        ShowYearPicker = false;
+        
+        // Nastavíme datum pro výběr týdne na aktuálně vybraný den
+        if (ShowWeekPicker)
+        {
+            WeekPickerDate = SelectedDate;
+        }
+    }
+    
+    private async Task SelectWeek()
+    {
+        // Vypočítáme začátek týdne obsahující vybraný datum
+        SelectedDate = WeekPickerDate.AddDays(-(int)WeekPickerDate.DayOfWeek + (int)DayOfWeek.Monday);
+        ShowWeekPicker = false;
+        await RefreshData();
+    }
+    
+    // Metody pro výběr měsíce
+    private void ToggleMonthPicker()
+    {
+        ShowMonthPicker = !ShowMonthPicker;
+        ShowWeekPicker = false;
+        ShowYearPicker = false;
+        SelectedMonthValue = SelectedDate.Month;
+        SelectedYearValue = SelectedDate.Year;
+    }
+    
+    private async Task SelectMonth()
+    {
+        SelectedDate = new DateTime(SelectedYearValue, SelectedMonthValue, 1);
+        ShowMonthPicker = false;
+        await RefreshData();
+    }
+    
+    // Metody pro výběr roku
+    private void ToggleYearPicker()
+    {
+        ShowYearPicker = !ShowYearPicker;
+        ShowWeekPicker = false;
+        ShowMonthPicker = false;
+        SelectedYearForYearView = SelectedDate.Year;
+    }
+    
+    private async Task SelectYear()
+    {
+        SelectedDate = new DateTime(SelectedYearForYearView, 1, 1);
+        ShowYearPicker = false;
+        await RefreshData();
+    }
+
+    // Metoda pro zavírání všech pickerů - volaná z JavaScriptu
+    [JSInvokable]
+    public static Task CloseDatePickers()
+    {
+        if (Instance != null)
+        {
+            Instance.ShowWeekPicker = false;
+            Instance.ShowMonthPicker = false;
+            Instance.ShowYearPicker = false;
+            return Instance.InvokeAsync(Instance.StateHasChanged);
+        }
+        return Task.CompletedTask;
+    }
+    
+    private static MeteoTrends Instance;
 } 

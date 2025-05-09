@@ -2192,3 +2192,27 @@ Na stránku meteorologických trendů byl přidán nový graf pro UV index s ná
 - Tooltip zobrazuje hodnoty UV indexu s přesností na jedno desetinné místo
 
 Tato nová funkce umožňuje uživatelům sledovat úroveň UV záření v různých časových obdobích, což může být užitečné pro plánování venkovních aktivit a ochranu před škodlivými účinky UV záření.
+
+## Meteo Trends (2024-05-13)
+
+V meteorologických grafech na stránce `/meteo/trends` byla implementována úprava agregace dat. Při výběru týdenního intervalu (week) se nyní místo denní agregace používá 6hodinová agregace. Tato změna zlepšuje vizuální reprezentaci dat v týdenním zobrazení, kde jsou nyní na ose X vidět čtyři hodnoty na den (po 6 hodinách).
+
+### Provedené změny:
+1. Upravena metoda `RefreshData` v komponentě `MeteoTrends.razor`, která nyní pro týdenní období používá agregaci "6hour" místo "daily".
+2. Do všech servisů pro meteorologická data byly implementovány metody pro 6hodinovou agregaci:
+   - TemperatureHistoryService
+   - HumidityHistoryService
+   - PressureHistoryService
+   - WindSpeedHistoryService
+   - WindDirectionHistoryService
+   - RainHistoryService
+   - SolarRadiationHistoryService
+   - UVIndexHistoryService
+3. Přidán interaktivní výběr pro týden, měsíc a rok pomocí kalendáře místo pouhé navigace šipkami vpřed/vzad. Toto umožňuje snadnější procházení historických dat.
+4. Upraveno rozmezí let v kalendářovém výběru od 1.6.2021 (počátek měření) do současnosti.
+5. Zmenšena velikost tlačítek pro výběr časového období pro lepší vzhled uživatelského rozhraní.
+
+## Meteo (2024-05-13)
+
+### Oprava zobrazení historických srážek:
+1. Upravena metoda `FetchDailyStatisticsForLastYearsAsync` v třídě `MeteoHistoryService.cs` pro správný výpočet srážek v sekci "Tento den v historii". Výpočet byl upraven z `Sum(r => r.Rain)` na `Max(r => r.Rain)`, protože hodnota Rain již představuje kumulativní srážky za den. Tato změna zajišťuje přesnější zobrazení historických dat o srážkách.

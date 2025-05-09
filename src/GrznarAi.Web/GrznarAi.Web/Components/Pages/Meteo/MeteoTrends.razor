@@ -7,6 +7,7 @@
 @inject IPressureHistoryService PressureHistoryService
 @inject IWindSpeedHistoryService WindSpeedHistoryService
 @inject IWindDirectionHistoryService WindDirectionHistoryService
+@inject IRainHistoryService RainHistoryService
 @inject ILogger<MeteoTrends> Logger
 @inject IJSRuntime JSRuntime
 
@@ -158,6 +159,16 @@
                         
                         <div class="chart-container mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5>Graf srážek</h5>
+                                <div class="rain-summary">
+                                    <span class="badge text-bg-primary me-2">Max: @(RainMax.ToString("F1")) mm</span>
+                                </div>
+                            </div>
+                            <div id="rain-chart" style="height: 400px;"></div>
+                        </div>
+                        
+                        <div class="chart-container mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5>Graf směru větru (stupně)</h5>
                                 <div class="wind-direction-summary">
                                     <span class="badge text-bg-primary me-2">Avg: @(WindDirectionAvg.ToString("F1"))°</span>
@@ -288,6 +299,7 @@
     private List<PressureDataPoint> PressureData = new();
     private List<WindSpeedDataPoint> WindSpeedData = new();
     private List<WindDirectionDataPoint> WindDirectionData = new();
+    private List<RainDataPoint> RainData = new();
     private bool IsLoading = false;
     private bool ChartNeedsRendering = false;
 
@@ -298,6 +310,7 @@
     private TemperatureSummaryData WindSpeedSummary = new(0, 0, 0);
     private float GustSpeedSummary = 0;
     private float WindDirectionAvg = 0;
+    private float RainMax = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -314,11 +327,15 @@
                     var script = document.createElement('script');
                     script.src = '/js/wind-direction-chart.js';
                     document.head.appendChild(script);
+                    
+                    var rainScript = document.createElement('script');
+                    rainScript.src = '/js/meteo/rain-chart.js';
+                    document.head.appendChild(rainScript);
                 ");
         }
         
         if (ChartNeedsRendering && TemperatureData?.Count > 0 && HumidityData?.Count > 0 && 
-            PressureData?.Count > 0 && WindSpeedData?.Count > 0 && WindDirectionData?.Count > 0)
+            PressureData?.Count > 0 && WindSpeedData?.Count > 0 && WindDirectionData?.Count > 0 && RainData?.Count > 0)
         {
             ChartNeedsRendering = false;
             await RenderChartAsync();
@@ -461,6 +478,29 @@
             {
                 Logger.LogWarning("Element grafu 'wind-direction-chart' nenalezen, graf směru větru nebude vykreslen");
             }
+            
+            // Ověříme, zda existuje DOM element pro graf srážek
+            var rainElementExists = await JSRuntime.InvokeAsync<bool>("eval", 
+                "document.getElementById('rain-chart') !== null");
+                
+            if (rainElementExists)
+            {
+                // Připravíme data pro graf srážek
+                var categories = RainData.Select(d => d.DisplayTime?.ToString() ?? string.Empty).ToArray();
+                var rainData = RainData.Select(d => d.Rain).ToArray();
+
+                Logger.LogInformation("Vykresluji graf srážek s {Count} body", categories.Length);
+                
+                // Zavoláme funkci pro vykreslení grafu srážek
+                await JSRuntime.InvokeVoidAsync("renderRainChart", 
+                    "rain-chart", 
+                    categories, 
+                    rainData);
+            }
+            else
+            {
+                Logger.LogWarning("Element grafu 'rain-chart' nenalezen, graf srážek nebude vykreslen");
+            }
         }
         catch (Exception ex)
         {
@@ -524,6 +564,9 @@
             
             // Načtení dat o směru větru
             WindDirectionData = await WindDirectionHistoryService.GetWindDirectionDataAsync(startDate, endDate, aggregationType);
+            
+            // Načtení dat o srážkách
+            RainData = await RainHistoryService.GetRainDataAsync(startDate, endDate, aggregationType);
             
             if (TemperatureData.Count > 0)
             {
@@ -664,8 +707,30 @@
                 Logger.LogWarning("Nebyla načtena žádná data směru větru pro období {Period}", SelectedPeriod);
             }
             
+            if (RainData.Count > 0)
+            {
+                // Počítání statistik pro srážky
+                var validRainData = RainData.Where(d => d.Rain.HasValue).Select(d => d.Rain.Value).ToList();
+                
+                if (validRainData.Any())
+                {
+                    RainMax = validRainData.Max();
+                }
+                else
+                {
+                    RainMax = 0;
+                }
+                
+                Logger.LogInformation("Načteno {Count} záznamů srážek pro období {Period}", RainData.Count, SelectedPeriod);
+            }
+            else
+            {
+                RainMax = 0;
+                Logger.LogWarning("Nebyla načtena žádná data srážek pro období {Period}", SelectedPeriod);
+            }
+            
             ChartNeedsRendering = TemperatureData.Count > 0 && HumidityData.Count > 0 && PressureData.Count > 0 && 
-                                 WindSpeedData.Count > 0 && WindDirectionData.Count > 0;
+                                 WindSpeedData.Count > 0 && WindDirectionData.Count > 0 && RainData.Count > 0;
         }
         catch (Exception ex)
         {

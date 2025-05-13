@@ -13,8 +13,11 @@
 
 <h1>Správa blogů</h1>
 
-<div class="mb-3">
-    <a href="/admin/blogs/new" class="btn btn-primary">Přidat nový blog</a>
+<div class="mb-3 d-flex">
+    <a href="/admin/blogs/new" class="btn btn-primary me-2">Přidat nový blog</a>
+    <a href="/admin/comments" class="btn btn-secondary">
+        <i class="bi bi-chat-dots"></i> Správa komentářů
+    </a>
 </div>
 
 @if (blogs == null)

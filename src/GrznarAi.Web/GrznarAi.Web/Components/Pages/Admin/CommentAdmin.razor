@@ -1,0 +1,534 @@
+@page "/admin/comments"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using GrznarAi.Web.Data
+@using GrznarAi.Web.Services
+@using System.Text.Json
+@inject NavigationManager NavigationManager
+@inject ICommentService CommentService
+@inject IBlogService BlogService
+@inject IJSRuntime JSRuntime
+@inject ILocalizationService Localizer
+@inject ILogger<CommentAdmin> Logger
+
+<PageTitle>Správa komentářů</PageTitle>
+
+<h1>Správa komentářů</h1>
+
+<div class="mb-3">
+    <a href="/admin/blogs" class="btn btn-secondary">
+        <i class="bi bi-pencil-square"></i> Správa blogů
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Vyhledat v komentářích" @bind="searchText" @bind:event="oninput" />
+            <button class="btn btn-outline-secondary" type="button" @onclick="FilterComments">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" @bind="statusFilter">
+            <option value="all">Všechny komentáře</option>
+            <option value="approved">Schválené</option>
+            <option value="unapproved">Neschválené</option>
+            <option value="deleted">Smazané</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" @bind="blogFilter">
+            <option value="0">Všechny blogy</option>
+            @if (blogs != null)
+            {
+                @foreach (var blog in blogs)
+                {
+                    var title = GetBlogTitle(blog);
+                    <option value="@blog.Id">@title</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100" @onclick="FilterComments">
+            Filtrovat
+        </button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Načítání...</span>
+        </div>
+    </div>
+}
+else if (comments == null || !comments.Any())
+{
+    <div class="alert alert-info">
+        Nebyly nalezeny žádné komentáře odpovídající zadaným kritériím.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Autor</th>
+                    <th>Obsah</th>
+                    <th>Blog</th>
+                    <th>Vytvořeno</th>
+                    <th>Stav</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var comment in comments)
+                {
+                    <tr class="@(comment.IsDeleted ? "table-danger" : comment.IsApproved ? "" : "table-warning")">
+                        <td>@comment.Id</td>
+                        <td>
+                            @comment.AuthorName
+                            @if (!string.IsNullOrEmpty(comment.AuthorEmail))
+                            {
+                                <small class="d-block text-muted">@comment.AuthorEmail</small>
+                            }
+                        </td>
+                        <td>
+                            @if (comment.Content.Length > 100)
+                            {
+                                @comment.Content.Substring(0, 100)<text>...</text>
+                            }
+                            else
+                            {
+                                @comment.Content
+                            }
+                            @if (comment.ParentCommentId.HasValue)
+                            {
+                                <span class="badge bg-info ms-1">Odpověď</span>
+                            }
+                        </td>
+                        <td>
+                            @GetBlogTitleById(comment.BlogId)
+                            <a href="/blog/@GetBlogSlug(comment.BlogId)" target="_blank" class="ms-1">
+                                <i class="bi bi-box-arrow-up-right small"></i>
+                            </a>
+                        </td>
+                        <td>@comment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @if (comment.IsDeleted)
+                            {
+                                <span class="badge bg-danger">Smazáno</span>
+                            }
+                            else if (comment.IsApproved)
+                            {
+                                <span class="badge bg-success">Schváleno</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Čeká na schválení</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowCommentDetail(comment)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                @if (!comment.IsDeleted)
+                                {
+                                    @if (!comment.IsApproved)
+                                    {
+                                        <button class="btn btn-sm btn-outline-success" @onclick="() => ApproveComment(comment.Id)">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    }
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteComment(comment.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                                        <i class="bi bi-slash-circle"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>
+            <span>Zobrazeno @comments.Count komentářů z @totalComments</span>
+        </div>
+        <div>
+            <nav aria-label="Stránkování komentářů">
+                <ul class="pagination mb-0">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => NavigateToPage(currentPage - 1)" disabled="@(currentPage == 1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                    </li>
+                    
+                    @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                    {
+                        var pageNumber = i;
+                        <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                            <button class="page-link" @onclick="() => NavigateToPage(pageNumber)">@pageNumber</button>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages || totalPages == 0 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => NavigateToPage(currentPage + 1)" disabled="@(currentPage == totalPages || totalPages == 0)">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+}
+
+@if (selectedComment != null)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detail komentáře #@selectedComment.Id</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCommentDetail"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Autor</h6>
+                            <p class="mb-1">@selectedComment.AuthorName</p>
+                            @if (!string.IsNullOrEmpty(selectedComment.AuthorEmail))
+                            {
+                                <p class="mb-1">Email: @selectedComment.AuthorEmail</p>
+                            }
+                            @if (!string.IsNullOrEmpty(selectedComment.ApplicationUserId))
+                            {
+                                <p class="mb-1">ID uživatele: @selectedComment.ApplicationUserId</p>
+                            }
+                            else if (!string.IsNullOrEmpty(selectedComment.UserCookieId))
+                            {
+                                <p class="mb-1">Cookie ID: @selectedComment.UserCookieId</p>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Informace</h6>
+                            <p class="mb-1">Vytvořeno: @selectedComment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</p>
+                            @if (selectedComment.UpdatedAt.HasValue)
+                            {
+                                <p class="mb-1">Upraveno: @selectedComment.UpdatedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</p>
+                            }
+                            <p class="mb-1">
+                                Stav: 
+                                @if (selectedComment.IsDeleted)
+                                {
+                                    <span class="badge bg-danger">Smazáno</span>
+                                }
+                                else if (selectedComment.IsApproved)
+                                {
+                                    <span class="badge bg-success">Schváleno</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Čeká na schválení</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Komentář</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                @selectedComment.Content
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (selectedComment.ParentCommentId.HasValue)
+                    {
+                        <div class="mb-3">
+                            <h6>Odpověď na komentář #@selectedComment.ParentCommentId</h6>
+                            @if (parentComment != null)
+                            {
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <p class="small mb-1">@parentComment.AuthorName - @parentComment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+                                        <p class="mb-0">@parentComment.Content</p>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">Nadřazený komentář není k dispozici</p>
+                            }
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <h6>Blog</h6>
+                        <p class="mb-1">
+                            <a href="/blog/@GetBlogSlug(selectedComment.BlogId)" target="_blank">
+                                @GetBlogTitleById(selectedComment.BlogId)
+                            </a>
+                        </p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-1">
+                                <i class="bi bi-hand-thumbs-up"></i> @selectedComment.LikesCount
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1">
+                                <i class="bi bi-hand-thumbs-down"></i> @selectedComment.DislikesCount
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if (!selectedComment.IsDeleted)
+                    {
+                        @if (!selectedComment.IsApproved)
+                        {
+                            <button type="button" class="btn btn-success" @onclick="() => ApproveComment(selectedComment.Id)">
+                                <i class="bi bi-check-lg"></i> Schválit
+                            </button>
+                        }
+                        <button type="button" class="btn btn-danger" @onclick="() => DeleteComment(selectedComment.Id)">
+                            <i class="bi bi-trash"></i> Smazat
+                        </button>
+                    }
+                    <button type="button" class="btn btn-secondary" @onclick="CloseCommentDetail">Zavřít</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<Comment>? comments;
+    private List<Blog>? blogs;
+    private Comment? selectedComment;
+    private Comment? parentComment;
+    private bool isLoading = true;
+    private int totalComments = 0;
+    private int pageSize = 20;
+    private int currentPage = 1;
+    private int totalPages => (int)Math.Ceiling((double)totalComments / pageSize);
+    private string searchText = "";
+    private string statusFilter = "all";
+    private int blogFilter = 0;
+    private Dictionary<int, string> blogTitles = new Dictionary<int, string>();
+    private Dictionary<int, string> blogSlugs = new Dictionary<int, string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBlogs();
+        await LoadComments();
+    }
+
+    private async Task LoadBlogs()
+    {
+        blogs = await BlogService.GetBlogsAsync();
+        
+        // Předpřipravíme titulky a slugy pro rychlejší přístup
+        if (blogs != null)
+        {
+            foreach (var blog in blogs)
+            {
+                blogTitles[blog.Id] = GetBlogTitle(blog);
+                
+                // Získat slug z první publikované jazykové verze
+                var content = blog.Contents.FirstOrDefault(c => c.IsPublished);
+                if (content != null)
+                {
+                    // Kontrola, zda existuje vlastnost Slug, pokud ne, použijeme URL-friendly verzi titulku
+                    if (content.GetType().GetProperty("Slug") != null)
+                    {
+                        blogSlugs[blog.Id] = content.GetType().GetProperty("Slug")?.GetValue(content)?.ToString() ?? blog.Id.ToString();
+                    }
+                    else
+                    {
+                        // Jako fallback použijeme ID blogu a titulek
+                        var title = content.Title ?? "";
+                        var friendlyTitle = string.Join("-", title.Split(' ')).ToLower();
+                        blogSlugs[blog.Id] = $"{blog.Id}-{friendlyTitle}";
+                    }
+                }
+                else
+                {
+                    blogSlugs[blog.Id] = blog.Id.ToString();
+                }
+            }
+        }
+    }
+
+    private async Task LoadComments()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Implementovat metodu v CommentService pro načtení komentářů podle filtrů
+            var result = await ((CommentService)CommentService).GetFilteredCommentsAsync(
+                searchText, 
+                statusFilter, 
+                blogFilter, 
+                (currentPage - 1) * pageSize, 
+                pageSize);
+            
+            comments = result.Comments;
+            totalComments = result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při načítání komentářů");
+            await JSRuntime.InvokeVoidAsync("alert", $"Chyba při načítání komentářů: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetBlogTitle(Blog blog)
+    {
+        // Získat titulek z první jazykové verze nebo použít ID blogu
+        var content = blog.Contents.FirstOrDefault();
+        return content != null ? content.Title : $"Blog #{blog.Id}";
+    }
+
+    private string GetBlogTitleById(int blogId)
+    {
+        if (blogTitles.TryGetValue(blogId, out var title))
+        {
+            return title;
+        }
+        
+        return $"Blog #{blogId}";
+    }
+
+    private string GetBlogSlug(int blogId)
+    {
+        if (blogSlugs.TryGetValue(blogId, out var slug))
+        {
+            return slug;
+        }
+        
+        return blogId.ToString();
+    }
+
+    private async Task FilterComments()
+    {
+        currentPage = 1; // Resetujeme stránkování při filtrování
+        await LoadComments();
+    }
+
+    private async Task NavigateToPage(int page)
+    {
+        if (page < 1 || page > totalPages || page == currentPage)
+            return;
+
+        currentPage = page;
+        await LoadComments();
+    }
+
+    private async Task ApproveComment(int commentId)
+    {
+        try
+        {
+            var success = await CommentService.ApproveCommentAsync(commentId);
+            if (success)
+            {
+                Logger.LogInformation("Komentář s ID {CommentId} byl schválen.", commentId);
+                await LoadComments();
+                
+                if (selectedComment != null && selectedComment.Id == commentId)
+                {
+                    selectedComment.IsApproved = true;
+                }
+            }
+            else
+            {
+                Logger.LogWarning("Nepodařilo se schválit komentář s ID {CommentId}.", commentId);
+                await JSRuntime.InvokeVoidAsync("alert", "Nepodařilo se schválit komentář.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Chyba při schvalování komentáře ID {CommentId}", commentId);
+            await JSRuntime.InvokeVoidAsync("alert", $"Chyba při schvalování komentáře: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteComment(int commentId)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Opravdu chcete smazat tento komentář?"))
+        {
+            try
+            {
+                var success = await CommentService.DeleteCommentAsync(commentId);
+                if (success)
+                {
+                    Logger.LogInformation("Komentář s ID {CommentId} byl smazán.", commentId);
+                    await LoadComments();
+                    
+                    if (selectedComment != null && selectedComment.Id == commentId)
+                    {
+                        selectedComment.IsDeleted = true;
+                    }
+                }
+                else
+                {
+                    Logger.LogWarning("Nepodařilo se smazat komentář s ID {CommentId}.", commentId);
+                    await JSRuntime.InvokeVoidAsync("alert", "Nepodařilo se smazat komentář.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Chyba při mazání komentáře ID {CommentId}", commentId);
+                await JSRuntime.InvokeVoidAsync("alert", $"Chyba při mazání komentáře: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ShowCommentDetail(Comment comment)
+    {
+        selectedComment = comment;
+        
+        // Pokud jde o odpověď, načteme nadřazený komentář
+        if (comment.ParentCommentId.HasValue)
+        {
+            parentComment = await CommentService.GetCommentByIdAsync(comment.ParentCommentId.Value);
+        }
+        else
+        {
+            parentComment = null;
+        }
+    }
+
+    private void CloseCommentDetail()
+    {
+        selectedComment = null;
+        parentComment = null;
+    }
+} 

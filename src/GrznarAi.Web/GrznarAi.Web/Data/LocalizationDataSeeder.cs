@@ -195,6 +195,10 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.AddComment", "Přidat komentář", "Add comment", "Add comment button");
             AddEntry("Blog.NoComments", "Zatím zde nejsou žádné komentáře. Buďte první!", "No comments yet. Be the first to comment!", "No comments message");
             AddEntry("Blog.LoadMoreComments", "Načíst další komentáře", "Load more comments", "Load more comments button");
+            AddEntry("Blog.LeaveComment", "Zanechat komentář", "Leave a comment", "Leave a comment heading");
+            AddEntry("Blog.Comment.Content", "Obsah komentáře", "Comment content", "Comment content label");
+            AddEntry("Blog.Comment.Submit", "Odeslat", "Submit", "Submit comment button");
+            AddEntry("Blog.Comment.Cancel", "Zrušit", "Cancel", "Cancel comment button");
             
             AddEntry("Blog.Date.January", "Leden", "January", "Month name - January");
             AddEntry("Blog.Date.February", "Únor", "February", "Month name - February");

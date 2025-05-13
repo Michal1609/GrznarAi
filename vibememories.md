@@ -2958,3 +2958,34 @@ V aplikaci najdete následující implementace:
 * Při vytváření nového grafu vždy zkontrolujte, zda správně uvolňujete předchozí instanci grafu
 * Používejte metodu `OnAfterRenderAsync` pro vykreslení grafů, nikoli `OnInitializedAsync`
 * Vždy testujte grafy v různých prohlížečích pro zajištění kompatibility
+
+## Administrace komentářů k blogům
+
+Byla vytvořena nová sekce pro administraci komentářů k blogům, která umožňuje přehledně sledovat a spravovat všechny komentáře v systému.
+
+### Přehled implementace
+
+1. **Nová stránka administrace komentářů**:
+   * Přístupná na URL `/admin/comments`
+   * Implementována jako Blazor komponenta v `Components/Pages/Admin/CommentAdmin.razor`
+   * Vyžaduje roli Admin (dekorována atributem `[Authorize]`)
+   * Na stránku se lze dostat přímo z admin sekce a také ze stránky správy blogů (`/admin/blogs`) pomocí tlačítka "Správa komentářů"
+
+2. **Hlavní funkce administrace komentářů**:
+   * Zobrazení seznamu všech komentářů s možností filtrování a stránkování
+   * Filtrování podle textu, stavu (schválené, neschválené, smazané) a příslušnosti k blogu
+   * Detail komentáře s možností zobrazení nadřazeného komentáře (u odpovědí)
+   * Schvalování komentářů čekajících na schválení
+   * Mazání nevhodných komentářů
+   * Zobrazení informací o komentáři včetně autora, data vytvoření a blogu, ke kterému patří
+
+3. **Propojení se správou blogů**:
+   * Ze stránky správy blogů (`/admin/blogs`) lze přejít na správu komentářů pomocí tlačítka "Správa komentářů"
+   * Ze stránky správy komentářů (`/admin/comments`) lze přejít zpět na správu blogů pomocí tlačítka "Správa blogů"
+   * Toto obousměrné propojení usnadňuje administrátorům práci při správě obsahu
+
+4. **Přidané lokalizační klíče pro komentáře**:
+   * `Blog.LeaveComment` - Nadpis pro zanechání komentáře
+   * `Blog.Comment.Content` - Popisek pro obsah komentáře
+   * `Blog.Comment.Submit` - Tlačítko pro odeslání komentáře
+   * `Blog.Comment.Cancel` - Tlačítko pro zrušení komentáře

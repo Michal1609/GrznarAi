@@ -32,6 +32,77 @@ namespace GrznarAi.Web.Services
             _contextFactory = contextFactory;
         }
 
+        // Model pro návratovou hodnotu filtrovaných komentářů
+        public class FilteredCommentsResult
+        {
+            public List<Comment> Comments { get; set; } = new List<Comment>();
+            public int TotalCount { get; set; }
+        }
+
+        // Metoda pro administrační panel komentářů
+        public async Task<FilteredCommentsResult> GetFilteredCommentsAsync(
+            string searchText, 
+            string statusFilter, 
+            int blogId, 
+            int skip, 
+            int take)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            
+            // Vytvoříme základní dotaz
+            var query = context.Comments.AsQueryable();
+            
+            // Filtr podle blogu
+            if (blogId > 0)
+            {
+                query = query.Where(c => c.BlogId == blogId);
+            }
+            
+            // Filtr podle statusu
+            switch (statusFilter)
+            {
+                case "approved":
+                    query = query.Where(c => c.IsApproved && !c.IsDeleted);
+                    break;
+                case "unapproved":
+                    query = query.Where(c => !c.IsApproved && !c.IsDeleted);
+                    break;
+                case "deleted":
+                    query = query.Where(c => c.IsDeleted);
+                    break;
+                default: // all
+                    break;
+            }
+            
+            // Filtr podle vyhledávacího textu
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                string search = searchText.ToLower();
+                query = query.Where(c => 
+                    c.Content.ToLower().Contains(search) || 
+                    c.AuthorName.ToLower().Contains(search) ||
+                    (c.AuthorEmail != null && c.AuthorEmail.ToLower().Contains(search)));
+            }
+            
+            // Získáme celkový počet komentářů splňujících filtr
+            int totalCount = await query.CountAsync();
+            
+            // Získáme stránkovaný výsledek
+            var comments = await query
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .Include(c => c.Blog)
+                .Include(c => c.User)
+                .ToListAsync();
+            
+            return new FilteredCommentsResult
+            {
+                Comments = comments,
+                TotalCount = totalCount
+            };
+        }
+
         public async Task<List<Comment>> GetCommentsForBlogAsync(int blogId, bool includeReplies = true)
         {
             using var context = await _contextFactory.CreateDbContextAsync();

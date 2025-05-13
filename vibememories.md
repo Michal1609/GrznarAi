@@ -2396,3 +2396,26 @@ V souboru `appsettings.json` byla přidána sekce pro konfiguraci webu:
 Tato konfigurace se používá pro generování absolutních URL adres v sitemap.xml.
 
 Tyto úpravy by měly přispět k lepší indexaci webu vyhledávači a zlepšit celkové SEO hodnocení webu.
+
+## Vylepšení stránky Projects - indikátor načítání
+
+Na stránce `/projects` byl implementován vylepšený indikátor načítání, který poskytuje uživatelům lepší zpětnou vazbu během načítání dat z GitHub API. Tato změna reaguje na problém s dlouhou dobou odezvy při načítání projektů, která je způsobená čekáním na API volání.
+
+### Provedené změny
+
+1. **Vizuální indikátor načítání**:
+   - Přidána animace Bootstrap spinneru (třídy `spinner-border` a `text-primary`)
+   - Nadpis "Načítání..." (`Projects.Loading`) pro zvýraznění stavu načítání
+   - Informační text (`Projects.LoadingFromGitHub`) vysvětlující, že se data načítají z GitHubu a proces může chvíli trvat
+   - Vycentrování a odsazení prostoru kolem indikátoru (třídy `text-center` a `py-5`)
+
+2. **Vylepšení vzhledu projektových karet**:
+   - Přidána animace při najetí myši (hover efekt) s jemným přechodem
+   - Přidán stínový efekt pro vizuální odlišení aktivní karty
+   - Implementováno vertikální posunutí karty při najetí myši pro interaktivnější dojem
+
+3. **Lokalizace**:
+   - Přidán nový lokalizační klíč `Projects.LoadingFromGitHub` s texty v češtině a angličtině
+   - Vylepšeny existující lokalizační texty pro lepší srozumitelnost
+
+Tato implementace poskytuje uživatelům jasnější vizuální zpětnou vazbu během procesu načítání a zlepšuje celkovou uživatelskou zkušenost na stránce projektů, zejména při pomalejších odezvách GitHub API. Uživatelé nyní lépe rozumí tomu, co se děje během delší doby načítání a proč tento proces může trvat déle.

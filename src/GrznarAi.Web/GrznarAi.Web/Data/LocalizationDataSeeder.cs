@@ -581,12 +581,13 @@ namespace GrznarAi.Web.Data
             // --- Projects Page Seed Data ---
             AddEntry("Projects.Title", "Projekty - GrznarAI", "Projects - GrznarAI", "Projects page title");
             AddEntry("Projects.Heading", "Moje Projekty", "My Projects", "Projects page heading");
-            AddEntry("Projects.Description", "Zde najdete výběr mých projektů s detaily získanými přímo z GitHubu.", "Here you can find a selection of my projects, with details fetched directly from GitHub.", "Projects page description");
-            AddEntry("Projects.Loading", "Načítání projektů...", "Loading projects...", "Projects loading message");
-            AddEntry("Projects.NoProjects", "Nebyly nalezeny žádné projekty nebo se nepodařilo načíst detaily z GitHubu.", "No projects found or failed to load details from GitHub.", "No projects message");
-            AddEntry("Projects.Stars", "Hvězdičky", "Stars", "GitHub stars tooltip");
-            AddEntry("Projects.Forks", "Forky", "Forks", "GitHub forks tooltip");
-            AddEntry("Projects.DetailButton", "Detail", "Detail", "Project detail button text");
+            AddEntry("Projects.Description", "Zde najdete výběr mých projektů s detaily získanými přímo z GitHubu včetně popisu, programovacích jazyků a počtu hvězdiček.", "Here you'll find a selection of my projects with details pulled directly from GitHub including descriptions, programming languages, and star counts.", "Projects page description");
+            AddEntry("Projects.Loading", "Načítání...", "Loading...", "Projects loading message");
+            AddEntry("Projects.LoadingFromGitHub", "Probíhá načítání dat z GitHubu. Tento proces může chvíli trvat...", "Loading data from GitHub. This process may take a moment...", "GitHub data loading message");
+            AddEntry("Projects.NoProjects", "Nebyly nalezeny žádné projekty.", "No projects found.", "No projects message");
+            AddEntry("Projects.Stars", "Hvězdičky", "Stars", "GitHub stars label");
+            AddEntry("Projects.Forks", "Forky", "Forks", "GitHub forks label");
+            AddEntry("Projects.DetailButton", "Detail", "Details", "Project detail button");
 
             // --- End Seed Data ---
             

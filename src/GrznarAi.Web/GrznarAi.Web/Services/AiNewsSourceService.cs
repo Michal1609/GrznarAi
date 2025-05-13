@@ -146,5 +146,49 @@ namespace GrznarAi.Web.Services
                 .OrderBy(s => s.Name)
                 .ToListAsync();
         }
+        
+        /// <summary>
+        /// Hromadně aktualizuje datum posledního stažení pro zdroje odpovídající zadaným URL
+        /// </summary>
+        /// <param name="sourceUrls">Seznam URL zdrojů, u kterých aktualizovat LastFetched</param>
+        /// <returns>Počet aktualizovaných zdrojů</returns>
+        public async Task<int> UpdateLastFetchedBulkAsync(IEnumerable<string> sourceUrls)
+        {
+            if (sourceUrls == null || !sourceUrls.Any())
+            {
+                return 0;
+            }
+            
+            // Převedeme na list a odstraníme duplicity
+            var urlList = sourceUrls.Where(url => !string.IsNullOrEmpty(url)).Distinct().ToList();
+            
+            if (!urlList.Any())
+            {
+                return 0;
+            }
+            
+            using var context = await _contextFactory.CreateDbContextAsync();
+            
+            // Získáme všechny zdroje, jejichž URL je v seznamu
+            var sources = await context.AiNewsSources
+                .Where(s => urlList.Contains(s.Url))
+                .ToListAsync();
+            
+            if (!sources.Any())
+            {
+                return 0;
+            }
+            
+            var now = DateTime.UtcNow;
+            
+            // Aktualizujeme datum posledního stažení pro všechny nalezené zdroje
+            foreach (var source in sources)
+            {
+                source.LastFetched = now;
+            }
+            
+            // Uložíme změny a vrátíme počet aktualizovaných zdrojů
+            return await context.SaveChangesAsync();
+        }
     }
 } 

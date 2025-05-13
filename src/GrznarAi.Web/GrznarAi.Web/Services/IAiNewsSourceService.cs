@@ -1,4 +1,5 @@
 using GrznarAi.Web.Data;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -57,5 +58,12 @@ namespace GrznarAi.Web.Services
         /// </summary>
         /// <returns>Seznam aktivních zdrojů AI novinek</returns>
         Task<List<AiNewsSource>> GetActiveSourcesAsync();
+        
+        /// <summary>
+        /// Hromadně aktualizuje datum posledního stažení pro zdroje odpovídající zadaným URL
+        /// </summary>
+        /// <param name="sourceUrls">Seznam URL zdrojů, u kterých aktualizovat LastFetched</param>
+        /// <returns>Počet aktualizovaných zdrojů</returns>
+        Task<int> UpdateLastFetchedBulkAsync(IEnumerable<string> sourceUrls);
     }
 } 

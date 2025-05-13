@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using GrznarAi.Web.Services;
 using GrznarAi.Web.Api.Models.AiNews;
 using GrznarAi.Web.Data;
@@ -16,15 +18,18 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
     {
         private readonly IAiNewsService _newsService;
         private readonly ITwitterService _twitterService;
+        private readonly IAiNewsSourceService _sourceService;
         private readonly ILogger<AiNewsItemsController> _logger;
 
         public AiNewsItemsController(
             IAiNewsService newsService,
             ITwitterService twitterService,
+            IAiNewsSourceService sourceService,
             ILogger<AiNewsItemsController> logger)
         {
             _newsService = newsService;
             _twitterService = twitterService;
+            _sourceService = sourceService;
             _logger = logger;
         }       
 
@@ -45,6 +50,8 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
             _logger.LogInformation("Přidávání {Count} AI novinek přes API", request.Count);
             
             var newsItems = new List<AiNewsItem>();
+            // Slovník pro uložení názvů zdrojů, které budeme potřebovat aktualizovat
+            var sourcesToUpdate = new HashSet<string>();
             
             foreach (var item in request)
             {
@@ -65,6 +72,12 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
                 };
                 
                 newsItems.Add(newsItem);
+                
+                // Přidáme název zdroje do seznamu pro aktualizaci, pokud není prázdný
+                if (!string.IsNullOrEmpty(item.SourceName))
+                {
+                    sourcesToUpdate.Add(item.SourceName);
+                }
             }
             
             // Původní počet položek k uložení
@@ -78,6 +91,21 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
             
             _logger.LogInformation("Přidáno {AddedCount} AI novinek, přeskočeno {SkippedCount} duplicitních položek", 
                 addedCount, skippedCount);
+            
+            // Aktualizujeme datum posledního stažení pro všechny zdroje
+            if (sourcesToUpdate.Count > 0)
+            {
+                try
+                {
+                    // Použijeme službu pro hromadnou aktualizaci zdrojů
+                    int updatedSources = await _sourceService.UpdateLastFetchedBulkAsync(sourcesToUpdate);
+                    _logger.LogInformation("Aktualizováno LastFetched pro {Count} zdrojů", updatedSources);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Došlo k chybě při aktualizaci LastFetched v tabulce AiNewsSources");
+                }
+            }
             
             // Pokud byly přidány nějaké novinky, pošleme tweet
             if (addedCount > 0)

@@ -2726,3 +2726,235 @@ Pro optimální uživatelskou zkušenost byla implementace rozdělena do tří h
   * Texty pro správu obrázků (nahrávání, mazání, detaily)
   * Chybové a potvrzovací zprávy
 - Podporované jazyky: čeština (cs) a angličtina (en)
+
+## Monitorování velikosti databáze
+
+### Přehled implementace
+
+Administrační sekce aplikace nyní zahrnuje sledování a vizualizaci velikosti připojené databáze. Tato funkce poskytuje administrátorům přehled o využití prostoru a může pomoci při plánování kapacity.
+
+### Implementované funkce
+
+1. **Zobrazení celkové velikosti databáze:**
+   * Vizualizace velikosti databáze v GB a MB
+   * Koláčový graf znázorňující poměr využitého a volného prostoru
+   * Progress bar ukazující procentuální využití vůči limitu
+   * Nastavitelný limit databáze (aktuálně 10 GB)
+
+2. **Zobrazení velikosti stránek:**
+   * Velikost dat uložených na stránkách databáze v MB
+   * Získává data pomocí SQL dotazu na `sys.dm_db_partition_stats`
+
+### Technická implementace
+
+1. **SQL dotazy pro získání velikosti databáze:**
+   ```sql
+   -- Získání celkové velikosti databáze v MB
+   SELECT
+       ROUND(CAST(SUM(size) * 8 AS DECIMAL(18,2)) / 1024, 2) AS total_size_mb
+   FROM
+       sys.master_files
+   WHERE
+       database_id = DB_ID()
+   
+   -- Získání velikosti stránek
+   SELECT 
+       SUM(p.reserved_page_count * 8192) AS TotalBytes
+   FROM 
+       sys.dm_db_partition_stats p
+   ```
+
+2. **Backend implementace (`Dashboard.razor.cs`):**
+   * Datové proměnné pro ukládání velikosti DB a limitu
+   ```csharp
+   private decimal _dbSizeMB = 0;
+   private decimal _dbSizeGB => Math.Round(_dbSizeMB / 1024, 2);
+   private decimal _dbSizeLimit = 10; // Limit v GB
+   private decimal _dbUsagePercentage => Math.Min((_dbSizeGB / _dbSizeLimit) * 100, 100);
+   private long _pagesSize = 0;
+   
+   // Data pro koláčový graf využití DB
+   private object[] _dbUsageChartData => new object[] { _dbSizeGB, Math.Max(0, _dbSizeLimit - _dbSizeGB) };
+   private string[] _dbUsageChartLabels => new string[] { "Využito", "Volné" };
+   private string[] _dbUsageChartColors => new string[] { "#39a3ff", "#e5e5e5" };
+   ```
+
+   * Načtení dat z databáze pomocí přímých SQL dotazů v metodě `RefreshDashboardAsync`:
+   ```csharp
+   // Získání velikosti databáze
+   var result = await context.Database
+       .SqlQueryRaw<decimal>(@"
+           SELECT
+               ROUND(CAST(SUM(size) * 8 AS DECIMAL(18,2)) / 1024, 2) AS total_size_mb
+           FROM
+               sys.master_files
+           WHERE
+               database_id = DB_ID()
+       ")
+       .ToListAsync();
+       
+   if (result.Count > 0)
+   {
+       _dbSizeMB = result[0];
+   }
+   
+   // Pokud je to možné, získání velikosti stránek
+   try
+   {
+       var pagesResult = await context.Database
+           .SqlQueryRaw<long>(@"
+               SELECT 
+                   SUM(p.reserved_page_count * 8192) AS TotalBytes
+               FROM 
+                   sys.dm_db_partition_stats p
+           ")
+           .ToListAsync();
+           
+       if (pagesResult.Count > 0)
+       {
+           _pagesSize = pagesResult[0];
+       }
+   }
+   catch (Exception ex)
+   {
+       Logger.LogWarning(ex, "Nepodařilo se získat informace o velikosti stránek");
+   }
+   ```
+
+3. **Frontend implementace (`Dashboard.razor`):**
+   * Využití komponenty `ApexChart` pro vykreslení koláčového grafu
+   * Vlastní komponenta pro zobrazení velikosti databáze s následujícími prvky:
+     * Koláčový graf s využitím a volným místem
+     * Textové zobrazení velikosti a limitu
+     * Progress bar pro vizuální reprezentaci využití
+     * Informace o velikosti v MB
+
+### Spouštění aplikace
+
+Pro správné spuštění aplikace je nutné zajistit:
+
+1. Správný projekt pro dotnet run - použít cestu k projektu:
+   ```
+   dotnet run --project src/GrznarAi.Web/GrznarAi.Web/GrznarAi.Web.csproj
+   ```
+
+2. Ujistit se, že databáze je správně nakonfigurována a existuje připojení s dostatečnými právy pro čtení systémových pohledů `sys.master_files` a `sys.dm_db_partition_stats`.
+
+### Další možnosti rozvoje
+
+V budoucnu by tato funkcionalita mohla být rozšířena o:
+
+1. Nastavitelné limity DB přímo z administrace
+2. Historický graf vývoje velikosti databáze
+3. Detailnější rozklad velikosti podle tabulek
+4. Automatické notifikace při překročení definovaných limitů
+5. Možnost automatické archivace nebo čištění starých dat
+
+## Implementace grafů pomocí ApexCharts
+
+### Přehled implementace
+
+V aplikaci používáme knihovnu ApexCharts pro vytváření a zobrazování grafů. Místo integrace přímo do Blazor (např. přes nuget balíček) používáme JavaScript a CDN přístup, který nabízí lepší výkon a flexibilitu.
+
+### Principy implementace
+
+1. **Načtení knihovny z CDN:**
+   * Knihovna ApexCharts je načtena z CDN v `MainLayout.razor`:
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js"></script>
+   ```
+
+2. **JavaScript wrappery:**
+   * Pro každý typ grafu máme samostatný JavaScript soubor (wrapper), který zpracovává vykreslování
+   * Hlavní metoda pro vykreslení grafu je exportována do `window` objektu
+   * Příklady souborů: `database-usage-chart.js`, `temperature-chart.js`
+
+3. **Volání z Blazoru:**
+   * V Blazor komponentě použijeme `IJSRuntime` k volání JavaScript funkcí
+   * Data pro graf jsou připravena v .NET a předána do JavaScript
+
+### Příklad implementace
+
+1. **JavaScript wrapper (`database-usage-chart.js`):**
+   ```javascript
+   window.renderDatabaseUsageChart = function (elementId, chartData) {
+       // Kontrola existence elementu
+       const chartElement = document.getElementById(elementId);
+       
+       // Zrušit existující graf
+       if (window.dbUsageChart) {
+           window.dbUsageChart.destroy();
+           window.dbUsageChart = null;
+       }
+
+       // Vytvoření nového grafu
+       window.dbUsageChart = new ApexCharts(chartElement, {
+           chart: { type: 'pie', height: 240 },
+           series: chartData.series,
+           labels: chartData.labels,
+           colors: chartData.colors,
+           // další nastavení...
+       });
+
+       // Vykreslení grafu
+       window.dbUsageChart.render();
+   };
+   ```
+
+2. **Blazor komponenta:**
+   ```csharp
+   // Injektování JSRuntime
+   [Inject] 
+   private IJSRuntime JSRuntime { get; set; }
+
+   // Data pro graf
+   private object[] _chartData => new object[] { 10, 90 };
+   private string[] _chartLabels => new string[] { "Využito", "Volné" };
+   
+   // Metoda pro vykreslení grafu
+   private async Task RenderChartAsync()
+   {
+       var chartData = new
+       {
+           series = _chartData,
+           labels = _chartLabels,
+           colors = new string[] { "#39a3ff", "#e5e5e5" }
+       };
+       
+       await JSRuntime.InvokeVoidAsync("renderDatabaseUsageChart", "chart-element-id", chartData);
+   }
+   
+   // Volání po načtení nebo aktualizaci dat
+   protected override async Task OnAfterRenderAsync(bool firstRender)
+   {
+       if (firstRender || _dataChanged)
+       {
+           await RenderChartAsync();
+       }
+   }
+   ```
+
+3. **HTML struktura v Blazor šabloně:**
+   ```html
+   <div id="chart-element-id" style="height: 240px;"></div>
+   ```
+
+### Výhody tohoto přístupu
+
+1. **Lepší výkon** - používáme nativní JavaScript knihovnu přímo, bez dodatečných wrapperů
+2. **Flexibilita** - snadné aktualizace ApexCharts na nové verze změnou CDN odkazu
+3. **Menší velikost aplikace** - nemusíme balit JavaScript knihovnu do naší aplikace
+4. **Plný přístup k funkcím** - možnost využít všechny funkce ApexCharts bez omezení
+
+### Existující implementace grafů
+
+V aplikaci najdete následující implementace:
+1. **Meteo grafy** - složitější implementace s mnoha typy grafů a datovými zdroji (`/meteo/trends`)
+2. **Dashboard grafy** - jednodušší implementace pro administrativní přehledy (`/admin/dashboard`)
+
+### Důležité poznámky
+
+* **Nikdy nepoužívejte nuget balíček ApexCharts.Blazor** - tento balíček způsobuje problémy s výkonem a kompatibilitou
+* Při vytváření nového grafu vždy zkontrolujte, zda správně uvolňujete předchozí instanci grafu
+* Používejte metodu `OnAfterRenderAsync` pro vykreslení grafů, nikoli `OnInitializedAsync`
+* Vždy testujte grafy v různých prohlížečích pro zajištění kompatibility

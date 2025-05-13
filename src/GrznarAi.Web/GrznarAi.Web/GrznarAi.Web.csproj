@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ApexCharts.Blazor" Version="0.9.6-alpha" />
     <PackageReference Include="Markdig" Version="0.41.0" />
     <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" Version="8.0.8" />

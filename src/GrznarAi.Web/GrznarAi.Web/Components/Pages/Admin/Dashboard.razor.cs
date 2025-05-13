@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -36,17 +37,57 @@ namespace GrznarAi.Web.Components.Pages.Admin
         [Inject]
         private ILogger<Dashboard> Logger { get; set; }
 
+        [Inject] 
+        private IJSRuntime JSRuntime { get; set; }
+
         private bool _isLoading = true;
+        private bool _dataRefreshed = false;
         private int _aiNewsCount = 0;
         private int _usersCount = 0;
         private long _cacheTotalSize = 0;
         private int _cacheItemsCount = 0;
         private DateTime? _lastAiNewsDate = null;
         private DateTime? _lastWeatherDate = null;
+        private decimal _dbSizeMB = 0;
+        private decimal _dbSizeGB => Math.Round(_dbSizeMB / 1024, 2);
+        private decimal _dbSizeLimit = 10; // Limit v GB, nastavte podle vašeho plánu
+        private decimal _dbUsagePercentage => Math.Min((_dbSizeGB / _dbSizeLimit) * 100, 100);
+        private long _pagesSize = 0;
+        
+        // Data pro koláčový graf využití DB
+        private object[] _dbUsageChartData => new object[] { _dbSizeGB, Math.Max(0, _dbSizeLimit - _dbSizeGB) };
+        private string[] _dbUsageChartLabels => new string[] { "Využito", "Volné" };
+        private string[] _dbUsageChartColors => new string[] { "#39a3ff", "#e5e5e5" };
         
         protected override async Task OnInitializedAsync()
         {
             await RefreshDashboardAsync();
+        }
+        
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!_isLoading && (_dataRefreshed || firstRender))
+            {
+                try
+                {
+                    _dataRefreshed = false;
+                    
+                    // Připravíme data pro graf
+                    var chartData = new
+                    {
+                        series = _dbUsageChartData,
+                        labels = _dbUsageChartLabels,
+                        colors = _dbUsageChartColors
+                    };
+                    
+                    // Voláme JavaScript pouze v OnAfterRenderAsync
+                    await JSRuntime.InvokeVoidAsync("renderDatabaseUsageChart", "database-usage-chart", chartData);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Chyba při vykreslování grafu databáze");
+                }
+            }
         }
         
         private async Task RefreshDashboardAsync()
@@ -67,6 +108,45 @@ namespace GrznarAi.Web.Components.Pages.Admin
                         .OrderByDescending(n => n.PublishedDate)
                         .Select(n => n.PublishedDate)
                         .FirstOrDefaultAsync();
+                        
+                    // Získání velikosti databáze
+                    var result = await context.Database
+                        .SqlQueryRaw<decimal>(@"
+                            SELECT
+                                ROUND(CAST(SUM(size) * 8 AS DECIMAL(18,2)) / 1024, 2) AS total_size_mb
+                            FROM
+                                sys.master_files
+                            WHERE
+                                database_id = DB_ID()
+                        ")
+                        .ToListAsync();
+                        
+                    if (result.Count > 0)
+                    {
+                        _dbSizeMB = result[0];
+                    }
+                    
+                    // Pokud je to možné, získání velikosti stránek
+                    try
+                    {
+                        var pagesResult = await context.Database
+                            .SqlQueryRaw<long>(@"
+                                SELECT 
+                                    SUM(p.reserved_page_count * 8192) AS TotalBytes
+                                FROM 
+                                    sys.dm_db_partition_stats p
+                            ")
+                            .ToListAsync();
+                            
+                        if (pagesResult.Count > 0)
+                        {
+                            _pagesSize = pagesResult[0];
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogWarning(ex, "Nepodařilo se získat informace o velikosti stránek");
+                    }
                 }
                 
                 // Získání počtu uživatelů
@@ -87,6 +167,7 @@ namespace GrznarAi.Web.Components.Pages.Admin
             finally
             {
                 _isLoading = false;
+                _dataRefreshed = true;
                 StateHasChanged();
             }
         }

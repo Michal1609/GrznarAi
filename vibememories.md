@@ -2229,3 +2229,57 @@ V meteorologických grafech na stránce `/meteo/trends` byla implementována úp
    ```
 2. Již sledované log soubory byly odstraněny ze sledování git repozitáře pomocí příkazu `git rm --cached` zatímco fyzické soubory zůstaly zachovány.
 3. Tato úprava zajišťuje, že log soubory nebudou nadále verzovány a přidávány do commit změn.
+
+## Admin Dashboard
+
+### Přehled Admin Dashboardu
+
+V administračním rozhraní byl implementován přehledový dashboard, který poskytuje základní systémové statistiky a informace o stavu služeb v reálném čase. Dashboard je dostupný pro uživatele s rolí Admin na URL `/admin/dashboard`.
+
+### Implementované statistiky a informace
+
+1. **Základní statistiky**:
+   - Počet AI novinek v databázi - zobrazuje celkový počet AI novinek v systému
+   - Počet registrovaných uživatelů - zobrazuje celkový počet uživatelů v systému
+   - Velikost obsazené cache - zobrazuje celkovou velikost cache v lidsky čitelném formátu (KB, MB, GB) a počet položek v cache
+
+2. **Status systémových služeb**:
+   - AI novinky - zobrazuje datum posledního přidání AI novinky a stav služby:
+     - Zelený indikátor (Online): poslední novinka přidána v posledních 24 hodinách
+     - Oranžový indikátor (Zpoždění): poslední novinka přidána v posledních 24-36 hodinách 
+     - Červený indikátor (Offline): poslední novinka starší než 48 hodin
+   - Meteo data - zobrazuje datum posledního záznamu počasí a stav služby:
+     - Zelený indikátor (Online): poslední záznam z poslední hodiny
+     - Červený indikátor (Offline): poslední záznam starší než 1 hodina
+
+### Architektura řešení
+
+1. **Komponenta Dashboard**:
+   - Rozdělena do dvou souborů podle principu code-behind:
+     - `Dashboard.razor` - obsahuje pouze UI komponentu
+     - `Dashboard.razor.cs` - obsahuje veškerou logiku a obslužný kód
+   - Používá `InteractiveServer` renderovací mód pro aktualizace v reálném čase
+   - Je dostupná pouze uživatelům s rolí Admin
+   - Využívá responsivní design s kartami pro přehlednou organizaci informací
+   - Obsahuje tlačítko pro manuální obnovení dat
+
+2. **Použité služby**:
+   - `ICacheService` - pro získání informací o velikosti a obsahu cache
+   - `IAiNewsService` - pro získání počtu AI novinek
+   - `UserManager<ApplicationUser>` - pro získání počtu uživatelů
+   - `IWeatherHistoryService` - pro získání informací o poslední aktualizaci meteo dat
+   - `IDbContextFactory<ApplicationDbContext>` - pro přímý přístup k databázi pro získání specifických informací
+
+3. **Logika aktualizace dat**:
+   - Data jsou načítána při inicializaci komponenty
+   - Uživatel může manuálně aktualizovat data kliknutím na tlačítko "Obnovit"
+   - Během načítání dat je zobrazen indikátor načítání (spinner)
+   - Zpracování chyb je implementováno pomocí try-catch bloku
+
+4. **Výpočet stavu služeb**:
+   - Stavy služeb jsou vypočítávány na základě času od poslední aktualizace
+   - Používá se barevné značení (zelená/oranžová/červená) pro vizuální indikaci stavu
+
+### Propojení s administrací
+
+Dashboard je přístupný z hlavní administrační stránky (`Administration.razor`), kde byla přidána nová karta s odkazem na dashboard.

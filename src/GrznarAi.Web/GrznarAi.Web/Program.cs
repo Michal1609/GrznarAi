@@ -265,6 +265,21 @@ app.MapGet("/Culture/SetCulture", (string culture, string redirectUri, HttpConte
     return Results.LocalRedirect(localRedirectUri);
 });
 
+// Create sitemap.xml endpoint
+app.MapGet("/sitemap.xml", async (
+    IDbContextFactory<ApplicationDbContext> contextFactory,
+    IBlogService blogService,
+    IAiNewsService aiNewsService,
+    IProjectService projectService,
+    IConfiguration configuration) =>
+{
+    var baseUrl = configuration["SiteSettings:SiteUrl"] ?? "https://grznar.ai";
+    var generator = new SitemapGenerator(contextFactory, blogService, aiNewsService, projectService, baseUrl);
+    var sitemap = await generator.GenerateSitemapAsync();
+    
+    return Results.Content(sitemap, "application/xml");
+});
+
 // Přidej na začátek programu, po registraci služeb
 // Ručně inicializujeme potřebné migrace a tabulky
 using (var scope = builder.Services.BuildServiceProvider().CreateScope())

@@ -227,6 +227,12 @@
             <!-- Sekce pro chyby -->
             @if (activeTab == "errors")
             {
+                <div class="mb-4 d-flex justify-content-end">
+                    <button class="btn btn-danger" @onclick="() => ShowDeleteAllErrorsConfirmation()">
+                        <i class="bi bi-trash me-1"></i> Smazat vše
+                    </button>
+                </div>
+                
                 @if (isLoading)
                 {
                     <div class="d-flex justify-content-center my-5">
@@ -346,6 +352,10 @@
                             <p>@Localizer.GetString("Administration.AiNews.Errors.DeleteConfirmation")</p>
                             <p><strong>@(errorToDelete?.Message ?? "")</strong></p>
                             break;
+                        case "all_errors":
+                            <p>Opravdu chcete smazat <strong>všechny záznamy chyb</strong>?</p>
+                            <p class="text-danger">Tato akce je nevratná!</p>
+                            break;
                     }
                 </div>
                 <div class="modal-footer">
@@ -452,7 +462,7 @@
     private AiNewsItem? newsItemToDelete = null;
     private AiNewsSource? sourceToDelete = null;
     private AiNewsError? errorToDelete = null;
-    private string deleteItemType = "news"; // "news", "source", "error"
+    private string deleteItemType = "news"; // "news", "source", "error", "all_errors"
 
     protected override async Task OnInitializedAsync()
     {
@@ -500,9 +510,8 @@
         isLoading = true;
         try
         {
-            var result = await ErrorService.GetErrorsAsync(errorCurrentPage, pageSize);
-            errors = result;
-            errorTotalCount = result.Count;
+            errors = await ErrorService.GetErrorsAsync(errorCurrentPage, pageSize);
+            errorTotalCount = await ErrorService.GetErrorsCountAsync();
         }
         catch (Exception ex)
         {
@@ -663,9 +672,19 @@
                 sourceToDelete = null;
                 errorToDelete = (AiNewsError)item;
                 break;
+            case "all_errors":
+                newsItemToDelete = null;
+                sourceToDelete = null;
+                errorToDelete = null;
+                break;
         }
         
         deleteConfirmationVisible = true;
+    }
+
+    private void ShowDeleteAllErrorsConfirmation()
+    {
+        ShowDeleteConfirmation(null, "all_errors");
     }
 
     private async Task DeleteNewsItem()
@@ -730,6 +749,12 @@
                         successMessage = "Záznam o chybě byl úspěšně smazán";
                         errorMessage = "Chyba při mazání záznamu o chybě";
                     }
+                    break;
+                case "all_errors":
+                    int deletedCount = await ErrorService.DeleteAllErrorsAsync();
+                    result = true;
+                    successMessage = $"Bylo smazáno všech {deletedCount} záznamů o chybách";
+                    errorMessage = "Chyba při mazání všech záznamů o chybách";
                     break;
             }
             

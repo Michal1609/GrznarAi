@@ -2340,3 +2340,59 @@ Funkcionalita pro kompletní mazání chyb a oprava stránkování v sekci chyb:
    - Implementována metoda `ShowDeleteAllErrorsConfirmation()` pro zobrazení potvrzovacího dialogu
    - Rozšířena metoda `DeleteItemAsync()` o zpracování smazání všech chyb
    - Po úspěšném smazání se zobrazí notifikace s počtem smazaných záznamů
+
+## SEO Optimalizace
+
+V rámci zlepšení indexace webu vyhledávači a SEO byly implementovány následující soubory a funkce:
+
+### robots.txt
+
+Na webu byl přidán soubor `robots.txt`, který je umístěn v kořenovém adresáři webu (`wwwroot/robots.txt`). Tento soubor obsahuje:
+
+```
+User-agent: *
+Allow: /
+
+Sitemap: https://grznar.ai/sitemap.xml
+```
+
+Soubor oznamuje vyhledávačům, že mohou indexovat celý web, a také jim poskytuje odkaz na sitemap.xml.
+
+### sitemap.xml
+
+Na webu byl implementován dynamicky generovaný soubor `sitemap.xml`, který je dostupný na URL `/sitemap.xml`. Tento soubor je generován za běhu a obsahuje:
+
+1. **Statické stránky** webu:
+   - Úvodní stránka
+   - Stránka projektů
+   - Blog
+   - AI Novinky
+   - Meteostanice
+   - Kontaktní stránka
+
+2. **Dynamické stránky** generované z databáze:
+   - Detaily jednotlivých blogových příspěvků
+   - Detaily jednotlivých AI novinek
+   - Detaily jednotlivých projektů
+
+Každý záznam v sitemap.xml obsahuje:
+- URL stránky
+- Datum poslední změny (aktuální datum generování)
+- Četnost změn (daily, weekly, monthly)
+- Prioritu stránky (v rozsahu 0.1 - 1.0)
+
+Implementace sitemap.xml byla provedena pomocí třídy `SitemapGenerator` v adresáři `Tools`, která zpracovává generování XML obsahu. Samotný endpoint je implementován v souboru `Program.cs` a používá třídu `SitemapGenerator` k vytvoření obsahu.
+
+### Konfigurace
+
+V souboru `appsettings.json` byla přidána sekce pro konfiguraci webu:
+
+```json
+"SiteSettings": {
+  "SiteUrl": "https://grznar.ai"
+}
+```
+
+Tato konfigurace se používá pro generování absolutních URL adres v sitemap.xml.
+
+Tyto úpravy by měly přispět k lepší indexaci webu vyhledávači a zlepšit celkové SEO hodnocení webu.

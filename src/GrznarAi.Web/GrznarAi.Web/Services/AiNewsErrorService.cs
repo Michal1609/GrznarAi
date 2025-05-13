@@ -52,6 +52,38 @@ namespace GrznarAi.Web.Services
                 .ToListAsync();
         }
 
+        public async Task<int> GetErrorsCountAsync(string searchTerm = null, int? sourceId = null, string category = null, bool? isResolved = null)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var query = context.AiNewsErrors.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(e => 
+                    e.Message.ToLower().Contains(searchTerm) || 
+                    (e.Details != null && e.Details.ToLower().Contains(searchTerm)) ||
+                    (e.Resolution != null && e.Resolution.ToLower().Contains(searchTerm)));
+            }
+
+            if (sourceId.HasValue)
+            {
+                query = query.Where(e => e.SourceId == sourceId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                query = query.Where(e => e.Category == category);
+            }
+
+            if (isResolved.HasValue)
+            {
+                query = query.Where(e => e.IsResolved == isResolved.Value);
+            }
+
+            return await query.CountAsync();
+        }
+
         public async Task<AiNewsError> GetErrorByIdAsync(int id)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
@@ -110,6 +142,16 @@ namespace GrznarAi.Web.Services
             context.AiNewsErrors.RemoveRange(resolvedErrors);
             await context.SaveChangesAsync();
             return resolvedErrors.Count;
+        }
+
+        public async Task<int> DeleteAllErrorsAsync()
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var errors = await context.AiNewsErrors.ToListAsync();
+            
+            context.AiNewsErrors.RemoveRange(errors);
+            await context.SaveChangesAsync();
+            return errors.Count;
         }
 
         public async Task<int> GetUnresolvedErrorsCountAsync()

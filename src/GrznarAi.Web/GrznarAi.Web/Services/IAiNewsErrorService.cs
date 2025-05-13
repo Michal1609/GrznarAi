@@ -20,6 +20,16 @@ namespace GrznarAi.Web.Services
         Task<List<AiNewsError>> GetErrorsAsync(int page, int pageSize, string searchTerm = null, int? sourceId = null, string category = null, bool? isResolved = null);
 
         /// <summary>
+        /// Získá celkový počet chyb při stahování AI novinek s možností filtrování
+        /// </summary>
+        /// <param name="searchTerm">Vyhledávaný text (nepovinný)</param>
+        /// <param name="sourceId">ID zdroje pro filtrování (nepovinný)</param>
+        /// <param name="category">Kategorie chyb pro filtrování (nepovinný)</param>
+        /// <param name="isResolved">Zda má zahrnout vyřešené chyby</param>
+        /// <returns>Celkový počet chyb</returns>
+        Task<int> GetErrorsCountAsync(string searchTerm = null, int? sourceId = null, string category = null, bool? isResolved = null);
+
+        /// <summary>
         /// Získá konkrétní chybu podle ID
         /// </summary>
         /// <param name="id">ID chyby</param>
@@ -60,6 +70,12 @@ namespace GrznarAi.Web.Services
         /// </summary>
         /// <returns>Počet smazaných chyb</returns>
         Task<int> DeleteResolvedErrorsAsync();
+        
+        /// <summary>
+        /// Smaže všechny chyby v databázi
+        /// </summary>
+        /// <returns>Počet smazaných chyb</returns>
+        Task<int> DeleteAllErrorsAsync();
 
         /// <summary>
         /// Získá počet nevyřešených chyb

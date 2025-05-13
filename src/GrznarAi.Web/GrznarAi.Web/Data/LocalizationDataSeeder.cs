@@ -546,6 +546,12 @@ namespace GrznarAi.Web.Data
             AddEntry("Administration.WeatherHistory.DataDeletedError", "Chyba při mazání historických dat", "Error deleting historical data", "Error message when deleting history fails");
             AddEntry("Administration.WeatherHistory.ErrorLoadingStats", "Chyba při načítání statistik historie počasí", "Error loading weather history statistics", "Error message when loading statistics fails");
 
+            // Common buttons and labels
+            AddEntry("Common.Refresh", "Obnovit", "Refresh", "Refresh button text");
+            AddEntry("Common.Copy", "Kopírovat", "Copy", "Copy button text");
+            AddEntry("Common.Close", "Zavřít", "Close", "Close button text");
+            AddEntry("Common.Clear", "Vymazat", "Clear", "Clear button/filter");
+
             // --- Meteo Trends Page ---
             AddEntry("Meteo.Trends", "Vývoj", "Trends", "Button for weather trends page");
             AddEntry("Meteo.Trends.Title", "Vývoj počasí", "Weather Trends", "Weather trends page title");
@@ -615,6 +621,28 @@ namespace GrznarAi.Web.Data
             AddEntry("Projects.Forks", "Forky", "Forks", "GitHub forks label");
             AddEntry("Projects.DetailButton", "Detail", "Details", "Project detail button");
 
+            // --- Image Manager Seed Data ---
+            AddEntry("ImageManager.Title", "Správce obrázků", "Image Manager", "Image manager page title");
+            AddEntry("ImageManager.Upload.Title", "Nahrát obrázky", "Upload Images", "Upload images section title");
+            AddEntry("ImageManager.Upload.FilesSelected", "souborů vybráno", "files selected", "Selected files count label");
+            AddEntry("ImageManager.Upload.Button", "Nahrát", "Upload", "Upload button text");
+            AddEntry("ImageManager.Filter", "Filtrovat obrázky...", "Filter images...", "Filter images placeholder");
+            AddEntry("ImageManager.NoImages", "V tomto adresáři nebyly nalezeny žádné obrázky.", "No images found in this directory.", "No images message");
+            AddEntry("ImageManager.Details.Path", "Cesta", "Path", "Image path label");
+            AddEntry("ImageManager.Details.Size", "Velikost", "Size", "Image size label");
+            AddEntry("ImageManager.Details.Modified", "Poslední změna", "Last Modified", "Last modified label");
+            AddEntry("ImageManager.Details.Dimensions", "Rozměry", "Dimensions", "Image dimensions label");
+            AddEntry("ImageManager.Delete.Title", "Potvrdit smazání", "Confirm Delete", "Delete confirmation title");
+            AddEntry("ImageManager.Delete.Confirmation", "Opravdu chcete smazat tento obrázek? Tato akce je nevratná.", "Are you sure you want to delete this image? This action cannot be undone.", "Delete confirmation message");
+            AddEntry("ImageManager.Upload.Success", "Obrázky byly úspěšně nahrány.", "Images were successfully uploaded.", "Upload success message");
+            AddEntry("ImageManager.Upload.Error", "Při nahrávání obrázků došlo k chybě.", "An error occurred while uploading images.", "Upload error message");
+            AddEntry("ImageManager.Delete.Success", "Obrázek byl úspěšně smazán.", "Image was successfully deleted.", "Delete success message");
+            AddEntry("ImageManager.Delete.Error", "Při mazání obrázku došlo k chybě.", "An error occurred while deleting the image.", "Delete error message");
+            AddEntry("ImageManager.Copy.Success", "URL byla zkopírována do schránky.", "URL was copied to clipboard.", "Copy URL success message");
+            AddEntry("ImageManager.Copy.Error", "Při kopírování URL došlo k chybě.", "An error occurred while copying the URL.", "Copy URL error message");
+            AddEntry("ImageManager.Card.ImageManager", "Správce obrázků", "Image Manager", "Admin card title for Image Manager");
+            AddEntry("ImageManager.Card.Description", "Nahrajte, spravujte a mažte obrázky na webu", "Upload, manage and delete images on the website", "Admin card description for Image Manager");
+
             // --- End Seed Data ---
 
             // --- Home Page Redesign ---
@@ -627,8 +655,6 @@ namespace GrznarAi.Web.Data
             AddEntry("HomePage.Featured.AiNews.Title", "AI Novinky", "AI News", "Home page AI news feature box title");
             AddEntry("HomePage.Featured.AiNews.Text", "Buďte informováni o nejnovějších zprávách ze světa AI, přeložených pro vaše pohodlí.", "Stay informed with the latest news from the AI world, translated for your convenience.", "Home page AI news feature box description");
             AddEntry("HomePage.Carousel.ViewAiNewsButton", "Zobrazit AI novinky", "View AI News", "Home page carousel view AI news button text");
-            
-            // --- End Seed Data ---
             
             try
             {

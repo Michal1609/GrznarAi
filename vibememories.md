@@ -233,9 +233,9 @@ Implementovaný systém lokalizace využívá kombinaci standardních ASP.NET Co
     *   Obsahuje metody pro administraci (`GetAllStringsAdminAsync`, `AddStringAsync`, atd.), které po změně v DB znovu načtou cache (`ReloadCacheAsync`).
 
 3.  **Konfigurace v `Program.cs`:**
-    *   `builder.Services.Configure<RequestLocalizationOptions>`: Definuje podporované kultury (`cs`, `en`), výchozí kulturu (`en`) a nastavuje `CookieRequestCultureProvider` jako primární zdroj pro určení jazyka.
-    *   `app.UseRequestLocalization(...)`: Aktivuje middleware, který na začátku každého requestu nastaví `CultureInfo.CurrentCulture` a `CultureInfo.CurrentUICulture` podle hodnoty z cookie `.AspNetCore.Culture`.
-    *   `app.MapGet("/Culture/SetCulture", ...)`: Minimal API endpoint, který přijme kód jazyka (`cs`/`en`) a návratové URL, nastaví cookie `.AspNetCore.Culture` a přesměruje uživatele zpět (což způsobí obnovení stránky a aplikování nové kultury).
+    -   `builder.Services.Configure<RequestLocalizationOptions>`: Definuje podporované kultury (`cs`, `en`), výchozí kulturu (`en`) a nastavuje `CookieRequestCultureProvider` jako primární zdroj pro určení jazyka.
+    -   `app.UseRequestLocalization(...)`: Aktivuje middleware, který na začátku každého requestu nastaví `CultureInfo.CurrentCulture` a `CultureInfo.CurrentUICulture` podle hodnoty z cookie `.AspNetCore.Culture`.
+    -   `app.MapGet("/Culture/SetCulture", ...)`: Minimal API endpoint, který přijme kód jazyka (`cs`/`en`) a návratové URL, nastaví cookie `.AspNetCore.Culture` a přesměruje uživatele zpět (což způsobí obnovení stránky a aplikování nové kultury).
 
 4.  **Použití v Razor komponentách:**
     *   Injectuje se služba: `@inject ILocalizationService Localizer`
@@ -2509,3 +2509,162 @@ V rámci podpory vícejazyčnosti byla přidána lokalizace pro stránku s detai
    - Využití lokalizačních klíčů pro texty v sekci komentářů
 
 Tyto úpravy zajišťují, že všechny texty na stránce s detailem blogu jsou nyní plně lokalizovány a budou se měnit podle zvoleného jazyka v aplikaci.
+
+## Image Manager v Administraci (2024-06-10)
+
+### Přehled funkcionality
+
+V administračním rozhraní byla implementována správa obrázků, která umožňuje administrátorům nahrávat, spravovat a mazat obrázky používané na webu. Tato funkcionalita je dostupná na URL `/admin/images` pro uživatele s rolí Admin.
+
+### Hlavní funkce Image Manageru
+
+1. **Nahrávání obrázků**:
+   - Podpora různých formátů obrázků (JPG, JPEG, PNG, GIF, SVG, WebP)
+   - Hromadné nahrávání více souborů najednou (až 50 souborů)
+   - Automatická validace typu souboru
+   - Ošetření duplicitních názvů souborů (přidání číselného sufixu)
+   - Omezení velikosti souboru na 10 MB
+   - Čištění názvů souborů (odstranění speciálních znaků a mezer)
+
+2. **Správa obrázků**:
+   - Přehledné zobrazení obrázků v responsivní mřížce
+   - Filtrování obrázků podle názvu
+   - Výběr adresáře pro zobrazení/nahrávání obrázků
+   - Zobrazení metadat obrázků (velikost, rozměry, datum poslední úpravy)
+   - Kopírování URL obrázku do schránky pro snadné použití
+
+3. **Mazání obrázků**:
+   - Potvrzovací dialog před smazáním
+   - Okamžité odstranění z přehledu po smazání
+
+### Technická implementace
+
+1. **Komponenty**:
+   - `ImageManager.razor` - UI komponenta s formulářem pro nahrávání a zobrazení obrázků
+   - `ImageManager.razor.cs` - kódová část implementující logiku
+
+2. **Model dat**:
+   - Třída `ImageInfo` obsahující informace o obrázku:
+     - Název souboru
+     - Úplná cesta
+     - Relativní cesta
+     - URL
+     - Velikost v bajtech
+     - Datum poslední úpravy
+     - Šířka a výška (v pixelech)
+
+3. **Klíčové metody**:
+   - `LoadDirectories()` - načtení dostupných adresářů pro obrázky
+   - `LoadImages()` - načtení seznamu obrázků z vybraného adresáře
+   - `UploadFiles()` - nahrání nových obrázků
+   - `DeleteImage()` - smazání vybraného obrázku
+   - `CopyImageUrl()` - kopírování URL obrázku do schránky
+
+4. **Použité technologie**:
+   - SixLabors.ImageSharp pro zpracování obrázků (získání rozměrů)
+   - JavaScript interop pro kopírování do schránky
+   - MudBlazor pro UI komponenty (Snackbar notifikace)
+
+5. **Bezpečnost**:
+   - Autorizace pomocí atributu `[Authorize(Roles = "Admin")]`
+   - Validace typu souborů
+   - Omezení velikosti souboru
+   - Čištění názvů souborů pomocí regulárních výrazů
+
+6. **Lokalizace**:
+   - Podpora českého a anglického jazyka
+   - Výchozí texty pro případy, kdy lokalizační klíč není nalezen
+
+### Použití Image Manageru
+
+1. **Přístup ke správě obrázků**:
+   - Přejděte na `/admin/administration`
+   - Klikněte na kartu "Image Manager"
+
+2. **Nahrání nového obrázku**:
+   - V sekci "Upload Images" klikněte na "Choose Files" a vyberte obrázky
+   - Klikněte na tlačítko "Upload"
+   - Po úspěšném nahrání se zobrazí potvrzující zpráva a obrázky se ihned objeví v přehledu
+
+3. **Práce s obrázky**:
+   - Filtrujte obrázky pomocí vyhledávacího pole
+   - Změňte adresář pomocí rozbalovacího menu
+   - Klikněte na obrázek pro zobrazení detailů
+   - Použijte tlačítko s ikonou schránky pro kopírování URL
+   - Použijte tlačítko s ikonou koše pro smazání obrázku
+
+4. **Použití obrázků na webu**:
+   - Zkopírujte URL obrázku a použijte jej v HTML nebo Markdown kódu
+   - Příklad v HTML: `<img src="/images/nazev-obrazku.jpg" alt="Popis obrázku">`
+   - Příklad v Razor: `<img src="@imageUrl" alt="Popis obrázku">`
+
+Tato nová funkcionalita významně zjednodušuje práci s obrázky na webu a eliminuje potřebu přístupu k souborovému systému serveru pro běžnou správu obrázků.
+
+## Image Manager v Administraci - Aktualizace (2024-06-10)
+
+### Přehled změn
+
+V Image Manageru byly provedeny následující úpravy:
+
+1. **Odstranění externích knihoven:**
+   - Odstraněna závislost na MudBlazor (ISnackbar)
+   - Odstraněna závislost na SixLabors.ImageSharp
+   - Použití standardních knihoven .NET pro práci s obrázky (System.Drawing)
+   - Implementace vlastního systému zobrazování notifikací pomocí standardních Bootstrap alert komponent
+
+2. **Optimalizace kódu:**
+   - Odstraněny zbytečné async/await volání bez await operátorů
+   - Přidáno vrácení Task.CompletedTask pro synchronní metody deklarované jako Task
+   - Oprava volání JavaScript metod pomocí IJSRuntime.InvokeAsync<object> místo InvokeVoidAsync
+
+3. **Výhody využití standardních knihoven:**
+   - Menší velikost aplikace (méně externích závislostí)
+   - Lepší kompatibilita s .NET rámcem
+   - Jednodušší údržba (méně závislostí na externích knihovnách)
+
+4. **Funkcionalita:**
+   - Zachována všechna původní funkcionalita správy obrázků
+   - Výběr adresáře pro zobrazení a upload obrázků
+   - Filtrování obrázků podle názvu
+   - Zobrazení detailů obrázku včetně rozměrů a velikosti
+   - Kopírování URL obrázku do schránky
+   - Mazání obrázků
+
+## Implementace lokalizace pro Image Manager (2024-06-11)
+
+### Přehled změn
+
+V komponentě Image Manager byla implementována kompletní lokalizace:
+
+1. **Přidání lokalizačních klíčů:**
+   - Přidány lokalizační klíče pro celou komponentu (celkem více než 20 klíčů)
+   - Přidána česká a anglická verze pro všechny texty
+   - Lokalizační klíče přidány do `LocalizationDataSeeder.cs`
+   - Lokalizační klíče jsou logicky organizovány podle částí UI (upload, detail, mazání atd.)
+
+2. **Struktura lokalizace:**
+   - `ImageManager.Title` - Název celé stránky
+   - `ImageManager.Upload.*` - Klíče související s uploadvem souborů
+   - `ImageManager.Details.*` - Klíče pro zobrazení detailů obrázku
+   - `ImageManager.Delete.*` - Klíče související s mazáním obrázků
+   - `ImageManager.Card.*` - Klíče pro administrační kartu
+   - `Common.*` - Sdílené klíče pro běžné operace (Copy, Delete, Cancel)
+
+3. **Implementace v UI:**
+   - Všechny statické texty nahrazeny voláním `@Localizer.GetString("KlíčTextu", "Výchozí text")`
+   - Výchozí hodnoty v angličtině pro případ, kdy lokalizační klíč není nalezen
+   - Použit existující mechanismus lokalizace přes `ILocalizationService`
+
+4. **Oprava referencí v Administration.razor:**
+   - Opraveny reference na lokalizační klíče v administrační kartě pro Image Manager
+   - Přejmenování klíče z původního `ImageManager.Description` na `ImageManager.Card.Description`
+
+5. **Přidání obecných lokalizačních klíčů:**
+   - Přidány obecné klíče pro často používané akce:
+     - `Common.Refresh` - tlačítko Obnovit/Refresh
+     - `Common.Copy` - tlačítko Kopírovat/Copy
+     - `Common.Close` - tlačítko Zavřít/Close
+     - (již existující `Common.Delete` a `Common.Cancel`)
+   - Tyto obecné klíče jsou používány napříč celou aplikací pro konzistentní lokalizaci
+
+Tyto změny zajišťují, že všechny texty v komponentě správce obrázků jsou nyní plně lokalizovány a budou se zobrazovat v jazyce, který si uživatel zvolí.

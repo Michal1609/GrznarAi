@@ -2419,3 +2419,93 @@ Na stránce `/projects` byl implementován vylepšený indikátor načítání, 
    - Vylepšeny existující lokalizační texty pro lepší srozumitelnost
 
 Tato implementace poskytuje uživatelům jasnější vizuální zpětnou vazbu během procesu načítání a zlepšuje celkovou uživatelskou zkušenost na stránce projektů, zejména při pomalejších odezvách GitHub API. Uživatelé nyní lépe rozumí tomu, co se děje během delší doby načítání a proč tento proces může trvat déle.
+
+## Redesign domovské stránky (Home Page)
+
+Domovská stránka byla kompletně přepracována pro lepší prezentaci obsahu a zlepšení uživatelské zkušenosti.
+
+### Hlavní změny
+
+1. **Nový layout**:
+   - V hlavní části stránky je zobrazen kombinovaný seznam AI novinek a blogových příspěvků z posledních 24 hodin
+   - V pravém sloupci jsou menší boxy s odkazy na hlavní sekce webu (Blog, Projekty, Meteo data, AI novinky)
+   - Všechny karty používají jednotný design s bílým pozadím a zaoblenými rohy (0.75rem)
+   - Zachován carousel slider v horní části stránky
+
+2. **Kombinované zprávy**:
+   - Zobrazují se příspěvky ze dvou zdrojů (AI novinky a blog)
+   - Seřazení podle času publikace (od nejnovějších)
+   - Omezení na posledních 24 hodin pro zajištění aktuálnosti
+   - U každé karty je jasně označen zdroj (AI novinka/blog)
+   - U AI novinek jsou dostupná tlačítka pro originální zdroj a český překlad
+
+3. **Implementace struktury**:
+   - Vytvořena nová služba `HomeService` pro získávání kombinovaných dat
+   - Model `HomeNewsItem` reprezentující položku na domovské stránce
+   - Enum `HomeNewsItemType` pro rozlišení typu zprávy (AI novinka/blog)
+   - Pomocná třída `SlugGenerator` pro generování URL-friendly slugů
+   - Refaktorováno podle SOLID principů do samostatných souborů
+
+### Technické detaily
+
+1. **Struktura souborů**:
+   - `Models/HomeNewsItem.cs`: Data model pro zprávy na domovské stránce
+   - `Services/IHomeService.cs`: Rozhraní služby
+   - `Services/Home/HomeService.cs`: Implementace služby
+   - `Core/Utils/SlugGenerator.cs`: Utilita pro generování slugů
+   - `Components/Pages/Home.razor`: UI komponenta pro domovskou stránku
+
+2. **Lokalizace**:
+   - Přidány lokalizační klíče pro domovskou stránku
+   - Všechny texty jsou lokalizovány (CS/EN)
+
+3. **Responzivní design**:
+   - Layout se přizpůsobuje různým velikostem obrazovky
+   - Na mobilních zařízeních se sloupce přeskládají pod sebe
+   - Karty mají vizuálně přitažlivý design s hover efekty
+
+Tato aktualizace zlepšuje použitelnost domovské stránky zobrazením aktuálního obsahu z více zdrojů na jednom místě, což uživatelům umožňuje rychlejší přístup k nejnovějším informacím bez nutnosti navigovat na různé sekce webu.
+
+## Lokalizace stránky s detailem blogu (BlogPost)
+
+V rámci podpory vícejazyčnosti byla přidána lokalizace pro stránku s detailem blogu (BlogPost.razor). Tato úprava zajišťuje, že všechny texty na stránce jsou nyní zobrazovány na základě vybraného jazyka uživatele.
+
+### Provedené úpravy:
+
+1. **Lokalizační klíče pro BlogPost**:
+   - Přidány nové lokalizační klíče v souboru `LocalizationDataSeeder.cs` v sekci "Blog post detail page":
+     - `BlogPost.Title`: Titulek stránky s detailem blogu
+     - `BlogPost.Loading`: Text během načítání blogu
+     - `BlogPost.NotFound.Title`: Nadpis při nenalezení blogu
+     - `BlogPost.NotFound.Description`: Popis při nenalezení blogu
+     - `BlogPost.BackToBlog`: Text tlačítka pro návrat na seznam blogů
+     - `BlogPost.RelatedPosts`: Nadpis sekce se souvisejícími příspěvky
+     - `BlogPost.PopularTags`: Nadpis sekce s populárními štítky
+     - `BlogPost.Share`: Nadpis sekce pro sdílení
+     - `BlogPost.Share.Facebook`: Popisek pro sdílení na Facebooku
+     - `BlogPost.Share.Twitter`: Popisek pro sdílení na Twitteru
+     - `BlogPost.Share.LinkedIn`: Popisek pro sdílení na LinkedIn
+     - `BlogPost.Share.Email`: Popisek pro sdílení e-mailem
+     - `BlogPost.Share.DefaultTitle`: Výchozí titulek při sdílení
+     - `BlogPost.Share.EmailBody`: Text e-mailu při sdílení
+     - `BlogPost.Author.Name`: Jméno autora
+     - `BlogPost.Author.Description`: Popis autora
+     - `BlogPost.Author.Alt`: Alternativní text pro obrázek autora
+
+2. **Lokalizační klíče pro komentáře u blogu**:
+   - Přidány lokalizační klíče pro sekci komentářů:
+     - `Blog.Comments`: Nadpis sekce komentářů
+     - `Blog.AddComment`: Text tlačítka pro přidání komentáře
+     - `Blog.NoComments`: Text při neexistenci komentářů
+     - `Blog.LoadMoreComments`: Text tlačítka pro načtení dalších komentářů
+
+3. **Úpravy v souboru BlogPost.razor**:
+   - Nahrazení pevných textů voláním `Localizer.GetString()`
+   - Lokalizace informací o autorovi pomocí klíčů `BlogPost.Author.*`
+   - Lokalizace sekce pro sdílení příspěvku
+   - Lokalizace sekce s populárními štítky a souvisejícími příspěvky
+
+4. **Úpravy v CommentList.razor**:
+   - Využití lokalizačních klíčů pro texty v sekci komentářů
+
+Tyto úpravy zajišťují, že všechny texty na stránce s detailem blogu jsou nyní plně lokalizovány a budou se měnit podle zvoleného jazyka v aplikaci.

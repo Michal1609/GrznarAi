@@ -1,10 +1,12 @@
 ﻿@page "/"
 @inject IJSRuntime JSRuntime
 @inject GrznarAi.Web.Services.ILocalizationService Localizer
-@inject GrznarAi.Web.Services.IBlogService BlogService
+@inject GrznarAi.Web.Services.IHomeService HomeService
 @using GrznarAi.Web.Data
-@using GrznarAi.Web.Components.Pages.Blog.Models
+@using GrznarAi.Web.Services
+@using GrznarAi.Web.Models
 @using System.Globalization
+@rendermode InteractiveServer
 
 <PageTitle>@Localizer.GetString("HomePage.Title")</PageTitle>
 
@@ -55,172 +57,185 @@
     </button>
 </div>
 
-<!-- Featured Content -->
+<!-- Main Content -->
 <div class="container mt-5">
     <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column">
-                    <div class="text-center mb-3">
-                        <i class="bi bi-journal-richtext text-primary" style="font-size: 3rem;"></i>
-                    </div>
-                    <h3 class="card-title text-center">@Localizer.GetString("HomePage.Featured.Blog.Title")</h3>
-                    <p class="card-text">@Localizer.GetString("HomePage.Featured.Blog.Text")</p>
-                    <div class="text-center mt-auto">
-                        <a href="/blog" class="btn btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ReadBlogButton")</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column">
-                    <div class="text-center mb-3">
-                        <i class="bi bi-code-square text-primary" style="font-size: 3rem;"></i>
-                    </div>
-                    <h3 class="card-title text-center">@Localizer.GetString("HomePage.Featured.Projects.Title")</h3>
-                    <p class="card-text">@Localizer.GetString("HomePage.Featured.Projects.Text")</p>
-                    <div class="text-center mt-auto">
-                        <a href="/projects" class="btn btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ViewProjectsButton")</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column">
-                    <div class="text-center mb-3">
-                        <i class="bi bi-cloud-sun text-primary" style="font-size: 3rem;"></i>
-                    </div>
-                    <h3 class="card-title text-center">@Localizer.GetString("HomePage.Featured.Meteo.Title")</h3>
-                    <p class="card-text">@Localizer.GetString("HomePage.Featured.Meteo.Text")</p>
-                    <div class="text-center mt-auto">
-                        <a href="/meteo" class="btn btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ViewMeteoButton")</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Latest Blog Posts -->
-<div class="container mt-5">
-    <h2 class="mb-4">@Localizer.GetString("HomePage.LatestPosts.Title")</h2>
-    <div class="row">
-        @if (isLoading)
-        {
-            <div class="d-flex justify-content-center w-100 py-4">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">@Localizer.GetString("BlogPost.Loading")</span>
-                </div>
-            </div>
-        }
-        else if (latestPosts.Count == 0)
-        {
-            <div class="col-12">
-                <div class="alert alert-info">
-                    @Localizer.GetString("HomePage.LatestPosts.NoPosts")
-                </div>
-            </div>
-        }
-        else
-        {
-            @foreach (var post in latestPosts)
+        <!-- Main content - Latest News -->
+        <div class="col-md-8">
+            <h2 class="mb-4">@Localizer.GetString("HomePage.LatestNews.Title")</h2>
+            
+            @if (isLoading)
             {
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">@post.Title</h5>
-                            <p class="card-text text-muted">@post.CreatedAt.ToString("d. MMMM yyyy")</p>
-                            <p class="card-text flex-grow-1">@post.Description</p>
-                            <a href="/blog/@post.Slug" class="btn btn-sm btn-primary mt-auto">@Localizer.GetString("HomePage.LatestPosts.ReadMore")</a>
-                        </div>
+                <div class="d-flex justify-content-center w-100 py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">@Localizer.GetString("HomePage.Loading")</span>
                     </div>
                 </div>
             }
-        }
-    </div>
-    <div class="text-center mt-3">
-        <a href="/blog" class="btn btn-outline-primary">@Localizer.GetString("HomePage.LatestPosts.ViewAll")</a>
+            else if (latestNews.Count == 0)
+            {
+                <div class="alert alert-info">
+                    @Localizer.GetString("HomePage.LatestNews.NoItems")
+                </div>
+            }
+            else
+            {
+                <div class="news-items">
+                @foreach (var item in latestNews)
+                {
+                    <div class="news-card mb-3" style="background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
+                        <div class="news-card-content" style="background-color: #ffffff; border-radius: 0.75rem;">
+                            <div class="row g-0">
+                                <div class="col-md-4 news-image">
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img src="@item.ImageUrl" alt="@item.Title" class="img-fluid rounded" />
+                                    }
+                                    else if (item.ItemType == HomeNewsItemType.AiNews)
+                                    {
+                                        <img src="/images/UniverzalAiNews.jpg" alt="AI News" class="img-fluid rounded" />
+                                    }
+                                    else
+                                    {
+                                        <div class="blog-placeholder d-flex align-items-center justify-content-center h-100 bg-light rounded">
+                                            <i class="bi bi-journal-richtext text-primary" style="font-size: 3rem;"></i>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="news-content p-3" style="background-color: #ffffff; border-radius: 0 0.75rem 0.75rem 0;">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="news-source">
+                                                <i class="bi bi-globe"></i> @item.Source
+                                            </span>
+                                            <span class="news-date">
+                                                <i class="bi bi-calendar3"></i> @item.PublishedDate.ToString("d. MMMM yyyy")
+                                            </span>
+                                        </div>
+                                        
+                                        <h2 class="news-title">
+                                            <a href="@item.Url" class="news-title-link">
+                                                @item.Title
+                                            </a>
+                                        </h2>
+                                        
+                                        <div class="news-summary">
+                                            @(string.IsNullOrEmpty(item.Description) ? "" : item.Description)
+                                        </div>
+                                        
+                                        <div class="news-actions mt-auto">
+                                            @if (item.ItemType == HomeNewsItemType.Blog)
+                                            {
+                                                <a href="@item.Url" class="btn btn-outline-primary">
+                                                    <i class="bi bi-book"></i> @Localizer.GetString("HomePage.ReadMore")
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="@item.SourceUrl" target="_blank" class="btn btn-outline-primary">
+                                                    <i class="bi bi-box-arrow-up-right"></i> @Localizer.GetString("HomePage.ReadOriginal")
+                                                </a>
+                                                <a href="@item.Url" class="btn btn-outline-success ms-2">
+                                                    <i class="bi bi-translate"></i> @Localizer.GetString("HomePage.ViewTranslation")
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar - Quick links -->
+        <div class="col-md-4">
+            <div class="sidebar-box mb-3" style="background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
+                <div class="sidebar-box-body" style="background-color: #ffffff; border-radius: 0.75rem; padding: 1.25rem;">
+                    <div class="text-center mb-2">
+                        <i class="bi bi-journal-richtext text-primary sidebar-icon"></i>
+                    </div>
+                    <h4 class="sidebar-title">@Localizer.GetString("HomePage.Featured.Blog.Title")</h4>
+                    <p class="sidebar-text">@Localizer.GetString("HomePage.Featured.Blog.Text")</p>
+                    <div class="text-center mt-2">
+                        <a href="/blog" class="btn btn-sm btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ReadBlogButton")</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-box mb-3" style="background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
+                <div class="sidebar-box-body" style="background-color: #ffffff; border-radius: 0.75rem; padding: 1.25rem;">
+                    <div class="text-center mb-2">
+                        <i class="bi bi-code-square text-primary sidebar-icon"></i>
+                    </div>
+                    <h4 class="sidebar-title">@Localizer.GetString("HomePage.Featured.Projects.Title")</h4>
+                    <p class="sidebar-text">@Localizer.GetString("HomePage.Featured.Projects.Text")</p>
+                    <div class="text-center mt-2">
+                        <a href="/projects" class="btn btn-sm btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ViewProjectsButton")</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-box mb-3" style="background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
+                <div class="sidebar-box-body" style="background-color: #ffffff; border-radius: 0.75rem; padding: 1.25rem;">
+                    <div class="text-center mb-2">
+                        <i class="bi bi-cloud-sun text-primary sidebar-icon"></i>
+                    </div>
+                    <h4 class="sidebar-title">@Localizer.GetString("HomePage.Featured.Meteo.Title")</h4>
+                    <p class="sidebar-text">@Localizer.GetString("HomePage.Featured.Meteo.Text")</p>
+                    <div class="text-center mt-2">
+                        <a href="/meteo" class="btn btn-sm btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ViewMeteoButton")</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-box mb-3" style="background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
+                <div class="sidebar-box-body" style="background-color: #ffffff; border-radius: 0.75rem; padding: 1.25rem;">
+                    <div class="text-center mb-2">
+                        <i class="bi bi-newspaper text-primary sidebar-icon"></i>
+                    </div>
+                    <h4 class="sidebar-title">@Localizer.GetString("HomePage.Featured.AiNews.Title")</h4>
+                    <p class="sidebar-text">@Localizer.GetString("HomePage.Featured.AiNews.Text")</p>
+                    <div class="text-center mt-2">
+                        <a href="/ai-news" class="btn btn-sm btn-outline-primary">@Localizer.GetString("HomePage.Carousel.ViewAiNewsButton")</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @code {
     private bool isLoading = true;
-    private List<BlogViewModel> latestPosts = new();
+    private List<HomeNewsItem> latestNews = new();
     private CultureInfo currentCulture => CultureInfo.CurrentUICulture;
     private string languageCode => currentCulture.TwoLetterISOLanguageName;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadLatestPosts();
+        await LoadLatestNewsAsync();
     }
 
-    private async Task LoadLatestPosts()
+    private async Task LoadLatestNewsAsync()
     {
         isLoading = true;
         
         try
         {
-            // Získáme poslední 3 publikované příspěvky v aktuálním jazyce
-            var posts = await BlogService.GetPublishedBlogsAsync(languageCode, 0, 3);
-            
-            // Pokud nejsou k dispozici žádné příspěvky v aktuálním jazyce, zkusíme je načíst v angličtině
-            if (posts.Count == 0 && languageCode != "en")
-            {
-                posts = await BlogService.GetPublishedBlogsAsync("en", 0, 3);
-                
-                // Pokud ani v angličtině nejsou žádné příspěvky, zkusíme je načíst v češtině
-                if (posts.Count == 0 && languageCode != "cs")
-                {
-                    posts = await BlogService.GetPublishedBlogsAsync("cs", 0, 3);
-                }
-            }
-            
-            // Převedeme příspěvky na viewmodel
-            latestPosts = posts.Select(MapBlogContentToViewModel).ToList();
+            // Získání kombinovaných dat za posledních 24 hodin
+            latestNews = await HomeService.GetLatestNewsAsync(languageCode);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Chyba při načítání posledních příspěvků: {ex.Message}");
+            Console.WriteLine($"Chyba při načítání aktualit: {ex.Message}");
+            latestNews = new List<HomeNewsItem>();
         }
         finally
         {
             isLoading = false;
         }
-    }
-    
-    private BlogViewModel MapBlogContentToViewModel(BlogContent blogContent)
-    {
-        string slug = blogContent.Title.ToLower()
-            .Replace(" ", "-")
-            .Replace("č", "c")
-            .Replace("ř", "r")
-            .Replace("ž", "z")
-            .Replace("š", "s")
-            .Replace("ý", "y")
-            .Replace("á", "a")
-            .Replace("í", "i")
-            .Replace("é", "e")
-            .Replace("ú", "u")
-            .Replace("ů", "u")
-            .Replace("ň", "n")
-            .Replace("ť", "t")
-            .Replace("ď", "d");
-        
-        return new BlogViewModel
-        {
-            Id = blogContent.Id,
-            BlogId = blogContent.BlogId,
-            Title = blogContent.Title,
-            Slug = slug,
-            Description = blogContent.Description ?? "",
-            Content = blogContent.Content,
-            Tags = blogContent.Tags?.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrWhiteSpace(t)).ToList() ?? new List<string>(),
-            CreatedAt = blogContent.CreatedAt,
-            UpdatedAt = blogContent.UpdatedAt ?? blogContent.CreatedAt,
-            IsPublished = blogContent.IsPublished
-        };
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -232,3 +247,7 @@
         }
     }
 }
+
+
+
+

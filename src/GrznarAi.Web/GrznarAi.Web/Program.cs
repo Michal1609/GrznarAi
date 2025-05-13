@@ -109,6 +109,9 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 // Register NoteService
 builder.Services.AddScoped<INoteService, NoteService>();
 
+// Register HomeService
+builder.Services.AddScoped<IHomeService, GrznarAi.Web.Services.Home.HomeService>();
+
 // Register CacheService as Singleton and Hosted Service
 builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddHostedService(sp => (CacheService)sp.GetRequiredService<ICacheService>());

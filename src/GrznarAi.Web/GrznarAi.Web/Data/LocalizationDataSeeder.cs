@@ -170,6 +170,32 @@ namespace GrznarAi.Web.Data
             AddEntry("Blog.Pagination.Previous", "Předchozí", "Previous", "Previous page button text");
             AddEntry("Blog.Pagination.Page", "Strana {0}", "Page {0}", "Page number indicator");
             AddEntry("Blog.Pagination.Of", "z {0}", "of {0}", "Page count indicator");
+            
+            // Blog post detail page
+            AddEntry("BlogPost.Title", "Příspěvek na blogu", "Blog Post", "Blog post page title");
+            AddEntry("BlogPost.Loading", "Načítání příspěvku...", "Loading post...", "Blog post loading message");
+            AddEntry("BlogPost.NotFound.Title", "Příspěvek nenalezen", "Post Not Found", "Blog post not found title");
+            AddEntry("BlogPost.NotFound.Description", "Požadovaný příspěvek nebyl nalezen nebo byl odstraněn.", "The requested post was not found or has been removed.", "Blog post not found description");
+            AddEntry("BlogPost.BackToBlog", "Zpět na blog", "Back to blog", "Back to blog button text");
+            AddEntry("BlogPost.RelatedPosts", "Související příspěvky", "Related Posts", "Related posts section title");
+            AddEntry("BlogPost.PopularTags", "Populární štítky", "Popular Tags", "Popular tags section title");
+            AddEntry("BlogPost.Share", "Sdílet", "Share", "Share section title");
+            AddEntry("BlogPost.Share.Facebook", "Sdílet na Facebooku", "Share on Facebook", "Share on Facebook button title");
+            AddEntry("BlogPost.Share.Twitter", "Sdílet na Twitteru", "Share on Twitter", "Share on Twitter button title");
+            AddEntry("BlogPost.Share.LinkedIn", "Sdílet na LinkedIn", "Share on LinkedIn", "Share on LinkedIn button title");
+            AddEntry("BlogPost.Share.Email", "Sdílet e-mailem", "Share by Email", "Share by email button title");
+            AddEntry("BlogPost.Share.DefaultTitle", "Zajímavý článek na GrznarAI", "Interesting article on GrznarAI", "Default share title");
+            AddEntry("BlogPost.Share.EmailBody", "Podívej se na tento článek: {0}", "Check out this article: {0}", "Email share body with URL placeholder");
+            AddEntry("BlogPost.Author.Name", "Michal Grznar", "Michal Grznar", "Author name");
+            AddEntry("BlogPost.Author.Description", "Software developer s vášní pro .NET, AI a meteorologii.", "Software developer with a passion for .NET, AI and meteorology.", "Author description");
+            AddEntry("BlogPost.Author.Alt", "Autor", "Author", "Author image alt text");
+            
+            // Blog comments
+            AddEntry("Blog.Comments", "Komentáře", "Comments", "Comments section title");
+            AddEntry("Blog.AddComment", "Přidat komentář", "Add comment", "Add comment button");
+            AddEntry("Blog.NoComments", "Zatím zde nejsou žádné komentáře. Buďte první!", "No comments yet. Be the first to comment!", "No comments message");
+            AddEntry("Blog.LoadMoreComments", "Načíst další komentáře", "Load more comments", "Load more comments button");
+            
             AddEntry("Blog.Date.January", "Leden", "January", "Month name - January");
             AddEntry("Blog.Date.February", "Únor", "February", "Month name - February");
             AddEntry("Blog.Date.March", "Březen", "March", "Month name - March");
@@ -589,6 +615,19 @@ namespace GrznarAi.Web.Data
             AddEntry("Projects.Forks", "Forky", "Forks", "GitHub forks label");
             AddEntry("Projects.DetailButton", "Detail", "Details", "Project detail button");
 
+            // --- End Seed Data ---
+
+            // --- Home Page Redesign ---
+            AddEntry("HomePage.LatestNews.Title", "Nejnovější novinky a příspěvky", "Latest News & Blog Posts", "Home page latest news section title");
+            AddEntry("HomePage.LatestNews.NoItems", "Za posledních 24 hodin nejsou k dispozici žádné novinky nebo příspěvky.", "No news or blog posts available from the last 24 hours.", "Home page no news/posts message");
+            AddEntry("HomePage.Loading", "Načítání...", "Loading...", "Home page loading message");
+            AddEntry("HomePage.ReadMore", "Přečíst více", "Read More", "Home page read more button text");
+            AddEntry("HomePage.ViewTranslation", "Zobrazit překlad", "View Translation", "Home page view translation button text");
+            AddEntry("HomePage.ReadOriginal", "Originální zdroj", "Read Original", "Home page read original button text");
+            AddEntry("HomePage.Featured.AiNews.Title", "AI Novinky", "AI News", "Home page AI news feature box title");
+            AddEntry("HomePage.Featured.AiNews.Text", "Buďte informováni o nejnovějších zprávách ze světa AI, přeložených pro vaše pohodlí.", "Stay informed with the latest news from the AI world, translated for your convenience.", "Home page AI news feature box description");
+            AddEntry("HomePage.Carousel.ViewAiNewsButton", "Zobrazit AI novinky", "View AI News", "Home page carousel view AI news button text");
+            
             // --- End Seed Data ---
             
             try

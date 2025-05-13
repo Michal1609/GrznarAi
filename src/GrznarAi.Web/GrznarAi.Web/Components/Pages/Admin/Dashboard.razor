@@ -108,7 +108,7 @@
                                                 }
                                                 else if (_lastAiNewsDate.HasValue)
                                                 {
-                                                    @_lastAiNewsDate.Value.ToString("dd.MM.yyyy HH:mm:ss")
+                                                    @_lastAiNewsDate.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
                                                 }
                                                 else
                                                 {
@@ -128,7 +128,7 @@
                                                 }
                                                 else
                                                 {
-                                                    var timeSinceLastAiNews = DateTime.Now - _lastAiNewsDate.Value;
+                                                    var timeSinceLastAiNews = DateTime.Now - _lastAiNewsDate.Value.ToLocalTime();
                                                     
                                                     @if (timeSinceLastAiNews.TotalHours <= 24)
                                                     {
@@ -156,7 +156,7 @@
                                                 }
                                                 else if (_lastWeatherDate.HasValue)
                                                 {
-                                                    @_lastWeatherDate.Value.ToString("dd.MM.yyyy HH:mm:ss")
+                                                    @_lastWeatherDate.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
                                                 }
                                                 else
                                                 {
@@ -176,7 +176,7 @@
                                                 }
                                                 else
                                                 {
-                                                    var timeSinceLastWeather = DateTime.Now - _lastWeatherDate.Value;
+                                                    var timeSinceLastWeather = DateTime.Now - _lastWeatherDate.Value.ToLocalTime();
                                                     
                                                     @if (timeSinceLastWeather.TotalHours <= 1)
                                                     {

@@ -578,8 +578,18 @@ namespace GrznarAi.Web.Data
 
             // --- Admin Page Localization ---
 
-            // --- End Seed Data --- 
+            // --- Projects Page Seed Data ---
+            AddEntry("Projects.Title", "Projekty - GrznarAI", "Projects - GrznarAI", "Projects page title");
+            AddEntry("Projects.Heading", "Moje Projekty", "My Projects", "Projects page heading");
+            AddEntry("Projects.Description", "Zde najdete výběr mých projektů s detaily získanými přímo z GitHubu.", "Here you can find a selection of my projects, with details fetched directly from GitHub.", "Projects page description");
+            AddEntry("Projects.Loading", "Načítání projektů...", "Loading projects...", "Projects loading message");
+            AddEntry("Projects.NoProjects", "Nebyly nalezeny žádné projekty nebo se nepodařilo načíst detaily z GitHubu.", "No projects found or failed to load details from GitHub.", "No projects message");
+            AddEntry("Projects.Stars", "Hvězdičky", "Stars", "GitHub stars tooltip");
+            AddEntry("Projects.Forks", "Forky", "Forks", "GitHub forks tooltip");
+            AddEntry("Projects.DetailButton", "Detail", "Detail", "Project detail button text");
 
+            // --- End Seed Data ---
+            
             try
             {
                 // Načtení existujících klíčů z databáze

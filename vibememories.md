@@ -2246,40 +2246,97 @@ V administračním rozhraní byl implementován přehledový dashboard, který p
 2. **Status systémových služeb**:
    - AI novinky - zobrazuje datum posledního přidání AI novinky a stav služby:
      - Zelený indikátor (Online): poslední novinka přidána v posledních 24 hodinách
-     - Oranžový indikátor (Zpoždění): poslední novinka přidána v posledních 24-36 hodinách 
-     - Červený indikátor (Offline): poslední novinka starší než 48 hodin
-   - Meteo data - zobrazuje datum posledního záznamu počasí a stav služby:
-     - Zelený indikátor (Online): poslední záznam z poslední hodiny
-     - Červený indikátor (Offline): poslední záznam starší než 1 hodina
+     - Oranžový indikátor (Warning): poslední novinka přidána během posledních 36 hodin
+     - Červený indikátor (Offline): poslední novinka přidána před více než 48 hodinami nebo data nejsou k dispozici
+   - Meteodata - zobrazuje datum posledního záznamu v tabulce WeatherHistory:
+     - Zelený indikátor (Online): poslední záznam je starý méně než 1 hodinu
+     - Červený indikátor (Offline): poslední záznam je starší než 1 hodina nebo data nejsou k dispozici
 
-### Architektura řešení
+### Architektura a struktura kódu
 
-1. **Komponenta Dashboard**:
-   - Rozdělena do dvou souborů podle principu code-behind:
-     - `Dashboard.razor` - obsahuje pouze UI komponentu
-     - `Dashboard.razor.cs` - obsahuje veškerou logiku a obslužný kód
-   - Používá `InteractiveServer` renderovací mód pro aktualizace v reálném čase
-   - Je dostupná pouze uživatelům s rolí Admin
-   - Využívá responsivní design s kartami pro přehlednou organizaci informací
-   - Obsahuje tlačítko pro manuální obnovení dat
+Dashboard je implementován v oddělených souborech podle principu code-behind:
+- **Dashboard.razor**: Obsahuje pouze UI komponentu s HTML, CSS a značkami pro databinding
+- **Dashboard.razor.cs**: Obsahuje veškerou logiku a kód komponentu
 
-2. **Použité služby**:
-   - `ICacheService` - pro získání informací o velikosti a obsahu cache
-   - `IAiNewsService` - pro získání počtu AI novinek
-   - `UserManager<ApplicationUser>` - pro získání počtu uživatelů
-   - `IWeatherHistoryService` - pro získání informací o poslední aktualizaci meteo dat
-   - `IDbContextFactory<ApplicationDbContext>` - pro přímý přístup k databázi pro získání specifických informací
+## Lokalizace stránky Projects
 
-3. **Logika aktualizace dat**:
-   - Data jsou načítána při inicializaci komponenty
-   - Uživatel může manuálně aktualizovat data kliknutím na tlačítko "Obnovit"
-   - Během načítání dat je zobrazen indikátor načítání (spinner)
-   - Zpracování chyb je implementováno pomocí try-catch bloku
+Stránka projektů byla úspěšně lokalizována podle standardního mechanismu lokalizace používaného v aplikaci.
 
-4. **Výpočet stavu služeb**:
-   - Stavy služeb jsou vypočítávány na základě času od poslední aktualizace
-   - Používá se barevné značení (zelená/oranžová/červená) pro vizuální indikaci stavu
+### Provedené změny
 
-### Propojení s administrací
+1. **Úprava souboru Projects.razor**:
+   - Přidání injekce `ILocalizationService` pro přístup k lokalizačním řetězcům
+   - Nahrazení všech pevných textů voláním metody `Localizer.GetString()`
+   - Lokalizace titulku stránky, nadpisů, popisů a textů tlačítek
+   - Přidání lokalizace pro popisky ikon (Stars, Forks)
 
-Dashboard je přístupný z hlavní administrační stránky (`Administration.razor`), kde byla přidána nová karta s odkazem na dashboard.
+2. **Přidání lokalizačních klíčů**:
+   - Do `LocalizationDataSeeder.cs` přidána nová sekce "Projects Page Seed Data" s následujícími klíči:
+     - `Projects.Title`: Titulek stránky
+     - `Projects.Heading`: Hlavní nadpis
+     - `Projects.Description`: Popisný text stránky
+     - `Projects.Loading`: Text během načítání
+     - `Projects.NoProjects`: Text při nenalezení projektů
+     - `Projects.Stars`: Popisek pro hvězdičky na GitHubu
+     - `Projects.Forks`: Popisek pro forky na GitHubu
+     - `Projects.DetailButton`: Text tlačítka pro detail projektu
+
+### Implementační detaily
+
+Lokalizace byla provedena podle standardního postupu pro lokalizaci stránek v projektu:
+1. Injektování služby `ILocalizationService`
+2. Nahrazení pevných textů voláním `Localizer.GetString()`
+3. Přidání lokalizačních klíčů do `LocalizationDataSeeder.cs`
+4. Definování českých a anglických textů pro každý lokalizační klíč
+
+Tato lokalizace zajišťuje, že stránka projektů bude správně zobrazovat texty v českém i anglickém jazyce podle aktuálně zvolené jazykové verze aplikace.
+
+## Administrace AI novinek (AiNewsAdmin)
+
+### Přehled administrace AI novinek
+
+Administrace AI novinek poskytuje grafické rozhraní pro správu novinek, zdrojů a chyb souvisejících s AI zprávami. Tato stránka je dostupná pouze pro uživatele s rolí Admin na URL `/admin/ainews`. Rozhraní je rozděleno do tří hlavních záložek:
+
+1. **Seznam novinek** - správa existujících AI novinek
+2. **Zdroje** - správa zdrojů pro stahování AI novinek
+3. **Chyby** - správa a zobrazení chyb, které nastaly při stahování novinek
+
+### Klíčové funkce a schopnosti
+
+1. **Seznam novinek**:
+   - Zobrazení seznamu novinek s titulkem v češtině a angličtině, datem publikace a zdrojem
+   - Filtrování novinek pomocí vyhledávání
+   - Stránkování pro snazší procházení velkého množství dat
+   - Možnost smazání jednotlivých novinek
+
+2. **Zdroje**:
+   - Správa zdrojů pro automatické stahování novinek (přidání, úprava, smazání)
+   - Nastavení URL, typu zdroje (Web, Facebook, Twitter)
+   - Aktivace/deaktivace zdrojů
+   - Přehled o posledním stahování
+
+3. **Chyby**:
+   - Zobrazení chyb, které nastaly při stahování novinek
+   - Detailní informace včetně stack trace
+   - Stránkování pro snazší procházení velkého množství chyb
+   - Možnost smazání jednotlivých chyb nebo všech chyb najednou pomocí tlačítka "Smazat vše"
+
+### Implementace
+
+Funkcionalita pro kompletní mazání chyb a oprava stránkování v sekci chyb:
+
+1. **Backend služby**:
+   - Do `IAiNewsErrorService` přidána metoda `DeleteAllErrorsAsync()` pro kompletní vymazání všech chyb
+   - Do `AiNewsErrorService` přidána implementace metody, která využívá Entity Framework Core pro efektivní smazání všech záznamů
+   - Implementována metoda `GetErrorsCountAsync()` pro získání celkového počtu chyb pro stránkování
+
+2. **UI komponenty**:
+   - Přidáno tlačítko "Smazat vše" v sekci chyb pro mazání všech chyb najednou
+   - Implementován konfirmační dialog pro potvrzení smazání všech chyb
+   - Opraveno stránkování v sekci chyb, které nyní zobrazuje správný počet stránek
+
+3. **Zpracování akcí**:
+   - Přidána nová hodnota "all_errors" do přepínače `deleteItemType` pro zpracování smazání všech chyb
+   - Implementována metoda `ShowDeleteAllErrorsConfirmation()` pro zobrazení potvrzovacího dialogu
+   - Rozšířena metoda `DeleteItemAsync()` o zpracování smazání všech chyb
+   - Po úspěšném smazání se zobrazí notifikace s počtem smazaných záznamů

@@ -4,23 +4,24 @@
 @inject IProjectService ProjectService
 @inject IGitHubService GitHubService
 @inject ILogger<Projects> Logger
+@inject ILocalizationService Localizer
 
-<PageTitle>Projects - GrznarAI</PageTitle>
+<PageTitle>@Localizer.GetString("Projects.Title")</PageTitle>
 
 <div class="container mt-4">
-    <h1 class="mb-4">My Projects</h1>
+    <h1 class="mb-4">@Localizer.GetString("Projects.Heading")</h1>
     
     <p class="lead mb-5">
-        Here you can find a selection of my projects, with details fetched directly from GitHub.
+        @Localizer.GetString("Projects.Description")
     </p>
     
     @if (displayProjects == null)
     {
-        <p><em>Loading projects...</em></p>
+        <p><em>@Localizer.GetString("Projects.Loading")</em></p>
     }
     else if (!displayProjects.Any())
     {
-        <p><em>No projects found or failed to load details from GitHub.</em></p>
+        <p><em>@Localizer.GetString("Projects.NoProjects")</em></p>
     }
     else
     {
@@ -47,14 +48,14 @@
                             <p class="card-text flex-grow-1">@project.GitHubDescription</p>
                             <div class="mt-auto d-flex justify-content-between align-items-center">
                                 <div>
-                                    <span class="badge bg-primary me-1" title="Stars"><i class="bi bi-star-fill"></i> @project.Stars</span>
-                                    <span class="badge bg-secondary" title="Forks"><i class="bi bi-diagram-2"></i> @project.Forks</span>
+                                    <span class="badge bg-primary me-1" title="@Localizer.GetString("Projects.Stars")"><i class="bi bi-star-fill"></i> @project.Stars</span>
+                                    <span class="badge bg-secondary" title="@Localizer.GetString("Projects.Forks")"><i class="bi bi-diagram-2"></i> @project.Forks</span>
                                 </div>
                                 <div>
                                     <a href="@project.GitHubUrl" target="_blank" class="btn btn-sm btn-outline-primary" disabled="string.IsNullOrEmpty(project.GitHubUrl)">
                                         <i class="bi bi-github me-1"></i> GitHub
                                     </a>
-                                    <a href="/project/@project.Id" class="btn btn-sm btn-info ms-1">Detail</a>
+                                    <a href="/project/@project.Id" class="btn btn-sm btn-info ms-1">@Localizer.GetString("Projects.DetailButton")</a>
                                 </div>
                             </div>
                         </div>

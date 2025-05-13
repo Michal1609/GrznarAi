@@ -414,3 +414,4 @@ FodyWeavers.xsd
 log*.txt
 *.log
 build_log.txt
+*.mdc

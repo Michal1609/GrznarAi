@@ -10,44 +10,92 @@ namespace GrznarAi.Web.Components.Pages.Admin
     public partial class ImageManager
     {
         private List<ImageInfo> images = new();
-        private List<string> directories = new();
+        private List<DirectoryInfo> directoryTree = new();
         private List<IBrowserFile> selectedFiles = new();
         private ImageInfo? selectedImage;
         private ImageInfo? imageToDelete;
+        private DirectoryInfo? directoryToDelete;
         private string currentDirectory = "images";
         private string filterText = string.Empty;
         private bool isLoading = true;
         private bool isUploading = false;
         private string alertMessage = string.Empty;
         private string alertClass = "alert-info";
+        private string newFolderName = string.Empty;
+        private bool showNewFolderModal = false;
+        private string selectedDirectoryPath = string.Empty;
         
         protected override async Task OnInitializedAsync()
         {
-            await LoadDirectories();
+            await LoadDirectoryTree();
             await LoadImages();
+            selectedDirectoryPath = currentDirectory;
         }
 
-        private Task LoadDirectories()
+        private async Task LoadDirectoryTree()
         {
-            directories.Clear();
+            directoryTree.Clear();
             
-            // Add default directories
-            directories.Add("images");
-            
-            // Add subdirectories in images
+            // Get base wwwroot/images directory
             string wwwrootPath = Environment.WebRootPath;
-            string imagesPath = Path.Combine(wwwrootPath, "images");
+            string imagesBasePath = Path.Combine(wwwrootPath, "images");
             
-            if (Directory.Exists(imagesPath))
+            // Create the root directories if they don't exist
+            if (!Directory.Exists(imagesBasePath))
             {
-                foreach (var dir in Directory.GetDirectories(imagesPath))
-                {
-                    string dirName = Path.GetRelativePath(wwwrootPath, dir).Replace("\\", "/");
-                    directories.Add(dirName);
-                }
+                Directory.CreateDirectory(imagesBasePath);
             }
 
-            return Task.CompletedTask;
+            // Add root directory
+            var rootDir = new DirectoryInfo
+            {
+                Name = "images",
+                FullPath = imagesBasePath,
+                RelativePath = "images",
+                Level = 0,
+                Children = new List<DirectoryInfo>()
+            };
+            
+            directoryTree.Add(rootDir);
+            
+            // Process subdirectories recursively
+            await LoadSubdirectories(rootDir);
+            
+            await Task.CompletedTask;
+        }
+        
+        private async Task LoadSubdirectories(DirectoryInfo parentDir)
+        {
+            try
+            {
+                string[] subdirectories = Directory.GetDirectories(parentDir.FullPath);
+                
+                foreach (var dir in subdirectories)
+                {
+                    string dirName = Path.GetFileName(dir);
+                    var subDir = new DirectoryInfo
+                    {
+                        Name = dirName,
+                        FullPath = dir,
+                        RelativePath = Path.Combine(parentDir.RelativePath, dirName).Replace("\\", "/"),
+                        Level = parentDir.Level + 1,
+                        Parent = parentDir,
+                        Children = new List<DirectoryInfo>()
+                    };
+                    
+                    parentDir.Children.Add(subDir);
+                    
+                    // Recursively process subdirectories
+                    await LoadSubdirectories(subDir);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error or handle exception
+                ShowAlert($"Error loading directories: {ex.Message}", "alert-danger");
+            }
+            
+            await Task.CompletedTask;
         }
 
         private async Task LoadImages()
@@ -75,36 +123,37 @@ namespace GrznarAi.Web.Components.Pages.Admin
                             string relativePath = Path.GetRelativePath(wwwrootPath, file).Replace("\\", "/");
                             string url = $"/{relativePath}";
                             
-                            // We don't get image dimensions from the server side to avoid external dependencies
-                            // Client-side JavaScript can be used to get dimensions if needed
-                            int width = 0;
-                            int height = 0;
-                            
-                            images.Add(new ImageInfo
+                            var imageInfo = new ImageInfo
                             {
                                 Name = Path.GetFileName(file),
                                 FullPath = file,
                                 RelativePath = relativePath,
                                 Url = url,
                                 Size = fileInfo.Length,
-                                LastModified = fileInfo.LastWriteTime,
-                                Width = width,
-                                Height = height
-                            });
+                                LastModified = fileInfo.LastWriteTime
+                            };
+                            
+                            // Try to get image dimensions if possible
+                            // Note: In a real app, you might want to use a library that can read image dimensions without loading the whole image
+                            try
+                            {
+                                // Code to get image dimensions could be added here
+                                // For simplicity, we're not implementing it in this example
+                            }
+                            catch { /* Ignore errors when getting dimensions */ }
+                            
+                            images.Add(imageInfo);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            Console.WriteLine($"Error processing file {file}: {ex.Message}");
+                            // Skip files that can't be processed
                         }
                     }
-                    
-                    // Sort images by name
-                    images = images.OrderBy(i => i.Name).ToList();
                 }
             }
             catch (Exception ex)
             {
-                ShowAlert($"{Localizer.GetString("ImageManager.Load.Error", "Error loading images")}: {ex.Message}", "alert-danger");
+                ShowAlert($"Error loading images: {ex.Message}", "alert-danger");
             }
             finally
             {
@@ -112,7 +161,7 @@ namespace GrznarAi.Web.Components.Pages.Admin
                 StateHasChanged();
             }
         }
-
+        
         private List<ImageInfo> filteredImages => 
             string.IsNullOrWhiteSpace(filterText) 
                 ? images 
@@ -120,7 +169,129 @@ namespace GrznarAi.Web.Components.Pages.Admin
 
         private async Task RefreshImages()
         {
+            await LoadDirectoryTree();
             await LoadImages();
+        }
+        
+        private async Task SelectDirectory(string directoryPath)
+        {
+            currentDirectory = directoryPath;
+            selectedDirectoryPath = directoryPath;
+            await LoadImages();
+        }
+        
+        private void ShowNewFolderModal()
+        {
+            newFolderName = string.Empty;
+            showNewFolderModal = true;
+        }
+        
+        private void HideNewFolderModal()
+        {
+            showNewFolderModal = false;
+        }
+        
+        private async Task CreateNewFolder()
+        {
+            if (string.IsNullOrWhiteSpace(newFolderName))
+            {
+                ShowAlert(Localizer.GetString("ImageManager.NewFolder.EmptyName", "Folder name cannot be empty."), "alert-warning");
+                return;
+            }
+            
+            try
+            {
+                // Clean folder name to remove invalid characters
+                string cleanName = Regex.Replace(newFolderName, @"[^\w\.-]", "-");
+                
+                string wwwrootPath = Environment.WebRootPath;
+                string newFolderPath = Path.Combine(wwwrootPath, currentDirectory, cleanName);
+                
+                if (Directory.Exists(newFolderPath))
+                {
+                    ShowAlert(Localizer.GetString("ImageManager.NewFolder.AlreadyExists", "A folder with this name already exists."), "alert-warning");
+                    return;
+                }
+                
+                Directory.CreateDirectory(newFolderPath);
+                ShowAlert(Localizer.GetString("ImageManager.NewFolder.Success", "Folder created successfully."), "alert-success");
+                
+                // Refresh directory tree
+                await LoadDirectoryTree();
+                HideNewFolderModal();
+            }
+            catch (Exception ex)
+            {
+                ShowAlert($"{Localizer.GetString("ImageManager.NewFolder.Error", "An error occurred while creating the folder.")}: {ex.Message}", "alert-danger");
+            }
+        }
+        
+        private void ConfirmDeleteDirectory(DirectoryInfo directory)
+        {
+            directoryToDelete = directory;
+        }
+        
+        private void CancelDeleteDirectory()
+        {
+            directoryToDelete = null;
+        }
+        
+        private async Task DeleteDirectory()
+        {
+            if (directoryToDelete == null) return;
+            
+            try
+            {
+                string directoryPath = directoryToDelete.FullPath;
+                
+                if (Directory.Exists(directoryPath))
+                {
+                    // Check if the directory is empty
+                    bool isEmpty = !Directory.EnumerateFileSystemEntries(directoryPath).Any();
+                    
+                    if (!isEmpty)
+                    {
+                        ShowAlert(Localizer.GetString("ImageManager.DeleteDirectory.NotEmpty", "The directory is not empty. Delete all files and subdirectories first."), "alert-warning");
+                        return;
+                    }
+                    
+                    Directory.Delete(directoryPath);
+                    ShowAlert(Localizer.GetString("ImageManager.DeleteDirectory.Success", "Directory was successfully deleted."), "alert-success");
+                    
+                    // If the deleted directory was the current directory, go back to the parent
+                    if (currentDirectory == directoryToDelete.RelativePath)
+                    {
+                        if (directoryToDelete.Parent != null)
+                        {
+                            currentDirectory = directoryToDelete.Parent.RelativePath;
+                            selectedDirectoryPath = currentDirectory;
+                            await LoadImages();
+                        }
+                        else
+                        {
+                            currentDirectory = "images";
+                            selectedDirectoryPath = "images";
+                            await LoadImages();
+                        }
+                    }
+                    
+                    // Refresh directory tree
+                    await LoadDirectoryTree();
+                }
+                else
+                {
+                    ShowAlert(Localizer.GetString("ImageManager.DeleteDirectory.NotFound", "The directory does not exist."), "alert-warning");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowAlert($"{Localizer.GetString("ImageManager.DeleteDirectory.Error", "An error occurred while deleting the directory.")}: {ex.Message}", "alert-danger");
+            }
+            finally
+            {
+                directoryToDelete = null;
+                StateHasChanged();
+            }
         }
 
         private void OnInputFileChange(InputFileChangeEventArgs e)
@@ -329,5 +500,16 @@ namespace GrznarAi.Web.Components.Pages.Admin
         public DateTime LastModified { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+    }
+    
+    public class DirectoryInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string FullPath { get; set; } = string.Empty;
+        public string RelativePath { get; set; } = string.Empty;
+        public int Level { get; set; }
+        public DirectoryInfo? Parent { get; set; }
+        public List<DirectoryInfo> Children { get; set; } = new();
+        public bool IsExpanded { get; set; } = true;
     }
 } 

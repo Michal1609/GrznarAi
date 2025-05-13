@@ -1,10 +1,10 @@
 @page "/admin/images"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
-@rendermode InteractiveServer
-
+@using System.ComponentModel
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Web
 @using GrznarAi.Web.Services
-
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
 @inject ILocalizationService Localizer
 @inject IJSRuntime JSRuntime
 @inject IWebHostEnvironment Environment
@@ -12,7 +12,7 @@
 
 <PageTitle>@Localizer.GetString("ImageManager.Title", "Image Manager")</PageTitle>
 
-<div class="container mt-4">
+<div class="container-fluid mt-4">
     <div class="card">
         <div class="card-header bg-primary text-white">
             <div class="d-flex justify-content-between align-items-center">
@@ -23,37 +23,6 @@
             </div>
         </div>
         <div class="card-body">
-            <!-- Upload Section -->
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h4 class="mb-0"><i class="bi bi-cloud-upload me-2"></i>@Localizer.GetString("ImageManager.Upload.Title", "Upload Images")</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <InputFile OnChange="OnInputFileChange" multiple class="form-control" accept=".jpg,.jpeg,.png,.gif,.svg" />
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    @if (selectedFiles.Count > 0)
-                                    {
-                                        <span>@selectedFiles.Count @Localizer.GetString("ImageManager.Upload.FilesSelected", "files selected")</span>
-                                    }
-                                </div>
-                                <button class="btn btn-primary" @onclick="UploadFiles" disabled="@(selectedFiles.Count == 0 || isUploading)">
-                                    @if (isUploading)
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    }
-                                    <i class="bi bi-upload me-2"></i>@Localizer.GetString("ImageManager.Upload.Button", "Upload")
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Alert Messages -->
             @if (!string.IsNullOrEmpty(alertMessage))
             {
@@ -63,74 +32,140 @@
                 </div>
             }
 
-            <!-- Filter and Directory Selection -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" placeholder="@Localizer.GetString("ImageManager.Filter", "Filter images...")" 
-                               @bind="filterText" @bind:event="oninput" />
-                        @if (!string.IsNullOrEmpty(filterText))
-                        {
-                            <button class="btn btn-outline-secondary" @onclick="() => filterText = string.Empty">
-                                <i class="bi bi-x"></i>
+            <div class="row">
+                <!-- Directory Tree (Left Side) -->
+                <div class="col-md-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-folder me-2"></i>@Localizer.GetString("ImageManager.Directories", "Directories")</h5>
+                            <button class="btn btn-sm btn-primary" @onclick="ShowNewFolderModal" title="@Localizer.GetString("ImageManager.NewFolder.Create", "Create Folder")">
+                                <i class="bi bi-folder-plus"></i>
                             </button>
-                        }
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush directory-tree">
+                                @foreach (var directory in directoryTree)
+                                {
+                                    <div class="directory-item">
+                                        <button class="list-group-item list-group-item-action d-flex align-items-center @(selectedDirectoryPath == directory.RelativePath ? "active" : "")"
+                                                @onclick="() => SelectDirectory(directory.RelativePath)">
+                                            <i class="bi bi-folder me-2"></i>
+                                            <span>@directory.Name</span>
+                                        </button>
+                                        @if (directory.Children.Count > 0)
+                                        {
+                                            @RenderSubdirectories(directory.Children, directory.RelativePath == selectedDirectoryPath)
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <select class="form-select" @bind="currentDirectory" @bind:after="LoadImages">
-                        @foreach (var dir in directories)
-                        {
-                            <option value="@dir">@dir</option>
-                        }
-                    </select>
-                </div>
-            </div>
 
-            <!-- Images Grid -->
-            @if (isLoading)
-            {
-                <div class="d-flex justify-content-center my-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            }
-            else if (images.Count == 0)
-            {
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>@Localizer.GetString("ImageManager.NoImages", "No images found in this directory.")
-                </div>
-            }
-            else
-            {
-                <div class="row g-3">
-                    @foreach (var image in filteredImages)
-                    {
-                        <div class="col-md-3 col-sm-4 col-6">
-                            <div class="card h-100">
-                                <div class="image-container position-relative" style="height: 200px; overflow: hidden;">
-                                    <img src="@image.Url" class="img-fluid h-100 w-100 object-fit-cover" alt="@image.Name" 
-                                         @onclick="() => ShowImageDetails(image)" style="cursor: pointer;" />
-                                </div>
+                <!-- Right Content Area -->
+                <div class="col-md-9">
+                    <!-- Row for Upload Section -->
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <!-- Ultra Compact Upload Section -->
+                            <div class="card">
                                 <div class="card-body p-2">
-                                    <p class="card-text small text-truncate mb-1" title="@image.Name">@image.Name</p>
-                                    <p class="card-text small text-muted mb-0">@FormatFileSize(image.Size)</p>
-                                </div>
-                                <div class="card-footer p-2 d-flex justify-content-between">
-                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => CopyImageUrl(image.Url)">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteImage(image)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center me-2">
+                                            <i class="bi bi-cloud-upload text-primary me-2"></i>
+                                            <small class="text-muted">@Localizer.GetString("ImageManager.CurrentPath", "Current path"): @currentDirectory</small>
+                                        </div>
+                                        <div class="flex-grow-1 d-flex">
+                                            <InputFile OnChange="OnInputFileChange" multiple class="form-control form-control-sm me-2" accept=".jpg,.jpeg,.png,.gif,.svg,.webp" />
+                                            <button class="btn btn-sm btn-primary" @onclick="UploadFiles" disabled="@(selectedFiles.Count == 0 || isUploading)">
+                                                @if (isUploading)
+                                                {
+                                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                }
+                                                <i class="bi bi-upload me-1"></i>@Localizer.GetString("ImageManager.Upload.Button", "Upload")
+                                                @if (selectedFiles.Count > 0)
+                                                {
+                                                    <span class="ms-1 badge bg-light text-dark">@selectedFiles.Count</span>
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    }
+                    </div>
+
+                    <!-- Row for Image List -->
+                    <div class="row">
+                        <div class="col-12">
+                            <!-- Image List -->
+                            <div class="card">
+                                <div class="card-header bg-light py-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0"><i class="bi bi-images me-2"></i>@Localizer.GetString("ImageManager.Images", "Images")</h5>
+                                        <div class="input-group input-group-sm" style="max-width: 300px;">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" class="form-control" placeholder="@Localizer.GetString("ImageManager.Filter", "Filter images...")" 
+                                                @bind="filterText" @bind:event="oninput" />
+                                            @if (!string.IsNullOrEmpty(filterText))
+                                            {
+                                                <button class="btn btn-outline-secondary" @onclick="() => filterText = string.Empty">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    @if (isLoading)
+                                    {
+                                        <div class="d-flex justify-content-center my-3">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    }
+                                    else if (images.Count == 0)
+                                    {
+                                        <div class="alert alert-info py-2">
+                                            <i class="bi bi-info-circle me-2"></i>@Localizer.GetString("ImageManager.NoImages", "No images found in this directory.")
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="row g-3">
+                                            @foreach (var image in filteredImages)
+                                            {
+                                                <div class="col-md-3 col-sm-4 col-6">
+                                                    <div class="card h-100">
+                                                        <div class="image-container position-relative" style="height: 160px; overflow: hidden;">
+                                                            <img src="@image.Url" class="img-fluid h-100 w-100 object-fit-cover" alt="@image.Name" 
+                                                                @onclick="() => ShowImageDetails(image)" style="cursor: pointer;" />
+                                                        </div>
+                                                        <div class="card-body p-2">
+                                                            <p class="card-text small text-truncate mb-1" title="@image.Name">@image.Name</p>
+                                                            <p class="card-text small text-muted mb-0">@FormatFileSize(image.Size)</p>
+                                                        </div>
+                                                        <div class="card-footer p-2 d-flex justify-content-between">
+                                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => CopyImageUrl(image.Url)">
+                                                                <i class="bi bi-clipboard"></i>
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteImage(image)">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            }
+            </div>
         </div>
     </div>
 </div>
@@ -156,7 +191,10 @@
                         </div>
                         <div class="col-md-6">
                             <p><strong>@Localizer.GetString("ImageManager.Details.Modified", "Last Modified"):</strong> @selectedImage.LastModified.ToString("g")</p>
-                            <p><strong>@Localizer.GetString("ImageManager.Details.Dimensions", "Dimensions"):</strong> @selectedImage.Width x @selectedImage.Height</p>
+                            @if (selectedImage.Width > 0 && selectedImage.Height > 0)
+                            {
+                                <p><strong>@Localizer.GetString("ImageManager.Details.Dimensions", "Dimensions"):</strong> @selectedImage.Width x @selectedImage.Height</p>
+                            }
                         </div>
                     </div>
                     <div class="input-group mt-3">
@@ -180,7 +218,7 @@
     <div class="modal-backdrop fade show"></div>
 }
 
-<!-- Delete Confirmation Modal -->
+<!-- Delete Image Confirmation Modal -->
 @if (imageToDelete != null)
 {
     <div class="modal fade show" tabindex="-1" style="display: block;" aria-modal="true" role="dialog">
@@ -206,4 +244,124 @@
         </div>
     </div>
     <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Delete Directory Confirmation Modal -->
+@if (directoryToDelete != null)
+{
+    <div class="modal fade show" tabindex="-1" style="display: block;" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Localizer.GetString("ImageManager.DeleteDirectory.Title", "Confirm Delete Directory")</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDeleteDirectory"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@Localizer.GetString("ImageManager.DeleteDirectory.Confirmation", "Are you sure you want to delete this directory? This action cannot be undone.")</p>
+                    <p><strong>@directoryToDelete.RelativePath</strong></p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        @Localizer.GetString("ImageManager.DeleteDirectory.Warning", "The directory must be empty to be deleted.")
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDeleteDirectory">
+                        @Localizer.GetString("Common.Cancel", "Cancel")
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="DeleteDirectory">
+                        <i class="bi bi-trash me-2"></i>@Localizer.GetString("Common.Delete", "Delete")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- New Folder Modal -->
+@if (showNewFolderModal)
+{
+    <div class="modal fade show" tabindex="-1" style="display: block;" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Localizer.GetString("ImageManager.NewFolder.Title", "Create New Folder")</h5>
+                    <button type="button" class="btn-close" @onclick="HideNewFolderModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>@Localizer.GetString("ImageManager.NewFolder.Info", "Create a new folder in the current directory:")</p>
+                    <p><strong>@currentDirectory</strong></p>
+                    <div class="form-group">
+                        <label for="folderName">@Localizer.GetString("ImageManager.NewFolder.Name", "Folder Name")</label>
+                        <input type="text" class="form-control" id="folderName" @bind="newFolderName" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideNewFolderModal">
+                        @Localizer.GetString("Common.Cancel", "Cancel")
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="CreateNewFolder">
+                        <i class="bi bi-folder-plus me-2"></i>@Localizer.GetString("ImageManager.NewFolder.Create", "Create Folder")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private RenderFragment RenderSubdirectories(List<DirectoryInfo> subdirectories, bool parentActive) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "ms-3 mt-1 subdirectories");
+        
+        foreach (var subdir in subdirectories)
+        {
+            builder.OpenElement(2, "div");
+            builder.AddAttribute(3, "class", "directory-item");
+            
+            // Directory button
+            builder.OpenElement(4, "div");
+            builder.AddAttribute(5, "class", "d-flex");
+            
+            builder.OpenElement(6, "button");
+            builder.AddAttribute(7, "class", $"list-group-item list-group-item-action d-flex align-items-center {(selectedDirectoryPath == subdir.RelativePath ? "active" : "")}");
+            builder.AddAttribute(8, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => SelectDirectory(subdir.RelativePath)));
+            
+            builder.OpenElement(9, "i");
+            builder.AddAttribute(10, "class", "bi bi-folder me-2");
+            builder.CloseElement(); // i
+            
+            builder.OpenElement(11, "span");
+            builder.AddContent(12, subdir.Name);
+            builder.CloseElement(); // span
+            
+            builder.CloseElement(); // button
+            
+            // Delete directory button
+            builder.OpenElement(13, "button");
+            builder.AddAttribute(14, "class", "btn btn-sm btn-outline-danger ms-1 align-self-center");
+            builder.AddAttribute(15, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => ConfirmDeleteDirectory(subdir)));
+            builder.AddAttribute(16, "title", Localizer.GetString("ImageManager.DeleteDirectory.Button", "Delete Directory"));
+            
+            builder.OpenElement(17, "i");
+            builder.AddAttribute(18, "class", "bi bi-trash");
+            builder.CloseElement(); // i
+            
+            builder.CloseElement(); // button
+            
+            builder.CloseElement(); // div d-flex
+            
+            // Render children if any
+            if (subdir.Children.Count > 0)
+            {
+                builder.AddContent(19, RenderSubdirectories(subdir.Children, selectedDirectoryPath == subdir.RelativePath));
+            }
+            
+            builder.CloseElement(); // directory-item div
+        }
+        
+        builder.CloseElement(); // subdirectories div
+    };
 } 

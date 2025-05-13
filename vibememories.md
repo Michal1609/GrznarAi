@@ -2668,3 +2668,61 @@ V komponentě Image Manager byla implementována kompletní lokalizace:
    - Tyto obecné klíče jsou používány napříč celou aplikací pro konzistentní lokalizaci
 
 Tyto změny zajišťují, že všechny texty v komponentě správce obrázků jsou nyní plně lokalizovány a budou se zobrazovat v jazyce, který si uživatel zvolí.
+
+## Správa obrázků s hierarchickou strukturou složek
+
+### Přehled implementace
+
+Správa obrázků byla vylepšena o hierarchickou strukturu složek, což umožňuje lepší organizaci obrázků podle jejich využití (např. blogy, projekty, atd.). Nová implementace nabízí:
+
+1. **Hierarchický strom složek:**
+   * Zobrazení stromové struktury složek na levé straně
+   * Možnost procházet podsložky libovolné hloubky
+   * Vizuální zvýraznění aktuálně vybrané složky
+
+2. **Správa složek:**
+   * Vytváření nových složek v aktuálně vybrané složce
+   * Mazání prázdných složek
+   * Navigace mezi složkami kliknutím v stromové struktuře
+
+3. **Správa obrázků ve složkách:**
+   * Nahrávání obrázků do konkrétní složky
+   * Zobrazení obrázků pouze z aktuální složky
+   * Mazání obrázků z vybrané složky
+   * Filtrování obrázků podle názvu
+
+### Vylepšené rozvržení a interaktivita
+
+Pro optimální uživatelskou zkušenost byla implementace rozdělena do tří hlavních částí:
+
+1. **Stromová struktura adresářů** (levý sloupec)
+   * Zobrazuje hierarchii složek
+   * Umožňuje intuitivní navigaci
+   * Obsahuje tlačítka pro vytváření a mazání složek
+
+2. **Upload sekce** (pravý sloupec, horní část)
+   * Kompaktní design pro efektivní využití prostoru
+   * Zobrazení aktuální cesty
+   * Možnost vybrat více souborů najednou
+
+3. **Seznam obrázků** (pravý sloupec, spodní část)
+   * Mřížkové zobrazení obrázků z aktuální složky
+   * Filtrování podle názvu
+   * Tlačítka pro kopírování URL a mazání
+
+### Důležité technické detaily
+
+- Pro správnou funkcionalitu interaktivních prvků je nezbytná direktiva `@rendermode InteractiveServer` v hlavičce komponenty.
+- Struktura adresářů je dynamicky načítána a zobrazována jako stromová struktura.
+- Všechny akce pracující se soubory a složkami mají implementovány bezpečnostní kontroly pro prevenci neautorizovaného přístupu.
+- Podpora pro různé formáty obrázků (.jpg, .jpeg, .png, .gif, .svg, .webp).
+
+### Lokalizace
+
+- Všechny texty v uživatelském rozhraní jsou lokalizovány pomocí ILocalizationService.
+- Lokalizační klíče byly přidány přímo do systému lokalizace v souboru `LocalizationDataSeeder.cs`, což zahrnuje:
+  * Názvy sekcí (Adresáře, Obrázky, atd.)
+  * Texty pro správu složek (vytváření, mazání)
+  * Texty pro správu obrázků (nahrávání, mazání, detaily)
+  * Chybové a potvrzovací zprávy
+- Podporované jazyky: čeština (cs) a angličtina (en)

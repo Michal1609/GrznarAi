@@ -656,6 +656,51 @@ namespace GrznarAi.Web.Data
             AddEntry("HomePage.Featured.AiNews.Text", "Buďte informováni o nejnovějších zprávách ze světa AI, přeložených pro vaše pohodlí.", "Stay informed with the latest news from the AI world, translated for your convenience.", "Home page AI news feature box description");
             AddEntry("HomePage.Carousel.ViewAiNewsButton", "Zobrazit AI novinky", "View AI News", "Home page carousel view AI news button text");
             
+            // --- Image Manager --- 
+            AddEntry("ImageManager.Title", "Správce obrázků", "Image Manager", "Image manager title");
+            AddEntry("ImageManager.Directories", "Adresáře", "Directories", "Image manager directories section title");
+            AddEntry("ImageManager.CurrentPath", "Aktuální cesta", "Current path", "Shows the current directory path");
+            AddEntry("ImageManager.Images", "Obrázky", "Images", "Images section title");
+            AddEntry("ImageManager.Filter", "Filtrovat obrázky...", "Filter images...", "Image filter placeholder");
+            AddEntry("ImageManager.NoImages", "V tomto adresáři nejsou žádné obrázky.", "No images found in this directory.", "Message when no images found");
+            
+            // Folder management
+            AddEntry("ImageManager.NewFolder.Title", "Vytvořit novou složku", "Create New Folder", "New folder modal title");
+            AddEntry("ImageManager.NewFolder.Info", "Vytvořit novou složku v aktuálním adresáři", "Create a new folder in the current directory", "New folder modal info text");
+            AddEntry("ImageManager.NewFolder.Name", "Název složky", "Folder Name", "New folder name label");
+            AddEntry("ImageManager.NewFolder.Create", "Vytvořit složku", "Create Folder", "Create folder button");
+            AddEntry("ImageManager.NewFolder.EmptyName", "Název složky nemůže být prázdný", "Folder name cannot be empty", "Error when folder name is empty");
+            AddEntry("ImageManager.NewFolder.Created", "Složka byla úspěšně vytvořena", "Folder created successfully", "Success message after folder creation");
+            AddEntry("ImageManager.NewFolder.Error", "Při vytváření složky došlo k chybě", "Error creating folder", "Error message on folder creation failure");
+            
+            // Directory management
+            AddEntry("ImageManager.DeleteDirectory.Title", "Potvrdit smazání adresáře", "Confirm Delete Directory", "Delete directory modal title");
+            AddEntry("ImageManager.DeleteDirectory.Confirmation", "Opravdu chcete smazat tento adresář? Tuto akci nelze vrátit zpět.", "Are you sure you want to delete this directory? This action cannot be undone.", "Delete directory confirmation message");
+            AddEntry("ImageManager.DeleteDirectory.Warning", "Adresář musí být prázdný, aby mohl být smazán.", "The directory must be empty to be deleted.", "Warning about directory deletion requirements");
+            AddEntry("ImageManager.DeleteDirectory.Button", "Smazat adresář", "Delete Directory", "Delete directory button text");
+            AddEntry("ImageManager.DeleteDirectory.Success", "Adresář byl úspěšně smazán", "Directory deleted successfully", "Success message after directory deletion");
+            AddEntry("ImageManager.DeleteDirectory.Error", "Při mazání adresáře došlo k chybě", "Error deleting directory", "Error message on directory deletion failure");
+            AddEntry("ImageManager.DeleteDirectory.NotEmpty", "Adresář není prázdný a nemůže být smazán", "Directory is not empty and cannot be deleted", "Error when trying to delete non-empty directory");
+            
+            // Image management
+            AddEntry("ImageManager.Upload.Button", "Nahrát", "Upload", "Upload button text");
+            AddEntry("ImageManager.Upload.Progress", "Nahrávání...", "Uploading...", "Upload in progress text");
+            AddEntry("ImageManager.Upload.Success", "Obrázky byly úspěšně nahrány", "Images uploaded successfully", "Success message after upload");
+            AddEntry("ImageManager.Upload.Error", "Při nahrávání obrázků došlo k chybě", "Error uploading images", "Error message on upload failure");
+            AddEntry("ImageManager.Delete.Title", "Potvrdit smazání", "Confirm Delete", "Delete image modal title");
+            AddEntry("ImageManager.Delete.Confirmation", "Opravdu chcete smazat tento obrázek? Tuto akci nelze vrátit zpět.", "Are you sure you want to delete this image? This action cannot be undone.", "Delete image confirmation message");
+            AddEntry("ImageManager.Delete.Success", "Obrázek byl úspěšně smazán", "Image deleted successfully", "Success message after image deletion");
+            AddEntry("ImageManager.Delete.Error", "Při mazání obrázku došlo k chybě", "Error deleting image", "Error message on image deletion failure");
+            
+            // Image details
+            AddEntry("ImageManager.Details.Path", "Cesta", "Path", "Image path label in details");
+            AddEntry("ImageManager.Details.Size", "Velikost", "Size", "Image size label in details");
+            AddEntry("ImageManager.Details.Modified", "Naposledy upraveno", "Last Modified", "Image last modified label in details");
+            AddEntry("ImageManager.Details.Dimensions", "Rozměry", "Dimensions", "Image dimensions label in details");
+
+            // --- Common --- 
+            // ... existing code ...
+
             try
             {
                 // Načtení existujících klíčů z databáze

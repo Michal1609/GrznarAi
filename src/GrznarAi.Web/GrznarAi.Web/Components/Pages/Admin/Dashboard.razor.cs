@@ -8,6 +8,7 @@ using Microsoft.JSInterop;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace GrznarAi.Web.Components.Pages.Admin
 {
@@ -109,21 +110,20 @@ namespace GrznarAi.Web.Components.Pages.Admin
                         .Select(n => n.PublishedDate)
                         .FirstOrDefaultAsync();
                         
-                    // Získání velikosti databáze
-                    var result = await context.Database
-                        .SqlQueryRaw<decimal>(@"
-                            SELECT
-                                ROUND(CAST(SUM(size) * 8 AS DECIMAL(18,2)) / 1024, 2) AS total_size_mb
-                            FROM
-                                sys.master_files
-                            WHERE
-                                database_id = DB_ID()
-                        ")
-                        .ToListAsync();
-                        
-                    if (result.Count > 0)
+                    // Získání velikosti databáze pomocí sp_spaceused (funguje na webhostingu)
+                    try
                     {
-                        _dbSizeMB = result[0];
+                        var spaceUsedResult = await context.Database.SqlQueryRaw<SpaceUsedResult>(
+                            "EXEC sp_spaceused @updateusage = 'FALSE';"
+                        ).ToListAsync();
+                        if (spaceUsedResult.Count > 0 && decimal.TryParse(spaceUsedResult[0].database_size.Replace(" MB", ""), NumberStyles.Any, CultureInfo.InvariantCulture, out var dbSizeMb))
+                        {
+                            _dbSizeMB = dbSizeMb;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await ErrorLogService.LogAsync($"Nepodařilo se získat velikost databáze přes sp_spaceused: {ex.Message}", ex.StackTrace, ex.InnerException?.Message, "Warning", nameof(Dashboard));
                     }
                     
                     // Pokud je to možné, získání velikosti stránek
@@ -186,6 +186,15 @@ namespace GrznarAi.Web.Components.Pages.Admin
             }
             
             return $"{size:0.##} {sizes[order]}";
+        }
+
+        // Definice pomocné třídy pro výsledek sp_spaceused
+        public class SpaceUsedResult
+        {
+            public string database_name { get; set; }
+            public string database_size { get; set; }
+            [System.ComponentModel.DataAnnotations.Schema.Column("unallocated space")]
+            public string UnallocatedSpace { get; set; }
         }
     }
 } 

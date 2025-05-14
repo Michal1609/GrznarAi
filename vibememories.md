@@ -3026,3 +3026,41 @@ Byla vytvořena nová sekce pro administraci komentářů k blogům, která umo�
 ## Database Migration
 - Migration `AddErrorLogTable` was created and applied.
 - The `ErrorLogs` table is now present in the database and ready for use by the logging system and admin UI.
+
+# Database Size Detection in Dashboard
+
+- The method for retrieving the database size in the admin dashboard was updated.
+- Instead of a direct SQL query on sys.master_files, the code now uses the command:
+  
+  `EXEC sp_spaceused @updateusage = 'FALSE';`
+
+- This command is compatible with most web hosting environments, where direct access to system views may be restricted.
+- The result is parsed from the `database_size` column (string, e.g. '123.45 MB').
+- A helper class `SpaceUsedResult` was added to map the result columns from `sp_spaceused`.
+- The code is robust to errors and logs a warning if the command fails.
+
+**Reason for change:**
+- The previous query did not work on some webhostings due to permission restrictions. The new approach is more portable and reliable for production hosting.
+
+---
+
+# Poznámka k monitoringu velikosti databáze (sp_spaceused)
+
+- Pokud je v dashboardu použit příkaz `EXEC sp_spaceused @updateusage = 'FALSE';` bez parametru @objname, vrací pouze tři sloupce:
+  - `database_name`
+  - `database_size`
+  - `unallocated_space`
+- C# model (SpaceUsedResult) musí obsahovat pouze tyto tři properties.
+- Pokud model obsahuje další properties (např. data, index_size, unused), dojde k chybě `The required column 'data' was not present in the results of a 'FromSql' operation.`
+- Oprava: model SpaceUsedResult byl zúžen na tři properties, což odpovídá výsledku sp_spaceused bez parametru @objname.
+
+---
+
+# Poznámka k mapování sloupců s mezerou (sp_spaceused)
+
+- Výstup procedury `sp_spaceused` obsahuje sloupec s názvem `unallocated space` (s mezerou).
+- Pro správné mapování v EF Core je nutné v C# modelu použít property s atributem `[Column("unallocated space")]`.
+- Pokud je property pojmenována jinak (např. UnallocatedSpace bez atributu), dojde k chybě `The required column 'unallocated_space' was not present in the results of a 'FromSql' operation.`
+- Oprava: v modelu SpaceUsedResult byla property pro tento sloupec upravena na `UnallocatedSpace` s atributem `[Column("unallocated space")]`.
+
+---

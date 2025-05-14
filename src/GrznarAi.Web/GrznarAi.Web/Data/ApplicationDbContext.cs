@@ -28,6 +28,7 @@ namespace GrznarAi.Web.Data
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
         public DbSet<EmailTemplateTranslation> EmailTemplateTranslations { get; set; }
         public DbSet<WeatherHistory> WeatherHistory { get; set; }
+        public DbSet<ErrorLog> ErrorLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -150,6 +151,10 @@ namespace GrznarAi.Web.Data
                 .WithOne(t => t.EmailTemplate)
                 .HasForeignKey(t => t.EmailTemplateId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Konfigurace pro ErrorLog
+            builder.Entity<ErrorLog>()
+                .HasIndex(e => e.CreatedAt);
         }
     }
 }

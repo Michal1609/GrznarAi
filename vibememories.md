@@ -2989,3 +2989,40 @@ Byla vytvořena nová sekce pro administraci komentářů k blogům, která umo�
    * `Blog.Comment.Content` - Popisek pro obsah komentáře
    * `Blog.Comment.Submit` - Tlačítko pro odeslání komentáře
    * `Blog.Comment.Cancel` - Tlačítko pro zrušení komentáře
+
+# ErrorLog System
+
+## Entity: ErrorLog
+- Universal table for storing error and warning logs from the application.
+- Fields:
+  - Message (required): Log message
+  - StackTrace (optional): Stack trace if available
+  - InnerException (optional): Inner exception message
+  - Level (optional): Log level (Error, Warning, Info, ...)
+  - Source (optional): Name of the service/component
+  - CreatedAt: Date and time of log creation
+
+## Usage
+- ErrorLog is used for batch or timed logging of errors and warnings from the codebase.
+- Logs are not written to the database immediately, but are collected in memory and saved in batches or after a specific time interval.
+- The system is designed for performance and to avoid excessive DB writes.
+
+## Next steps
+- Implement a service for batch/timed logging.
+- Integrate with Dashboard and admin UI for log management.
+
+# ErrorLog Admin UI
+
+## Admin Page: /admin/error-logs
+- Provides paginated list of error and warning logs from the ErrorLog table.
+- Allows searching, viewing details (stacktrace, inner exception), and deleting individual or all logs.
+- Accessible from the main admin dashboard.
+- Uses IErrorLogService for all operations.
+
+## Dashboard Integration
+- All errors and warnings in Dashboard.razor.cs are now logged via IErrorLogService (batched, not immediate DB write).
+- This ensures all runtime issues are visible in the admin error log UI.
+
+## Database Migration
+- Migration `AddErrorLogTable` was created and applied.
+- The `ErrorLogs` table is now present in the database and ready for use by the logging system and admin UI.

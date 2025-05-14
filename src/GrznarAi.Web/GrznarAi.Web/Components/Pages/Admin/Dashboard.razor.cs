@@ -35,7 +35,7 @@ namespace GrznarAi.Web.Components.Pages.Admin
         private IWeatherHistoryService WeatherHistoryService { get; set; }
 
         [Inject]
-        private ILogger<Dashboard> Logger { get; set; }
+        private IErrorLogService ErrorLogService { get; set; }
 
         [Inject] 
         private IJSRuntime JSRuntime { get; set; }
@@ -85,7 +85,7 @@ namespace GrznarAi.Web.Components.Pages.Admin
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Chyba při vykreslování grafu databáze");
+                    await ErrorLogService.LogAsync($"Chyba při vykreslování grafu databáze: {ex.Message}", ex.StackTrace, ex.InnerException?.Message, "Error", nameof(Dashboard));
                 }
             }
         }
@@ -145,7 +145,7 @@ namespace GrznarAi.Web.Components.Pages.Admin
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogWarning(ex, "Nepodařilo se získat informace o velikosti stránek");
+                        await ErrorLogService.LogAsync($"Nepodařilo se získat informace o velikosti stránek: {ex.Message}", ex.StackTrace, ex.InnerException?.Message, "Warning", nameof(Dashboard));
                     }
                 }
                 
@@ -162,7 +162,7 @@ namespace GrznarAi.Web.Components.Pages.Admin
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Chyba při načítání dat pro dashboard");
+                await ErrorLogService.LogAsync($"Chyba při načítání dat pro dashboard: {ex.Message}", ex.StackTrace, ex.InnerException?.Message, "Error", nameof(Dashboard));
             }
             finally
             {

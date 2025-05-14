@@ -1,0 +1,194 @@
+@page "/admin/error-logs"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+
+@using GrznarAi.Web.Services
+@inject IErrorLogService ErrorLogService
+@inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@Localizer.GetString("ErrorLogs.Title", "Error Logs") - GrznarAI</PageTitle>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">@Localizer.GetString("ErrorLogs.Title", "Error Logs")</h2>
+            <button class="btn btn-danger" @onclick="DeleteAllLogs" title="@Localizer.GetString("ErrorLogs.DeleteAll", "Delete all logs")">
+                <i class="bi bi-trash"></i> @Localizer.GetString("ErrorLogs.DeleteAll", "Delete all logs")
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <input class="form-control"
+                       placeholder="@Localizer.GetString("ErrorLogs.Search", "Search logs...")"
+                       value="@searchTerm"
+                       @oninput="OnSearchChanged"
+                       @onkeydown="OnKeyDown" />
+            </div>
+            @if (isLoading)
+            {
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            }
+            else if (logs == null || logs.Count == 0)
+            {
+                <div class="alert alert-info">@Localizer.GetString("ErrorLogs.NoLogs", "No error logs found.")</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>@Localizer.GetString("ErrorLogs.Message", "Message")</th>
+                                <th>@Localizer.GetString("ErrorLogs.Level", "Level")</th>
+                                <th>@Localizer.GetString("ErrorLogs.Source", "Source")</th>
+                                <th>@Localizer.GetString("ErrorLogs.CreatedAt", "Created At")</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in logs)
+                            {
+                                <tr>
+                                    <td>@log.Id</td>
+                                    <td>
+                                        <span title="@log.Message">@log.Message</span>
+                                        @if (!string.IsNullOrEmpty(log.StackTrace))
+                                        {
+                                            <details>
+                                                <summary>@Localizer.GetString("ErrorLogs.StackTrace", "StackTrace")</summary>
+                                                <pre>@log.StackTrace</pre>
+                                            </details>
+                                        }
+                                        @if (!string.IsNullOrEmpty(log.InnerException))
+                                        {
+                                            <details>
+                                                <summary>@Localizer.GetString("ErrorLogs.InnerException", "InnerException")</summary>
+                                                <pre>@log.InnerException</pre>
+                                            </details>
+                                        }
+                                    </td>
+                                    <td>@log.Level</td>
+                                    <td>@log.Source</td>
+                                    <td>@log.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteLog(log.Id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <nav>
+                    <ul class="pagination">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : null)">
+                            <button class="page-link" @onclick="PreviousPage">&laquo;</button>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            var pageNum = i;
+                            <li class="page-item @(currentPage == pageNum ? "active" : null)">
+                                <button class="page-link" @onclick="() => GoToPage(pageNum)">@pageNum</button>
+                            </li>
+                        }
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : null)">
+                            <button class="page-link" @onclick="NextPage">&raquo;</button>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<GrznarAi.Web.Data.ErrorLog> logs;
+    private bool isLoading = true;
+    private string searchTerm = string.Empty;
+    private int currentPage = 1;
+    private int pageSize = 20;
+    private int totalPages = 1;
+    private int totalCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLogsAsync();
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+        totalCount = await ErrorLogService.GetLogsCountAsync(searchTerm);
+        totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
+        logs = await ErrorLogService.GetLogsAsync(currentPage, pageSize, searchTerm);
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task DeleteLog(int id)
+    {
+        if (!await ConfirmDeleteAsync()) return;
+        await ErrorLogService.DeleteLogAsync(id);
+        await LoadLogsAsync();
+    }
+
+    private async Task DeleteAllLogs()
+    {
+        if (!await ConfirmDeleteAsync(true)) return;
+        await ErrorLogService.DeleteAllLogsAsync();
+        await LoadLogsAsync();
+    }
+
+    private async Task<bool> ConfirmDeleteAsync(bool all = false)
+    {
+        var msg = all ? Localizer.GetString("ErrorLogs.ConfirmDeleteAll", "Delete all logs?") : Localizer.GetString("ErrorLogs.ConfirmDelete", "Delete this log?");
+        return await JSRuntime.InvokeAsync<bool>("confirm", msg);
+    }
+
+    private async Task PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadLogsAsync();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadLogsAsync();
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page != currentPage)
+        {
+            currentPage = page;
+            await LoadLogsAsync();
+        }
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            currentPage = 1;
+            await LoadLogsAsync();
+        }
+    }
+} 

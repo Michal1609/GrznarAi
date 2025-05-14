@@ -239,6 +239,20 @@ namespace GrznarAi.Web.Data
             AddEntry("Notes.Notification", "Oznámení", "Notification", "Alert notification title");
             AddEntry("Notes.Done", "Hotovo", "Done", "Done button text");
 
+            // --- Error Logs Admin Page Seed Data ---
+            AddEntry("ErrorLogs.Title", "Chybové logy", "Error Logs", "Nadpis stránky s chybovými logy");
+            AddEntry("ErrorLogs.DeleteAll", "Smazat vše", "Delete all logs", "Tlačítko pro smazání všech logů");
+            AddEntry("ErrorLogs.Search", "Hledat v logu...", "Search logs...", "Placeholder pro vyhledávání v logu");
+            AddEntry("ErrorLogs.NoLogs", "Žádné chybové logy nebyly nalezeny.", "No error logs found.", "Zpráva při prázdném seznamu logů");
+            AddEntry("ErrorLogs.Message", "Zpráva", "Message", "Sloupec pro zprávu logu");
+            AddEntry("ErrorLogs.Level", "Úroveň", "Level", "Sloupec pro úroveň logu");
+            AddEntry("ErrorLogs.Source", "Zdroj", "Source", "Sloupec pro zdroj logu");
+            AddEntry("ErrorLogs.CreatedAt", "Vytvořeno", "Created At", "Sloupec pro datum vytvoření logu");
+            AddEntry("ErrorLogs.StackTrace", "StackTrace", "StackTrace", "Detail stack trace");
+            AddEntry("ErrorLogs.InnerException", "InnerException", "InnerException", "Detail inner exception");
+            AddEntry("ErrorLogs.ConfirmDelete", "Opravdu chcete smazat tento log?", "Are you sure you want to delete this log?", "Potvrzení mazání jednoho logu");
+            AddEntry("ErrorLogs.ConfirmDeleteAll", "Opravdu chcete smazat všechny logy?", "Are you sure you want to delete all logs?", "Potvrzení mazání všech logů");
+
             // Notes categories related
             AddEntry("Notes.Categories.AddNew", "Přidat novou kategorii", "Add New Category", "Add new category modal title");
             AddEntry("Notes.Categories.Edit", "Upravit kategorii", "Edit Category", "Edit category modal title");

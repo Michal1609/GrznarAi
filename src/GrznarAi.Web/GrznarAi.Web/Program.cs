@@ -147,6 +147,9 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ContextMenuService>();
 
+// Register ErrorLogService
+builder.Services.AddSingleton<IErrorLogService, ErrorLogService>();
+
 // Configure Localization
 log.Information("Configure...");
 builder.Services.Configure<RequestLocalizationOptions>(options =>

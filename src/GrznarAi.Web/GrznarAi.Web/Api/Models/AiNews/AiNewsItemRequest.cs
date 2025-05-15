@@ -12,14 +12,13 @@ namespace GrznarAi.Web.Api.Models.AiNews
         /// Titulek v angličtině
         /// </summary>
         [Required]
-        [StringLength(200)]
+        [StringLength(450)]
         public string TitleEn { get; set; } = string.Empty;
 
         /// <summary>
         /// Titulek v češtině
         /// </summary>
         [Required]
-        [StringLength(200)]
         public string TitleCz { get; set; } = string.Empty;
 
         /// <summary>
@@ -34,14 +33,12 @@ namespace GrznarAi.Web.Api.Models.AiNews
 
         /// <summary>
         /// Souhrn v angličtině
-        /// </summary>
-        [StringLength(1000)]
+        /// </summary>        
         public string? SummaryEn { get; set; }
 
         /// <summary>
         /// Souhrn v češtině
         /// </summary>
-        [StringLength(1000)]
         public string? SummaryCz { get; set; }
 
         /// <summary>

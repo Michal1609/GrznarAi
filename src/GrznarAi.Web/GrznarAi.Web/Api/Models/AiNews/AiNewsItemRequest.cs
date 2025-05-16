@@ -12,7 +12,6 @@ namespace GrznarAi.Web.Api.Models.AiNews
         /// Titulek v angličtině
         /// </summary>
         [Required]
-        [StringLength(450)]
         public string TitleEn { get; set; } = string.Empty;
 
         /// <summary>

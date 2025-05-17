@@ -55,6 +55,7 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
             
             foreach (var item in request)
             {
+                Uri.TryCreate(item.ImageUrl, UriKind.Absolute, out var imageUrl);
                 var newsItem = new AiNewsItem
                 {
                     TitleEn = item.TitleEn,
@@ -64,7 +65,7 @@ namespace GrznarAi.Web.Api.Controllers.AiNews
                     SummaryEn = item.SummaryEn,
                     SummaryCz = item.SummaryCz,
                     Url = item.Url,
-                    ImageUrl = item.ImageUrl,
+                    ImageUrl = imageUrl?.ToString(),
                     SourceName = item.SourceName,
                     PublishedDate = item.PublishedDate,
                     ImportedDate = DateTime.UtcNow,

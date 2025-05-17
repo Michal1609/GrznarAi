@@ -50,9 +50,8 @@ namespace GrznarAi.Web.Api.Models.AiNews
 
         /// <summary>
         /// URL obrázku
-        /// </summary>
-        [Url]
-        [StringLength(500)]
+        /// </summary>        
+        [StringLength(2048)]
         public string? ImageUrl { get; set; }
 
         /// <summary>

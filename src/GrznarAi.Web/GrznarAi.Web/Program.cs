@@ -150,6 +150,9 @@ builder.Services.AddScoped<ContextMenuService>();
 // Register ErrorLogService
 builder.Services.AddSingleton<IErrorLogService, ErrorLogService>();
 
+// Register BroadcastAnnouncementService
+builder.Services.AddScoped<IBroadcastAnnouncementService, BroadcastAnnouncementService>();
+
 // Configure Localization
 log.Information("Configure...");
 builder.Services.Configure<RequestLocalizationOptions>(options =>

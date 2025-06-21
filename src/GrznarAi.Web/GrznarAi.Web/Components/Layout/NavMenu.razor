@@ -43,14 +43,21 @@
     </li>
 
     <!-- Applications Section -->
-    <AuthorizeView>
-        <Authorized>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="applicationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="nav-icon-wrapper"><i class="bi bi-app"></i></span> @Localizer.GetString("NavMenu.Applications")
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="applicationsDropdown">
-                    <!-- Only show Notes app when user has permission -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="applicationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="nav-icon-wrapper"><i class="bi bi-app"></i></span> @Localizer.GetString("NavMenu.Applications")
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="applicationsDropdown">
+            <!-- Broadcast Announcements - available to everyone -->
+            <li>
+                <NavLink class="dropdown-item" href="broadcast-announcements">
+                    <span class="nav-icon-wrapper"><i class="bi bi-broadcast-pin"></i></span> @Localizer.GetString("NavMenu.Applications.BroadcastAnnouncements")
+                </NavLink>
+            </li>
+            
+            <!-- Only show Notes app when user has permission -->
+            <AuthorizeView>
+                <Authorized>
                     @if (HasPermission("App.Notes"))
                     {
                         <li>
@@ -59,10 +66,10 @@
                             </NavLink>
                         </li>
                     }
-                </ul>
-            </li>
-        </Authorized>
-    </AuthorizeView>
+                </Authorized>
+            </AuthorizeView>
+        </ul>
+    </li>
     <!-- End Applications Section -->
 
     <!-- Administration Section -->

@@ -103,6 +103,23 @@
                     </div>
                 </div>
 
+                <!-- Broadcast Announcements Admin Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="bi bi-broadcast-pin me-2"></i>@Localizer.GetString("Administration.BroadcastAnnouncements.Title")</h4>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p>@Localizer.GetString("Administration.BroadcastAnnouncements.Description")</p>
+                            <div class="mt-auto">
+                                <button class="btn btn-primary" @onclick='() => NavigationManager.NavigateTo("/admin/broadcast-announcements")'>
+                                    <i class="bi bi-arrow-right me-2"></i>@Localizer.GetString("Administration.BroadcastAnnouncements.Title")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- API Keys Card -->
                 <div class="col-md-4 mb-4">
                     <div class="card h-100 shadow-sm">

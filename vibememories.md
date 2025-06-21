@@ -3064,3 +3064,35 @@ Byla vytvořena nová sekce pro administraci komentářů k blogům, která umo�
 - Oprava: v modelu SpaceUsedResult byla property pro tento sloupec upravena na `UnallocatedSpace` s atributem `[Column("unallocated space")]`.
 
 ---
+
+# Broadcast Announcements - Opravy a vylepšení
+
+## Opravy provedené v prosinci 2024
+
+### 1. Problém s chybovou hláškou místo prázdného seznamu
+- **Problém**: Stránka zobrazovala "Při načítání hlášení došlo k chybě" místo správné zprávy o tom, že nejsou k dispozici žádná data
+- **Příčina**: Stránka používala HttpClient pro volání vlastního API místo přímého přístupu k databázi
+- **Řešení**: Vytvořen `BroadcastAnnouncementService` a `IBroadcastAnnouncementService` pro přímý přístup k DB přes EF Core
+- **Výsledek**: Stránka nyní správně zobrazuje "Žádná hlášení" když nejsou data
+
+### 2. Databázová migrace
+- **Problém**: Tabulka `BroadcastAnnouncements` neexistovala v databázi
+- **Řešení**: Vytvořena a aplikována migrace `AddBroadcastAnnouncement`
+- **Výsledek**: Tabulka s indexy byla úspěšně vytvořena
+
+### 3. Přeuspořádání zobrazení
+- **Požadavek**: Přesunout datum před text hlášení
+- **Řešení**: Upraveno HTML v `BroadcastAnnouncements.razor` - prohodily se sloupce
+- **Výsledek**: Datum se nyní zobrazuje první, poté text
+
+### 4. Problém s mazáním v administraci
+- **Problém**: Mazání hlášení v admin sekci nefungovalo
+- **Příčina**: Chyběl `@rendermode InteractiveServer` a správná konfigurace služeb
+- **Řešení**: Přidán `@rendermode InteractiveServer` a opraveny injection konflikty
+- **Výsledek**: Mazání hlášení nyní funguje správně
+
+### 5. Registrace služeb
+- **Přidáno**: `IBroadcastAnnouncementService` zaregistrován v DI kontejneru
+- **Umístění**: `Program.cs` - služba je dostupná napříč aplikací
+
+---

@@ -1,0 +1,136 @@
+@page "/broadcast-announcements"
+@page "/hlaseni-rozhlasu"
+@using GrznarAi.Web.Api.Models
+@using GrznarAi.Web.Services
+@rendermode InteractiveServer
+@inject IGlobalSettingsService GlobalSettingsService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@Localizer.GetString("BroadcastAnnouncements.Title")</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-4">@Localizer.GetString("BroadcastAnnouncements.Title")</h1>
+            <p class="lead">@Localizer.GetString("BroadcastAnnouncements.Description")</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="row justify-content-center">
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">@Localizer.GetString("BroadcastAnnouncements.Loading")</span>
+                </div>
+                <p class="mt-2">@Localizer.GetString("BroadcastAnnouncements.Loading")</p>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    @errorMessage
+                </div>
+            </div>
+        </div>
+    }
+    else if (pagedResponse != null && pagedResponse.Announcements.Any())
+    {
+        <div class="row">
+            @foreach (var announcement in pagedResponse.Announcements)
+            {
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="announcement-meta">
+                                        <small class="text-muted">
+                                            <i class="bi bi-broadcast"></i>
+                                            @Localizer.GetString("BroadcastAnnouncements.BroadcastDateTime")
+                                        </small>
+                                        <div class="announcement-date">
+                                            @announcement.BroadcastDateTime.ToString("dd.MM.yyyy HH:mm")
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="announcement-content">
+                                        @((MarkupString)FormatAnnouncementContent(announcement.Content))
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (pagedResponse.TotalPages > 1)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <nav aria-label="@Localizer.GetString("BroadcastAnnouncements.Pagination.Label")">
+                        <ul class="pagination justify-content-center">
+                            <!-- Previous Button -->
+                            <li class="page-item @(pagedResponse.HasPreviousPage ? "" : "disabled")">
+                                <button class="page-link" disabled="@(!pagedResponse.HasPreviousPage)"
+                                        @onclick="async () => await LoadPage(currentPage - 1)">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </button>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            @{
+                                var startPage = Math.Max(1, currentPage - 2);
+                                var endPage = Math.Min(pagedResponse.TotalPages, currentPage + 2);
+                            }
+
+                            @for (int i = startPage; i <= endPage; i++)
+                            {
+                                var pageNum = i;
+                                <li class="page-item @(pageNum == currentPage ? "active" : "")">
+                                    <button class="page-link" @onclick="async () => await LoadPage(pageNum)">
+                                        @pageNum
+                                    </button>
+                                </li>
+                            }
+
+                            <!-- Next Button -->
+                            <li class="page-item @(pagedResponse.HasNextPage ? "" : "disabled")">
+                                <button class="page-link" disabled="@(!pagedResponse.HasNextPage)"
+                                        @onclick="async () => await LoadPage(currentPage + 1)">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <!-- Pagination Info -->
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            @string.Format(Localizer.GetString("BroadcastAnnouncements.Pagination.Info"), currentPage, pagedResponse.TotalPages, pagedResponse.TotalCount)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="py-5">
+                    <i class="bi bi-megaphone fs-1 text-muted"></i>
+                    <h3 class="mt-3">@Localizer.GetString("BroadcastAnnouncements.NoAnnouncements")</h3>
+                    <p class="text-muted">@Localizer.GetString("BroadcastAnnouncements.NoAnnouncementsDescription")</p>
+                </div>
+            </div>
+        </div>
+    }
+</div> 

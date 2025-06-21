@@ -719,6 +719,44 @@ namespace GrznarAi.Web.Data
             // --- Common --- 
             // ... existing code ...
 
+            // --- Broadcast Announcements Localization ---
+            AddEntry("BroadcastAnnouncements.Title", "Hlášení rozhlasu", "Broadcast Announcements", "Broadcast Announcements page title");
+            AddEntry("BroadcastAnnouncements.Description", "Nejnovější hlášení z místního rozhlasu", "Latest announcements from local radio", "Broadcast Announcements page description");
+            AddEntry("BroadcastAnnouncements.Loading", "Načítání hlášení...", "Loading announcements...", "Loading announcements message");
+            AddEntry("BroadcastAnnouncements.BroadcastDateTime", "Datum a čas vysílání", "Broadcast date and time", "Broadcast date time label");
+            AddEntry("BroadcastAnnouncements.NoAnnouncements", "Žádná hlášení", "No announcements", "No announcements message");
+            AddEntry("BroadcastAnnouncements.NoAnnouncementsDescription", "V současné době nejsou k dispozici žádná hlášení rozhlasu", "No radio announcements are currently available", "No announcements description");
+            AddEntry("BroadcastAnnouncements.Error.Network", "Chyba při načítání dat ze sítě", "Network error loading data", "Network error message");
+            AddEntry("BroadcastAnnouncements.Error.General", "Při načítání hlášení došlo k chybě", "Error occurred while loading announcements", "General error message");
+            AddEntry("BroadcastAnnouncements.Pagination.Label", "Stránkování hlášení", "Announcements pagination", "Pagination aria label");
+            AddEntry("BroadcastAnnouncements.Pagination.Info", "Strana {0} z {1} (celkem {2} hlášení)", "Page {0} of {1} (total {2} announcements)", "Pagination info with placeholders");
+
+            // Administration section for Broadcast Announcements
+            AddEntry("Administration.BroadcastAnnouncements.Title", "Správa hlášení rozhlasu", "Broadcast Announcements Management", "Admin title for broadcast announcements");
+            AddEntry("Administration.BroadcastAnnouncements.Description", "Správa hlášení z místního rozhlasu, mazání a vyhledávání", "Manage announcements from local radio, delete and search", "Admin description for broadcast announcements");
+            AddEntry("Administration.BroadcastAnnouncements.DeleteAll", "Smazat vše", "Delete All", "Delete all button");
+            AddEntry("Administration.BroadcastAnnouncements.Search", "Hledat v hlášeních...", "Search in announcements...", "Search placeholder");
+            AddEntry("Administration.BroadcastAnnouncements.SearchResults", "Nalezeno {0} výsledků pro \"{1}\"", "Found {0} results for \"{1}\"", "Search results message");
+            AddEntry("Administration.BroadcastAnnouncements.TotalCount", "Celkem {0} hlášení", "Total {0} announcements", "Total count message");
+            AddEntry("Administration.BroadcastAnnouncements.Content.Column", "Obsah", "Content", "Content column header");
+            AddEntry("Administration.BroadcastAnnouncements.BroadcastDateTime.Column", "Datum vysílání", "Broadcast Date", "Broadcast date column header");
+            AddEntry("Administration.BroadcastAnnouncements.ImportedDateTime.Column", "Datum importu", "Import Date", "Import date column header");
+            AddEntry("Administration.BroadcastAnnouncements.IsActive.Column", "Aktivní", "Active", "Active status column header");
+            AddEntry("Administration.BroadcastAnnouncements.Active", "Aktivní", "Active", "Active status badge");
+            AddEntry("Administration.BroadcastAnnouncements.Inactive", "Neaktivní", "Inactive", "Inactive status badge");
+            AddEntry("Administration.BroadcastAnnouncements.DeleteConfirmation", "Opravdu chcete smazat toto hlášení?", "Are you sure you want to delete this announcement?", "Delete confirmation message");
+            AddEntry("Administration.BroadcastAnnouncements.DeleteAllConfirmation", "Opravdu chcete smazat všechna hlášení?", "Are you sure you want to delete all announcements?", "Delete all confirmation message");
+            AddEntry("Administration.BroadcastAnnouncements.DeleteAllWarning", "Tato akce je nevratná a odstraní všechna hlášení z databáze!", "This action is irreversible and will remove all announcements from the database!", "Delete all warning message");
+            AddEntry("Administration.BroadcastAnnouncements.DeletedSuccess", "Hlášení bylo úspěšně smazáno", "Announcement was successfully deleted", "Delete success message");
+            AddEntry("Administration.BroadcastAnnouncements.DeletedAllSuccess", "Všechna hlášení byla úspěšně smazána", "All announcements were successfully deleted", "Delete all success message");
+            AddEntry("Administration.BroadcastAnnouncements.DeleteError", "Při mazání hlášení došlo k chybě", "Error occurred while deleting announcement", "Delete error message");
+            AddEntry("Administration.BroadcastAnnouncements.DeleteAllError", "Při mazání všech hlášení došlo k chybě", "Error occurred while deleting all announcements", "Delete all error message");
+            AddEntry("Administration.BroadcastAnnouncements.Pagination.Label", "Stránkování správy hlášení", "Admin announcements pagination", "Admin pagination aria label");
+            AddEntry("Administration.BroadcastAnnouncements.Pagination.Info", "Strana {0} z {1} (celkem {2} hlášení)", "Page {0} of {1} (total {2} announcements)", "Admin pagination info with placeholders");
+
+            // Navigation menu
+            AddEntry("NavMenu.Applications.BroadcastAnnouncements", "Hlášení rozhlasu", "Broadcast Announcements", "Navigation menu item for broadcast announcements");
+
             try
             {
                 // Načtení existujících klíčů z databáze

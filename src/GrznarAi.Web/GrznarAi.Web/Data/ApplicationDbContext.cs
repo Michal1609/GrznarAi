@@ -29,6 +29,7 @@ namespace GrznarAi.Web.Data
         public DbSet<EmailTemplateTranslation> EmailTemplateTranslations { get; set; }
         public DbSet<WeatherHistory> WeatherHistory { get; set; }
         public DbSet<ErrorLog> ErrorLogs { get; set; }
+        public DbSet<BroadcastAnnouncement> BroadcastAnnouncements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -155,6 +156,16 @@ namespace GrznarAi.Web.Data
             // Konfigurace pro ErrorLog
             builder.Entity<ErrorLog>()
                 .HasIndex(e => e.CreatedAt);
+
+            // Konfigurace pro BroadcastAnnouncement
+            builder.Entity<BroadcastAnnouncement>()
+                .HasIndex(ba => ba.BroadcastDateTime);
+
+            builder.Entity<BroadcastAnnouncement>()
+                .HasIndex(ba => ba.ImportedDateTime);
+
+            builder.Entity<BroadcastAnnouncement>()
+                .HasIndex(ba => ba.IsActive);
         }
     }
 }

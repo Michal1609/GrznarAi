@@ -64,7 +64,8 @@ namespace GrznarAi.Web.Api.Controllers
                         Content = ba.Content,
                         BroadcastDateTime = ba.BroadcastDateTime,
                         ImportedDateTime = ba.ImportedDateTime,
-                        IsActive = ba.IsActive
+                        IsActive = ba.IsActive,
+                        AudioUrl = ba.AudioUrl
                     })
                     .ToListAsync();
 
@@ -104,7 +105,8 @@ namespace GrznarAi.Web.Api.Controllers
                         Content = ba.Content,
                         BroadcastDateTime = ba.BroadcastDateTime,
                         ImportedDateTime = ba.ImportedDateTime,
-                        IsActive = ba.IsActive
+                        IsActive = ba.IsActive,
+                        AudioUrl = ba.AudioUrl
                     })
                     .FirstOrDefaultAsync();
 
@@ -143,7 +145,8 @@ namespace GrznarAi.Web.Api.Controllers
                     Content = request.Content.Trim(),
                     BroadcastDateTime = request.BroadcastDateTime,
                     ImportedDateTime = DateTime.UtcNow,
-                    IsActive = true
+                    IsActive = true,
+                    AudioUrl = request.AudioUrl
                 };
 
                 _context.BroadcastAnnouncements.Add(announcement);
@@ -155,7 +158,8 @@ namespace GrznarAi.Web.Api.Controllers
                     Content = announcement.Content,
                     BroadcastDateTime = announcement.BroadcastDateTime,
                     ImportedDateTime = announcement.ImportedDateTime,
-                    IsActive = announcement.IsActive
+                    IsActive = announcement.IsActive,
+                    AudioUrl = announcement.AudioUrl
                 };
 
                 _logger.LogInformation("Created new broadcast announcement with ID {Id}", announcement.Id);

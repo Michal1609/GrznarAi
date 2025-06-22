@@ -1,4 +1,3 @@
-using GrznarAi.Web.Client.Pages;
 using GrznarAi.Web.Components;
 using GrznarAi.Web.Components.Account;
 using GrznarAi.Web.Data;
@@ -11,8 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
-using GrznarAi.Web.Models;
 using Serilog;
 using GrznarAi.Web.Core.Options;
 using Radzen;
@@ -483,6 +480,22 @@ catch (Exception ex)
 {
     log.Error(ex, "Chyba při seedování emailových šablon");
 }
+
+// Global setting seeder
+try
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        log.Information("Seedování Global settings...");
+        var dbContext = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+        await GlobalSettingsDataSeeder.SeedAsync(dbContext);        
+    }
+}
+catch (Exception ex)
+{
+    log.Error(ex, "Chyba při seedování Global šablon");
+}
+
 
 // Create admin accout if not exists
 try

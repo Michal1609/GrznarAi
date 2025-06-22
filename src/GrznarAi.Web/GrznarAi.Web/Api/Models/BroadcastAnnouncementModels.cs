@@ -19,6 +19,12 @@ namespace GrznarAi.Web.Api.Models
         /// </summary>
         [Required]
         public DateTime BroadcastDateTime { get; set; }
+
+        /// <summary>
+        /// Optional URL of the audio file for the announcement
+        /// </summary>
+        [MaxLength(2048)]
+        public string? AudioUrl { get; set; }
     }
 
     /// <summary>
@@ -50,6 +56,11 @@ namespace GrznarAi.Web.Api.Models
         /// Indicates if the announcement is active/visible
         /// </summary>
         public bool IsActive { get; set; }
+
+        /// <summary>
+        /// URL of the audio file for the announcement
+        /// </summary>
+        public string? AudioUrl { get; set; }
     }
 
     /// <summary>

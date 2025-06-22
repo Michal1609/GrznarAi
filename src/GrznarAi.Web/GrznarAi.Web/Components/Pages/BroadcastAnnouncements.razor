@@ -54,7 +54,7 @@
                                             @Localizer.GetString("BroadcastAnnouncements.BroadcastDateTime")
                                         </small>
                                         <div class="announcement-date">
-                                            @announcement.BroadcastDateTime.ToString("dd.MM.yyyy HH:mm")
+                                            @announcement.BroadcastDateTime.ToString("dd.MM.yyyy")
                                         </div>
                                     </div>
                                 </div>
@@ -64,6 +64,17 @@
                                     </div>
                                 </div>
                             </div>
+                            @if (!string.IsNullOrEmpty(announcement.AudioUrl))
+                            {
+                                <div class="row mt-3">
+                                    <div class="col-md-9 offset-md-3">
+                                        <audio controls style="width: 100%;">
+                                            <source src="@announcement.AudioUrl" type="audio/ogg">
+                                            Váš prohlížeč nepodporuje přehrávání zvuku.
+                                        </audio>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>

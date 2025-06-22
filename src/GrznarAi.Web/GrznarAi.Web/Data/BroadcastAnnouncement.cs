@@ -34,5 +34,11 @@ namespace GrznarAi.Web.Data
         /// Indicates if the announcement is active/visible
         /// </summary>
         public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// URL of the audio file for the announcement
+        /// </summary>
+        [MaxLength(2048)]
+        public string? AudioUrl { get; set; }
     }
 } 

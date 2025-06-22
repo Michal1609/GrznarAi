@@ -55,7 +55,8 @@ namespace GrznarAi.Web.Services
                         Content = ba.Content,
                         BroadcastDateTime = ba.BroadcastDateTime,
                         ImportedDateTime = ba.ImportedDateTime,
-                        IsActive = ba.IsActive
+                        IsActive = ba.IsActive,
+                        AudioUrl = ba.AudioUrl
                     })
                     .ToListAsync();
 
@@ -113,7 +114,8 @@ namespace GrznarAi.Web.Services
                         Content = ba.Content,
                         BroadcastDateTime = ba.BroadcastDateTime,
                         ImportedDateTime = ba.ImportedDateTime,
-                        IsActive = ba.IsActive
+                        IsActive = ba.IsActive,
+                        AudioUrl = ba.AudioUrl
                     })
                     .ToListAsync();
 

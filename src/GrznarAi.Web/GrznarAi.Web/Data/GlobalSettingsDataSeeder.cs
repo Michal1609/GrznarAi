@@ -1,18 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace GrznarAi.Web.Data
 {
-    public static class GlobalSettingsDataSeeder
+    public class GlobalSettingsDataSeeder
     {
-        public static async Task SeedAsync(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger logger)
-        {
-            logger.LogInformation("Inicializace výchozích globálních nastavení...");
-            
+        public static async Task SeedAsync(IDbContextFactory<ApplicationDbContext> contextFactory)
+        {            
             using var context = await contextFactory.CreateDbContextAsync();
             var settings = new List<GlobalSetting>();
             var existingKeys = new HashSet<string>(
@@ -41,18 +34,16 @@ namespace GrznarAi.Web.Data
             // Pouze jedno nastavení - Admin.GlobalSettings.PageSize
             AddSetting("Admin.GlobalSettings.PageSize", "50", "int", "Počet položek na stránku v administraci globálních nastavení");
             
+            // Nastavení pro BroadcastAnnouncements
+            AddSetting("BroadcastAnnouncements.PageSize", "10", "int", "Počet hlášení rozhlasu zobrazených na jedné stránce.");
+            
             // Nastavení pro AI News
             AddSetting("AiNews.DuplicateCheckDays", "10", "int", "Počet dní pro kontrolu duplicit při importu AI novinek");
             
             if (settings.Count > 0)
             {
                 await context.GlobalSettings.AddRangeAsync(settings);
-                await context.SaveChangesAsync();
-                logger.LogInformation("Inicializováno {Count} globálních nastavení", settings.Count);
-            }
-            else
-            {
-                logger.LogInformation("Všechna globální nastavení již existují, žádná nová nebyla přidána");
+                await context.SaveChangesAsync();                
             }
         }
     }

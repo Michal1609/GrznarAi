@@ -32,4 +32,18 @@
 ## 7. Dokončení
 - [x] Spustit webovou aplikaci
 - [x] Aktualizovat `tasks.md`
-- [ ] Aktualizovat `vibememories.md` 
+- [ ] Aktualizovat `vibememories.md`
+
+## Blog - obrázky v markdownu nejsou vidět ve veřejném zobrazení
+- Opravit pořadí transformací v MarkdownService (nejprve obrázky, pak odkazy)
+- Otestovat zobrazení obrázků v blogu
+- (Volitelné) Refaktorovat MarkdownService na použití Markdig
+- Aktualizovat tasks.md a vibememories.md
+- Spustit testy a build
+
+## Blog - přechod na Markdig pro plnou podporu Markdownu
+- Refaktorovat MarkdownService na použití Markdig
+- Otestovat zobrazení blogu s různými Markdown prvky (obrázky, tabulky, HTML, atd.)
+- Ověřit, že se nic nerozbilo v editaci a náhledu
+- Aktualizovat tasks.md a vibememories.md
+- Spustit testy a build 

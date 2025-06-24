@@ -3098,3 +3098,13 @@ Byla vytvořena nová sekce pro administraci komentářů k blogům, která umo�
 - **Umístění**: `Program.cs` - služba je dostupná napříč aplikací
 
 ---
+
+## Oprava zobrazení obrázků v markdownu v blogu (2024-06-xx)
+
+Bylo opraveno pořadí transformací v `MarkdownService` – nejprve se převádějí obrázky (`![alt](url)`), až poté odkazy (`[text](url)`).
+
+Dříve byly obrázky v markdownu chybně převedeny na odkazy a ve veřejném zobrazení blogu se místo obrázku zobrazoval pouze odkaz s alt textem. Nyní se obrázky zobrazují správně jak v náhledu editoru, tak na veřejné stránce blogu.
+
+## Blog - přechod na Markdig pro plnou podporu Markdownu (2024-06-xx)
+
+MarkdownService nyní používá Markdig s rozšířeními (UseAdvancedExtensions, PipeTables, AutoIdentifiers, EmphasisExtras, Bootstrap). Díky tomu je zajištěna plná kompatibilita s moderním Markdownem včetně tabulek, footnotes, task lists, atd. Odebrány všechny vlastní regex transformace.

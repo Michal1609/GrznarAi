@@ -26,7 +26,7 @@ namespace GrznarAi.Web.Services
         /// <summary>
         /// Get paged list of active broadcast announcements
         /// </summary>
-        public async Task<PagedBroadcastAnnouncementResponse> GetPagedAnnouncementsAsync(int page = 1, int? pageSize = null)
+        public async Task<PagedBroadcastAnnouncementResponse> GetPagedAnnouncementsAsync(int page = 1, int? pageSize = null, string? search = null, DateTime? day = null)
         {
             try
             {
@@ -40,8 +40,23 @@ namespace GrznarAi.Web.Services
                 actualPageSize = Math.Max(1, Math.Min(100, actualPageSize)); // Max 100 items per page
 
                 var query = context.BroadcastAnnouncements
-                    .Where(ba => ba.IsActive)
-                    .OrderByDescending(ba => ba.BroadcastDateTime);
+                    .Where(ba => ba.IsActive);
+
+                // Apply search filter if provided
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    var searchLower = search.ToLower();
+                    query = query.Where(ba => ba.Content.ToLower().Contains(searchLower));
+                }
+
+                // Apply day filter if provided
+                if (day.HasValue)
+                {
+                    var date = day.Value.Date;
+                    query = query.Where(ba => ba.BroadcastDateTime.Date == date);
+                }
+
+                query = query.OrderByDescending(ba => ba.BroadcastDateTime);
 
                 var totalCount = await query.CountAsync();
                 var totalPages = (int)Math.Ceiling((double)totalCount / actualPageSize);

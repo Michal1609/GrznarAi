@@ -46,4 +46,25 @@
 - Otestovat zobrazení blogu s různými Markdown prvky (obrázky, tabulky, HTML, atd.)
 - Ověřit, že se nic nerozbilo v editaci a náhledu
 - Aktualizovat tasks.md a vibememories.md
-- Spustit testy a build 
+- Spustit testy a build
+
+# BroadcastAnnouncements - fulltextové vyhledávání a kalendář
+
+## 1. Analýza
+- [x] Analýza požadavků
+- [x] Vytvoření seznamu úkolů
+
+## 2. Backend
+- [ ] Upravit službu BroadcastAnnouncementService a případně API, aby podporovalo filtrování podle textu a data
+- [ ] Upravit modely a případně DTO pro přenos filtrů
+- [ ] Přidat/rozšířit testy pro nové metody ve službě
+
+## 3. Frontend
+- [ ] Přidat do stránky BroadcastAnnouncements.razor textové pole pro fulltextové vyhledávání
+- [ ] Přidat do stránky BroadcastAnnouncements.razor kalendář pro výběr dne
+- [ ] Odesílat dotaz na backend při změně textu nebo data (debounce)
+
+## 4. Testování a dokončení
+- [ ] Otestovat funkčnost na UI i backendu
+- [ ] Aktualizovat README.md a vibememories.md
+- [ ] Spustit build a všechny testy 

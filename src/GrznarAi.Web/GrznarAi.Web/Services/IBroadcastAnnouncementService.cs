@@ -12,8 +12,10 @@ namespace GrznarAi.Web.Services
         /// </summary>
         /// <param name="page">Page number (starts from 1)</param>
         /// <param name="pageSize">Number of items per page</param>
+        /// <param name="search">Search term (fulltext)</param>
+        /// <param name="day">Day to filter announcements (date only)</param>
         /// <returns>Paged list of announcements</returns>
-        Task<PagedBroadcastAnnouncementResponse> GetPagedAnnouncementsAsync(int page = 1, int? pageSize = null);
+        Task<PagedBroadcastAnnouncementResponse> GetPagedAnnouncementsAsync(int page = 1, int? pageSize = null, string? search = null, DateTime? day = null);
 
         /// <summary>
         /// Get paged list of all broadcast announcements for admin

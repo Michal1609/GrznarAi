@@ -15,6 +15,43 @@ namespace GrznarAi.Web.Components.Pages
         private List<BroadcastAnnouncementResponse>? announcements;
         private PagedBroadcastAnnouncementResponse? pagedResponse;
         private int currentPage = 1;
+        private string? searchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                DebouncedSearch();
+            }
+        }
+        private string? _searchText;
+        private DateTime? selectedDay
+        {
+            get => _selectedDay;
+            set
+            {
+                _selectedDay = value;
+                DebouncedSearch();
+            }
+        }
+        private DateTime? _selectedDay;
+        private System.Timers.Timer? debounceTimer;
+
+        private async Task DebouncedSearch()
+        {
+            debounceTimer?.Stop();
+            debounceTimer?.Dispose();
+            debounceTimer = new System.Timers.Timer(400) { AutoReset = false };
+            debounceTimer.Elapsed += async (_, __) => await InvokeAsync(async () => await LoadPage(1));
+            debounceTimer.Start();
+        }
+
+        private async Task ClearFilters()
+        {
+            searchText = null;
+            selectedDay = null;
+            await LoadPage(1);
+        }
 
         protected override async Task OnInitializedAsync()
         {
@@ -27,11 +64,8 @@ namespace GrznarAi.Web.Components.Pages
             {
                 isLoading = true;
                 errorMessage = null;
-                
                 StateHasChanged();
-
-                var response = await BroadcastService.GetPagedAnnouncementsAsync(page);
-
+                var response = await BroadcastService.GetPagedAnnouncementsAsync(page, null, searchText, selectedDay);
                 if (response != null)
                 {
                     pagedResponse = response;
@@ -57,8 +91,6 @@ namespace GrznarAi.Web.Components.Pages
             {
                 errorMessage = Localizer.GetString("BroadcastAnnouncements.Error.General");
                 Console.WriteLine($"Error loading broadcast announcements: {ex.Message}");
-                
-                // Set empty response on error
                 pagedResponse = new PagedBroadcastAnnouncementResponse
                 {
                     Announcements = new List<BroadcastAnnouncementResponse>(),

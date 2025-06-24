@@ -3108,3 +3108,31 @@ Dříve byly obrázky v markdownu chybně převedeny na odkazy a ve veřejném z
 ## Blog - přechod na Markdig pro plnou podporu Markdownu (2024-06-xx)
 
 MarkdownService nyní používá Markdig s rozšířeními (UseAdvancedExtensions, PipeTables, AutoIdentifiers, EmphasisExtras, Bootstrap). Díky tomu je zajištěna plná kompatibilita s moderním Markdownem včetně tabulek, footnotes, task lists, atd. Odebrány všechny vlastní regex transformace.
+
+# BroadcastAnnouncements - fulltextové vyhledávání a kalendář (2024-06)
+
+## Cíl
+Přidat na stránku Hlášení rozhlasu možnost fulltextového vyhledávání a filtrování podle data (výběr dne pomocí kalendáře).
+
+## Návrh řešení a úvaha k testům
+- **Backend:**
+  - Rozšířit BroadcastAnnouncementService o metodu, která umožní filtrovat hlášení podle textu (fulltext v názvu/obsahu) a podle data.
+  - API rozšířit o nové parametry (query, date).
+  - Modely/DTO rozšířit o filtrační parametry.
+- **Frontend:**
+  - Přidat textové pole pro fulltext a kalendář pro výběr dne.
+  - Při změně hodnoty odeslat dotaz na backend (debounce).
+- **Testy:**
+  - Vytvořit nový testovací projekt (xUnit, pokud není preferováno jinak).
+  - Testy strukturovat podle služby (BroadcastAnnouncementServiceTests).
+  - Pokrýt:
+    - Filtrování podle textu (case insensitive, partial match)
+    - Filtrování podle data (přesný den)
+    - Kombinaci obou filtrů
+    - Okrajové případy (prázdný dotaz, null datum, žádné výsledky)
+  - Testy budou mockovat datový zdroj (in-memory kolekce).
+
+## Důvody pro tuto strukturu
+- Umožní snadné rozšíření testů v budoucnu (např. další filtry).
+- Testy budou rychlé a nezávislé na DB.
+- TDD přístup zajistí, že logika bude správně navržena a pokryta.

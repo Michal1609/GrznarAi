@@ -17,15 +17,18 @@ namespace GrznarAi.Web.Api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<BroadcastAnnouncementController> _logger;
         private readonly IGlobalSettingsService _globalSettingsService;
+        private readonly IBroadcastAnnouncementService _announcementService;
 
         public BroadcastAnnouncementController(
             ApplicationDbContext context,
             ILogger<BroadcastAnnouncementController> logger,
-            IGlobalSettingsService globalSettingsService)
+            IGlobalSettingsService globalSettingsService,
+            IBroadcastAnnouncementService announcementService)
         {
             _context = context;
             _logger = logger;
             _globalSettingsService = globalSettingsService;
+            _announcementService = announcementService;
         }
 
         /// <summary>
@@ -33,52 +36,20 @@ namespace GrznarAi.Web.Api.Controllers
         /// </summary>
         /// <param name="page">Page number (starts from 1)</param>
         /// <param name="pageSize">Number of items per page</param>
+        /// <param name="search">Search term (fulltext)</param>
+        /// <param name="day">Day to filter announcements (date only)</param>
         /// <returns>Paged list of announcements</returns>
         [HttpGet]
         public async Task<ActionResult<PagedBroadcastAnnouncementResponse>> GetAnnouncements(
             int page = 1, 
-            int? pageSize = null)
+            int? pageSize = null,
+            string? search = null,
+            DateTime? day = null)
         {
             try
             {
-                // Get page size from global settings if not provided
-                var actualPageSize = pageSize ?? _globalSettingsService.GetInt("BroadcastAnnouncements.PageSize", 10);
-                
-                // Ensure minimum values
-                page = Math.Max(1, page);
-                actualPageSize = Math.Max(1, Math.Min(100, actualPageSize)); // Max 100 items per page
-
-                var query = _context.BroadcastAnnouncements
-                    .Where(ba => ba.IsActive)
-                    .OrderByDescending(ba => ba.BroadcastDateTime);
-
-                var totalCount = await query.CountAsync();
-                var totalPages = (int)Math.Ceiling((double)totalCount / actualPageSize);
-
-                var announcements = await query
-                    .Skip((page - 1) * actualPageSize)
-                    .Take(actualPageSize)
-                    .Select(ba => new BroadcastAnnouncementResponse
-                    {
-                        Id = ba.Id,
-                        Content = ba.Content,
-                        BroadcastDateTime = ba.BroadcastDateTime,
-                        ImportedDateTime = ba.ImportedDateTime,
-                        IsActive = ba.IsActive,
-                        AudioUrl = ba.AudioUrl
-                    })
-                    .ToListAsync();
-
-                return Ok(new PagedBroadcastAnnouncementResponse
-                {
-                    Announcements = announcements,
-                    TotalCount = totalCount,
-                    CurrentPage = page,
-                    PageSize = actualPageSize,
-                    TotalPages = totalPages,
-                    HasNextPage = page < totalPages,
-                    HasPreviousPage = page > 1
-                });
+                var result = await _announcementService.GetPagedAnnouncementsAsync(page, pageSize, search, day);
+                return Ok(result);
             }
             catch (Exception ex)
             {

@@ -1037,7 +1037,7 @@ var hourlyData = WeatherData
         <span class="temp-min">Min @GetMinTemperature() °C</span>
         <span class="temp-avg">Prům @GetAvgTemperature() °C</span>
         <span class="temp-max">Max @GetMaxTemperature() °C</span>
-    </div>
+</div>
 </div>
 ```
 
@@ -1381,7 +1381,7 @@ V komponentě MeteoTrends.razor byla opravena vizualizace popisků na ose X při
 
 Implementace změn:
 1. Upraven zobrazovací formát pro osu X při denním zobrazení pomocí podmíněného renderování:
-   ```csharp
+```csharp
    @if (SelectedPeriod == PeriodType.Day)
    {
        <RadzenAxisLabels Rotation="@GetAxisLabelRotation()" FormatString="{0:HH:mm}" />

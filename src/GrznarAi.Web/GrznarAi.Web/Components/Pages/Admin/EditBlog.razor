@@ -4,10 +4,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Services
+@using GrznarAi.Web.Components.Shared
 @using PSC.Blazor.Components.MarkdownEditor
 @inject NavigationManager NavigationManager
 @inject IBlogService BlogService
 @inject IJSRuntime JSRuntime
+@inject ILocalizationService Localizer
 
 <PageTitle>Upravit blog</PageTitle>
 
@@ -26,14 +28,40 @@ else if (blog == null)
 }
 else
 {
-    <div class="mb-3">
-        <label for="language" class="form-label">Jazyk</label>
-        <select id="language" class="form-select" @onchange="SelectLanguage">
-            @foreach (var lang in availableLanguages)
-            {
-                <option value="@lang.Code" selected="@(selectedLanguage == lang.Code)">@lang.Name</option>
-            }
-        </select>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="mb-3">
+                <label for="language" class="form-label">Jazyk</label>
+                <select id="language" class="form-select" @onchange="SelectLanguage">
+                    @foreach (var lang in availableLanguages)
+                    {
+                        <option value="@lang.Code" selected="@(selectedLanguage == lang.Code)">@lang.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="mb-3">
+                <label class="form-label">@Localizer.GetString("Blog.Image", "Blog Image")</label>
+                <div class="card">
+                    <div class="card-body text-center">
+                        @if (!string.IsNullOrEmpty(blog.ImageUrl))
+                        {
+                            <img src="@blog.ImageUrl" class="img-fluid rounded mb-2" style="max-height: 200px;" alt="Blog Image Preview" />
+                        }
+                        else
+                        {
+                            <div class="bg-light d-flex align-items-center justify-content-center mb-2" style="height: 150px;">
+                                <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                        }
+                        <button type="button" class="btn btn-primary btn-sm" @onclick="() => isImageSelectorVisible = true">
+                            <i class="bi bi-pencil-square me-1"></i> @Localizer.GetString("Blog.SelectImage", "Select Image")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     @if (blogContent == null)
@@ -91,6 +119,10 @@ else
     }
 }
 
+<ImageSelector IsVisible="isImageSelectorVisible"
+               OnImageSelected="HandleImageSelected"
+               OnClose="() => isImageSelectorVisible = false" />
+
 @code {
     [Parameter]
     public int BlogId { get; set; }
@@ -99,6 +131,7 @@ else
     private BlogContent? blogContent;
     private string selectedLanguage = "cs";
     private bool isLoading = true;
+    private bool isImageSelectorVisible = false;
 
     private record LanguageInfo(string Code, string Name);
 
@@ -180,6 +213,7 @@ else
         try
         {
             await BlogService.CreateOrUpdateBlogContentAsync(blogContent);
+            await BlogService.UpdateBlogImageUrlAsync(blog.Id, blog.ImageUrl);
             await JSRuntime.InvokeVoidAsync("alert", "Blog byl úspěšně uložen");
             
             // Znovu načteme blog, aby se zobrazily aktuální údaje
@@ -190,6 +224,15 @@ else
             Console.WriteLine($"Error saving blog: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("alert", $"Chyba při ukládání blogu: {ex.Message}");
         }
+    }
+
+    private void HandleImageSelected(string imageUrl)
+    {
+        if (blog != null)
+        {
+            blog.ImageUrl = imageUrl;
+        }
+        isImageSelectorVisible = false;
     }
 
     private void GoBack()

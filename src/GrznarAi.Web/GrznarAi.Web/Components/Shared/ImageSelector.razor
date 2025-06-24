@@ -1,0 +1,117 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using System.IO
+@using GrznarAi.Web.Services
+@inject IWebHostEnvironment WebHostEnvironment
+@inject ILocalizationService Localizer
+
+@if (IsVisible)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog" @onclick="Close">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" @onclick:stopPropagation>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Localizer.GetString("ImageSelector.Title", "Select Image")</h5>
+                    <button type="button" class="btn-close" @onclick="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h6>@Localizer.GetString("ImageSelector.Folders", "Folders")</h6>
+                            <ul class="list-group">
+                                @foreach (var dir in directoryTree)
+                                {
+                                    <li class="list-group-item list-group-item-action @(selectedDirectoryPath == dir.RelativePath ? "active" : "")"
+                                        @onclick="() => SelectDirectory(dir.RelativePath)">
+                                        <i class="bi bi-folder-fill me-2"></i> @dir.Name
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="col-md-9">
+                            <h6>@Localizer.GetString("ImageSelector.Images", "Images")</h6>
+                            @if (isLoading)
+                            {
+                                <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            }
+                            else if (images.Any())
+                            {
+                                <div class="image-gallery">
+                                    @foreach (var image in images)
+                                    {
+                                        <div class="img-thumbnail-wrapper @(selectedImageUrl == image.Url ? "selected" : "")"
+                                             @onclick="() => SelectImage(image.Url)">
+                                            <img src="@image.Url" class="img-thumbnail" alt="@image.Name" />
+                                            <div class="img-name" title="@image.Name">@image.Name</div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p>@Localizer.GetString("ImageSelector.NoImagesFound", "No images found in this directory.")</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if (selectedImageUrl != null)
+                    {
+                        <div class="me-auto d-flex align-items-center">
+                            <img src="@selectedImageUrl" style="max-height: 40px; max-width: 100px;" class="me-2 img-thumbnail" />
+                            <small class="text-muted">@selectedImageUrl</small>
+                        </div>
+                    }
+                    <button type="button" class="btn btn-secondary" @onclick="Close">@Localizer.GetString("Buttons.Cancel", "Cancel")</button>
+                    <button type="button" class="btn btn-primary" @onclick="ConfirmSelection" disabled="@(string.IsNullOrEmpty(selectedImageUrl))">@Localizer.GetString("Buttons.Confirm", "Confirm")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<style>
+    .image-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+
+    .img-thumbnail-wrapper {
+        position: relative;
+        cursor: pointer;
+        border: 2px solid transparent;
+        border-radius: .25rem;
+        padding: 4px;
+        transition: border-color .15s ease-in-out;
+    }
+
+    .img-thumbnail-wrapper:hover {
+        border-color: #0d6efd;
+    }
+
+    .img-thumbnail-wrapper.selected {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .5);
+    }
+
+    .img-thumbnail {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+    }
+    
+    .img-name {
+        font-size: 0.8rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-top: 4px;
+    }
+</style> 

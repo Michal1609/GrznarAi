@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig" Version="0.41.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
     <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" Version="8.0.8" />
     <PackageReference Include="Radzen.Blazor" Version="6.6.4" />

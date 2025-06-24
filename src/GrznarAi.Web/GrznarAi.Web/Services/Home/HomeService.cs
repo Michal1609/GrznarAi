@@ -56,7 +56,9 @@ namespace GrznarAi.Web.Services.Home
                     Description = post.Description ?? string.Empty,
                     PublishedDate = post.CreatedAt,
                     Url = $"/blog/{slug}",
-                    ImageUrl = null, // Blog posts don't have images currently
+                    ImageUrl = !string.IsNullOrWhiteSpace(post.Blog.ImageUrl) 
+                                 ? post.Blog.ImageUrl 
+                                 : "/images/Blog/BlogSmall.jpg",
                     Source = "Blog",
                     SourceUrl = "/blog",
                     ItemType = HomeNewsItemType.Blog

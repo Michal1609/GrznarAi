@@ -4,9 +4,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using GrznarAi.Web.Data
 @using GrznarAi.Web.Services
+@using GrznarAi.Web.Components.Shared
 @using PSC.Blazor.Components.MarkdownEditor
 @inject NavigationManager NavigationManager
 @inject IBlogService BlogService
+@inject ILocalizationService Localizer
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Přidat nový blog</PageTitle>
 
@@ -16,32 +19,58 @@
     <DataAnnotationsValidator />
     <ValidationSummary class="text-danger" />
 
-    <div class="mb-3">
-        <label for="language" class="form-label">Jazyk</label>
-        <InputSelect id="language" class="form-select" @bind-Value="blogContent.LanguageCode">
-            <option value="cs">Čeština</option>
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-        </InputSelect>
-        <ValidationMessage For="() => blogContent.LanguageCode" class="text-danger" />
-    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="mb-3">
+                <label for="language" class="form-label">Jazyk</label>
+                <InputSelect id="language" class="form-select" @bind-Value="blogContent.LanguageCode">
+                    <option value="cs">Čeština</option>
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                </InputSelect>
+                <ValidationMessage For="() => blogContent.LanguageCode" class="text-danger" />
+            </div>
 
-    <div class="mb-3">
-        <label for="title" class="form-label">Název</label>
-        <InputText id="title" class="form-control" @bind-Value="blogContent.Title" />
-        <ValidationMessage For="() => blogContent.Title" class="text-danger" />
-    </div>
+            <div class="mb-3">
+                <label for="title" class="form-label">Název</label>
+                <InputText id="title" class="form-control" @bind-Value="blogContent.Title" />
+                <ValidationMessage For="() => blogContent.Title" class="text-danger" />
+            </div>
 
-    <div class="mb-3">
-        <label for="description" class="form-label">Krátký popis</label>
-        <InputTextArea id="description" class="form-control" @bind-Value="blogContent.Description" rows="3" />
-        <ValidationMessage For="() => blogContent.Description" class="text-danger" />
-    </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Krátký popis</label>
+                <InputTextArea id="description" class="form-control" @bind-Value="blogContent.Description" rows="3" />
+                <ValidationMessage For="() => blogContent.Description" class="text-danger" />
+            </div>
 
-    <div class="mb-3">
-        <label for="tags" class="form-label">Tagy (oddělené čárkou)</label>
-        <InputText id="tags" class="form-control" @bind-Value="blogContent.Tags" />
-        <ValidationMessage For="() => blogContent.Tags" class="text-danger" />
+            <div class="mb-3">
+                <label for="tags" class="form-label">Tagy (oddělené čárkou)</label>
+                <InputText id="tags" class="form-control" @bind-Value="blogContent.Tags" />
+                <ValidationMessage For="() => blogContent.Tags" class="text-danger" />
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="mb-3">
+                <label class="form-label">@Localizer.GetString("Blog.Image", "Blog Image")</label>
+                <div class="card">
+                    <div class="card-body text-center">
+                        @if (!string.IsNullOrEmpty(imageUrl))
+                        {
+                            <img src="@imageUrl" class="img-fluid rounded mb-2" style="max-height: 200px;" alt="Blog Image Preview" />
+                        }
+                        else
+                        {
+                            <div class="bg-light d-flex align-items-center justify-content-center mb-2" style="height: 150px;">
+                                <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                        }
+                        <button type="button" class="btn btn-primary btn-sm" @onclick="() => isImageSelectorVisible = true">
+                            <i class="bi bi-pencil-square me-1"></i> @Localizer.GetString("Blog.SelectImage", "Select Image")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card mb-3">
@@ -66,8 +95,14 @@
     <button type="button" class="btn btn-secondary" @onclick="GoBack">Zrušit</button>
 </EditForm>
 
+<ImageSelector IsVisible="isImageSelectorVisible"
+               OnImageSelected="HandleImageSelected"
+               OnClose="() => isImageSelectorVisible = false" />
+
 @code {
     private BlogContent blogContent = new() { LanguageCode = "cs" };
+    private string? imageUrl;
+    private bool isImageSelectorVisible = false;
 
     private async Task HandleValidSubmit()
     {
@@ -80,14 +115,26 @@
             blogContent.BlogId = newBlog.Id;
             await BlogService.CreateOrUpdateBlogContentAsync(blogContent);
 
+            // 3. Aktualizujeme URL obrázku, pokud bylo vybráno
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                await BlogService.UpdateBlogImageUrlAsync(newBlog.Id, imageUrl);
+            }
+
             NavigationManager.NavigateTo("/admin/blogs");
         }
         catch (Exception ex)
         {
             // Log error, show message
             Console.WriteLine($"Error creating blog: {ex.Message}");
-            // TODO: Přidat zobrazení chybové zprávy uživateli
+            await JSRuntime.InvokeVoidAsync("alert", $"Chyba při vytváření blogu: {ex.Message}");
         }
+    }
+
+    private void HandleImageSelected(string selectedImageUrl)
+    {
+        imageUrl = selectedImageUrl;
+        isImageSelectorVisible = false;
     }
 
     private void GoBack()

@@ -19,6 +19,11 @@ namespace GrznarAi.Web.Data
         // Počítadlo komentářů
         public int CommentsCount { get; set; } = 0;
 
+        /// <summary>
+        /// Gets or sets the URL of the blog's title image.
+        /// </summary>
+        public string? ImageUrl { get; set; }
+
         // Navigační vlastnosti
         public ICollection<BlogContent> Contents { get; set; } = new List<BlogContent>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();

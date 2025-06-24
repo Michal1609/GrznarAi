@@ -757,6 +757,20 @@ namespace GrznarAi.Web.Data
             // Navigation menu
             AddEntry("NavMenu.Applications.BroadcastAnnouncements", "Hlášení rozhlasu", "Broadcast Announcements", "Navigation menu item for broadcast announcements");
 
+            // --- ImageSelector Seed Data ---
+            AddEntry("ImageSelector.Title", "Vybrat obrázek", "Select Image", "Image selector modal title");
+            AddEntry("ImageSelector.Folders", "Složky", "Folders", "Image selector folders section");
+            AddEntry("ImageSelector.Images", "Obrázky", "Images", "Image selector images section");
+            AddEntry("ImageSelector.NoImagesFound", "V tomto adresáři nejsou žádné obrázky.", "No images found in this directory.", "Image selector no images message");
+            AddEntry("ImageSelector.Loading", "Načítání...", "Loading...", "Image selector loading spinner");
+            AddEntry("ImageSelector.Preview", "Náhled", "Preview", "Image selector preview label");
+            // Blog image selection
+            AddEntry("Blog.Image", "Obrázek blogu", "Blog Image", "Blog image label");
+            AddEntry("Blog.SelectImage", "Vybrat obrázek", "Select Image", "Blog select image button");
+            // --- Buttons (Common) ---
+            AddEntry("Buttons.Cancel", "Zrušit", "Cancel", "Cancel button text");
+            AddEntry("Buttons.Confirm", "Potvrdit", "Confirm", "Confirm button text");
+
             try
             {
                 // Načtení existujících klíčů z databáze

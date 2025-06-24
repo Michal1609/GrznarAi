@@ -9,29 +9,6 @@ using GrznarAi.Web.Components.Pages.Blog.Models;
 
 namespace GrznarAi.Web.Services
 {
-    public interface IBlogService
-    {
-        Task<List<Blog>> GetBlogsAsync();
-        Task<Blog?> GetBlogByIdAsync(int blogId);
-        Task<Blog> CreateBlogAsync();
-        Task DeleteBlogAsync(int id);
-        Task<BlogContent?> GetBlogContentAsync(int blogId, string languageCode);
-        Task<List<BlogContent>> GetBlogContentsByLanguageAsync(string languageCode);
-        Task<BlogContent> CreateOrUpdateBlogContentAsync(BlogContent blogContent);
-        Task DeleteBlogContentAsync(int blogContentId);
-        Task<List<BlogContent>> GetPublishedBlogsAsync(string languageCode, int skip = 0, int take = 10);
-        Task<int> GetPublishedBlogsCountAsync(string languageCode);
-        Task<List<BlogContent>> SearchBlogsAsync(string languageCode, string searchTerm, int skip = 0, int take = 10);
-        Task<int> SearchBlogsCountAsync(string languageCode, string searchTerm);
-        Task<List<BlogContent>> GetBlogsByTagAsync(string languageCode, string tag, int skip = 0, int take = 10);
-        Task<int> GetBlogsByTagCountAsync(string languageCode, string tag);
-        Task<List<BlogContent>> GetBlogsByMonthAsync(string languageCode, int year, int month, int skip = 0, int take = 10);
-        Task<int> GetBlogsByMonthCountAsync(string languageCode, int year, int month);
-        Task<List<string>> GetPopularTagsAsync(string languageCode, int count = 10);
-        Task<List<ArchiveMonthViewModel>> GetArchiveMonthsAsync(string languageCode);
-        Task<BlogContent?> GetBlogContentBySlugAsync(string languageCode, string slug);
-    }
-
     public class BlogService : IBlogService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
@@ -65,6 +42,22 @@ namespace GrznarAi.Web.Services
             return blog;
         }
 
+        public async Task UpdateBlogImageUrlAsync(int blogId, string? imageUrl)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            var blog = await context.Blogs.FindAsync(blogId);
+            if (blog != null)
+            {
+                blog.ImageUrl = imageUrl;
+                blog.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new KeyNotFoundException($"Blog with ID {blogId} not found.");
+            }
+        }
+
         public async Task DeleteBlogAsync(int id)
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
@@ -74,9 +67,7 @@ namespace GrznarAi.Web.Services
 
             if (blog != null)
             {
-                // Nejprve odstraníme všechny obsahy
                 context.BlogContents.RemoveRange(blog.Contents);
-                // Poté odstraníme blog
                 context.Blogs.Remove(blog);
                 await context.SaveChangesAsync();
             }
@@ -111,13 +102,11 @@ namespace GrznarAi.Web.Services
 
             if (existingContent == null)
             {
-                // Vytvoření nového obsahu
                 blogContent.CreatedAt = DateTime.UtcNow;
                 context.BlogContents.Add(blogContent);
             }
             else
             {
-                // Aktualizace existujícího obsahu
                 existingContent.Title = blogContent.Title;
                 existingContent.Description = blogContent.Description;
                 existingContent.Content = blogContent.Content;
@@ -125,10 +114,9 @@ namespace GrznarAi.Web.Services
                 existingContent.IsPublished = blogContent.IsPublished;
                 existingContent.UpdatedAt = DateTime.UtcNow;
                 
-                blogContent = existingContent; // Pro návratový účel
+                blogContent = existingContent;
             }
 
-            // Aktualizace časové značky u blog entity
             var blog = await context.Blogs.FindAsync(blogContent.BlogId);
             if (blog != null)
             {
@@ -154,8 +142,6 @@ namespace GrznarAi.Web.Services
                 throw new KeyNotFoundException($"BlogContent with ID {blogContentId} not found.");
             }
         }
-        
-        // Implementace metod pro veřejnou část blogu
         
         public async Task<List<BlogContent>> GetPublishedBlogsAsync(string languageCode, int skip = 0, int take = 10)
         {
@@ -185,12 +171,10 @@ namespace GrznarAi.Web.Services
             searchTerm = searchTerm.ToLower();
             await using var context = await _contextFactory.CreateDbContextAsync();
             
-            // Získáme všechny publikované blogy v daném jazyce
             var blogsQuery = context.BlogContents
                 .Include(bc => bc.Blog)
                 .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished);
             
-            // Vyhledáme ty, které obsahují hledaný text v některém z polí
             var filteredBlogs = await blogsQuery.ToListAsync();
             
             var results = filteredBlogs
@@ -215,11 +199,9 @@ namespace GrznarAi.Web.Services
             searchTerm = searchTerm.ToLower();
             await using var context = await _contextFactory.CreateDbContextAsync();
             
-            // Získáme všechny publikované blogy v daném jazyce
             var blogsQuery = context.BlogContents
                 .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished);
             
-            // Vyhledáme ty, které obsahují hledaný text v některém z polí
             var filteredBlogs = await blogsQuery.ToListAsync();
             
             return filteredBlogs
@@ -258,17 +240,17 @@ namespace GrznarAi.Web.Services
         
         public async Task<List<BlogContent>> GetBlogsByMonthAsync(string languageCode, int year, int month, int skip = 0, int take = 10)
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            
             var startDate = new DateTime(year, month, 1);
             var endDate = startDate.AddMonths(1);
-            
-            await using var context = await _contextFactory.CreateDbContextAsync();
+
             return await context.BlogContents
                 .Include(bc => bc.Blog)
                 .Where(bc => 
                     bc.LanguageCode == languageCode && 
-                    bc.IsPublished && 
-                    bc.CreatedAt >= startDate &&
-                    bc.CreatedAt < endDate)
+                    bc.IsPublished &&
+                    bc.CreatedAt >= startDate && bc.CreatedAt < endDate)
                 .OrderByDescending(bc => bc.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -277,66 +259,44 @@ namespace GrznarAi.Web.Services
         
         public async Task<int> GetBlogsByMonthCountAsync(string languageCode, int year, int month)
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            
             var startDate = new DateTime(year, month, 1);
             var endDate = startDate.AddMonths(1);
             
-            await using var context = await _contextFactory.CreateDbContextAsync();
             return await context.BlogContents
                 .Where(bc => 
                     bc.LanguageCode == languageCode && 
-                    bc.IsPublished && 
-                    bc.CreatedAt >= startDate &&
-                    bc.CreatedAt < endDate)
+                    bc.IsPublished &&
+                    bc.CreatedAt >= startDate && bc.CreatedAt < endDate)
                 .CountAsync();
         }
         
         public async Task<List<string>> GetPopularTagsAsync(string languageCode, int count = 10)
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
-            var blogContents = await context.BlogContents
+            
+            var tags = await context.BlogContents
                 .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished && !string.IsNullOrEmpty(bc.Tags))
+                .Select(bc => bc.Tags)
                 .ToListAsync();
-                
-            // Extrakce a počítání tagů
-            var tagDictionary = new Dictionary<string, int>();
-            
-            foreach (var content in blogContents)
-            {
-                if (string.IsNullOrEmpty(content.Tags)) continue;
-                
-                var tags = content.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim())
-                    .Where(t => !string.IsNullOrEmpty(t));
-                    
-                foreach (var tag in tags)
-                {
-                    if (tagDictionary.ContainsKey(tag))
-                        tagDictionary[tag]++;
-                    else
-                        tagDictionary[tag] = 1;
-                }
-            }
-            
-            // Vrácení nejpopulárnějších tagů
-            return tagDictionary
-                .OrderByDescending(kv => kv.Value)
+
+            return tags
+                .SelectMany(t => t.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                .Select(t => t.Trim())
+                .GroupBy(t => t)
+                .OrderByDescending(g => g.Count())
                 .Take(count)
-                .Select(kv => kv.Key)
+                .Select(g => g.Key)
                 .ToList();
         }
         
         public async Task<List<ArchiveMonthViewModel>> GetArchiveMonthsAsync(string languageCode)
         {
-            Debug.WriteLine($"BlogService.GetArchiveMonthsAsync: Získávám archivní měsíce pro jazyk {languageCode}");
-            
             await using var context = await _contextFactory.CreateDbContextAsync();
-            
-            var blogContents = await context.BlogContents
+
+            return await context.BlogContents
                 .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished)
-                .ToListAsync();
-                
-            // Seskupení podle roku a měsíce s počtem článků
-            var archiveMonths = blogContents
                 .GroupBy(bc => new { bc.CreatedAt.Year, bc.CreatedAt.Month })
                 .Select(g => new ArchiveMonthViewModel
                 {
@@ -344,35 +304,23 @@ namespace GrznarAi.Web.Services
                     Month = g.Key.Month,
                     Count = g.Count()
                 })
-                .OrderByDescending(am => am.Year)
-                .ThenByDescending(am => am.Month)
-                .ToList();
-                
-            Debug.WriteLine($"BlogService.GetArchiveMonthsAsync: Nalezeno {archiveMonths.Count} archivních měsíců");
-            return archiveMonths;
+                .OrderByDescending(g => g.Year)
+                .ThenByDescending(g => g.Month)
+                .ToListAsync();
         }
         
         public async Task<BlogContent?> GetBlogContentBySlugAsync(string languageCode, string slug)
         {
-            if (string.IsNullOrEmpty(languageCode) || string.IsNullOrEmpty(slug))
-            {
-                Debug.WriteLine("BlogService.GetBlogContentBySlugAsync: Jazykový kód nebo slug je prázdný");
-                return null;
-            }
-
             await using var context = await _contextFactory.CreateDbContextAsync();
-            // Slug není v modelu, takže musíme použít alternativní strategii, např. slug = normalizovaný Title
-            var blogContents = await context.BlogContents
+            
+            var contents = await context.BlogContents
                 .Include(bc => bc.Blog)
-                .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished && !string.IsNullOrEmpty(bc.Title))
+                .Where(bc => bc.LanguageCode == languageCode && bc.IsPublished)
                 .ToListAsync();
-                
-            // Vytvoření slugu z titulku a porovnání
-            return blogContents.FirstOrDefault(bc => 
-                GenerateSlug(bc.Title) == slug);
+
+            return contents.FirstOrDefault(bc => GenerateSlug(bc.Title) == slug);
         }
-        
-        // Pomocná metoda pro generování slugu z titulku
+
         private string GenerateSlug(string? title)
         {
             if (string.IsNullOrEmpty(title))
@@ -381,7 +329,6 @@ namespace GrznarAi.Web.Services
                 return string.Empty;
             }
 
-            // Jednoduchá implementace pro vytvoření slugu z titulku
             return title
                 .ToLowerInvariant()
                 .Replace(" ", "-")

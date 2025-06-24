@@ -1,5 +1,7 @@
 # Vibe Memories - Poznámky k vývoji
 
+> **Poznámka k repozitáři:** Výchozí větev repozitáře na GitHubu je `main` (nikoliv `master`). Všechny commity a push operace prováděj na větev `main`.
+
 ## Google Analytics implementace
 
 ### Přehled implementace Google Analytics

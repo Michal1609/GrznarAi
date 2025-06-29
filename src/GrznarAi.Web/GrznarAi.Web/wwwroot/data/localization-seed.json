@@ -792,43 +792,7 @@
       "language": "en",
       "value": "&copy; {0} GrznarAI. All rights reserved.",
       "description": "Footer Copyright Text (with year placeholder {0})"
-    },
-    {
-      "key": "NavMenu.Applications",
-      "language": "cs",
-      "value": "Aplikace",
-      "description": "NavMenu Applications Dropdown"
-    },
-    {
-      "key": "NavMenu.Applications",
-      "language": "en",
-      "value": "Applications",
-      "description": "NavMenu Applications Dropdown"
-    },
-    {
-      "key": "NavMenu.Applications.Notes",
-      "language": "cs",
-      "value": "Poznámky",
-      "description": "NavMenu Applications Link - Notes"
-    },
-    {
-      "key": "NavMenu.Applications.Notes",
-      "language": "en",
-      "value": "Notes",
-      "description": "NavMenu Applications Link - Notes"
-    },
-    {
-      "key": "Notes.Title",
-      "language": "cs",
-      "value": "Poznámky",
-      "description": "Notes page title"
-    },
-    {
-      "key": "Notes.Title",
-      "language": "en",
-      "value": "Notes",
-      "description": "Notes page title"
-    },
+    },     
     {
       "key": "Notes.Description",
       "language": "cs",
@@ -984,18 +948,6 @@
       "language": "en",
       "value": "Remove from category",
       "description": "Button to remove note from category"
-    },
-    {
-      "key": "Notes.SaveNote",
-      "language": "cs",
-      "value": "Uložit poznámku",
-      "description": "Button to save a note"
-    },
-    {
-      "key": "Notes.SaveNote",
-      "language": "en",
-      "value": "Save note",
-      "description": "Button to save a note"
     },
     {
       "key": "Notes.SaveCategory",
@@ -1884,19 +1836,7 @@
       "language": "en",
       "value": "Notes",
       "description": "Notes page title"
-    },
-    {
-      "key": "Notes.Categories",
-      "language": "cs",
-      "value": "Kategorie",
-      "description": "Notes categories section title"
-    },
-    {
-      "key": "Notes.Categories",
-      "language": "en",
-      "value": "Categories",
-      "description": "Notes categories section title"
-    },
+    },   
     {
       "key": "Notes.AllNotes",
       "language": "cs",
@@ -1920,42 +1860,6 @@
       "language": "en",
       "value": "Loading...",
       "description": "Notes loading message"
-    },
-    {
-      "key": "Notes.NoNotes",
-      "language": "cs",
-      "value": "Nemáte zatím žádné poznámky",
-      "description": "Message when no notes found"
-    },
-    {
-      "key": "Notes.NoNotes",
-      "language": "en",
-      "value": "You don't have any notes yet",
-      "description": "Message when no notes found"
-    },
-    {
-      "key": "Notes.NoCategories",
-      "language": "cs",
-      "value": "Nemáte zatím žádné kategorie",
-      "description": "Message when no categories found"
-    },
-    {
-      "key": "Notes.NoCategories",
-      "language": "en",
-      "value": "You don't have any categories yet",
-      "description": "Message when no categories found"
-    },
-    {
-      "key": "Notes.Search",
-      "language": "cs",
-      "value": "Hledat v poznámkách...",
-      "description": "Search input placeholder"
-    },
-    {
-      "key": "Notes.Search",
-      "language": "en",
-      "value": "Search notes...",
-      "description": "Search input placeholder"
     },
     {
       "key": "Notes.New",
@@ -2076,42 +1980,6 @@
       "language": "en",
       "value": "Save",
       "description": "Save button text"
-    },
-    {
-      "key": "Notes.Cancel",
-      "language": "cs",
-      "value": "Zrušit",
-      "description": "Cancel button text"
-    },
-    {
-      "key": "Notes.Cancel",
-      "language": "en",
-      "value": "Cancel",
-      "description": "Cancel button text"
-    },
-    {
-      "key": "Notes.Created",
-      "language": "cs",
-      "value": "Poznámka byla vytvořena",
-      "description": "Note created confirmation"
-    },
-    {
-      "key": "Notes.Created",
-      "language": "en",
-      "value": "Note has been created",
-      "description": "Note created confirmation"
-    },
-    {
-      "key": "Notes.Updated",
-      "language": "cs",
-      "value": "Poznámka byla aktualizována",
-      "description": "Note updated confirmation"
-    },
-    {
-      "key": "Notes.Updated",
-      "language": "en",
-      "value": "Note has been updated",
-      "description": "Note updated confirmation"
     },
     {
       "key": "Notes.Error",
@@ -2484,18 +2352,6 @@
       "language": "en",
       "value": "Precipitation",
       "description": "Precipitation section title"
-    },
-    {
-      "key": "Meteo.SolarRadiation",
-      "language": "cs",
-      "value": "Sluneční záření",
-      "description": "Solar radiation section title"
-    },
-    {
-      "key": "Meteo.SolarRadiation",
-      "language": "en",
-      "value": "Solar Radiation",
-      "description": "Solar radiation section title"
     },
     {
       "key": "Meteo.Loading",
@@ -3662,18 +3518,6 @@
       "description": "Blog administration description"
     },
     {
-      "key": "Administration.Users.Title",
-      "language": "cs",
-      "value": "Správa uživatelů",
-      "description": "User administration title"
-    },
-    {
-      "key": "Administration.Users.Title",
-      "language": "en",
-      "value": "User Management",
-      "description": "User administration title"
-    },
-    {
       "key": "Administration.Users.Description",
       "language": "cs",
       "value": "Spravujte uživatelské účty a oprávnění",
@@ -3722,30 +3566,6 @@
       "description": "Admin search button"
     },
     {
-      "key": "Administration.Loading",
-      "language": "cs",
-      "value": "Načítání...",
-      "description": "Admin loading message"
-    },
-    {
-      "key": "Administration.Loading",
-      "language": "en",
-      "value": "Loading...",
-      "description": "Admin loading message"
-    },
-    {
-      "key": "Administration.Save",
-      "language": "cs",
-      "value": "Uložit",
-      "description": "Admin save button"
-    },
-    {
-      "key": "Administration.Save",
-      "language": "en",
-      "value": "Save",
-      "description": "Admin save button"
-    },
-    {
       "key": "Administration.Cancel",
       "language": "cs",
       "value": "Zrušit",
@@ -3768,30 +3588,6 @@
       "language": "en",
       "value": "Actions",
       "description": "Admin actions column"
-    },
-    {
-      "key": "Administration.Confirmation",
-      "language": "cs",
-      "value": "Potvrzení",
-      "description": "Admin confirmation dialog title"
-    },
-    {
-      "key": "Administration.Confirmation",
-      "language": "en",
-      "value": "Confirmation",
-      "description": "Admin confirmation dialog title"
-    },
-    {
-      "key": "Common.Clear",
-      "language": "cs",
-      "value": "Vymazat",
-      "description": "Clear button/filter"
-    },
-    {
-      "key": "Common.Clear",
-      "language": "en",
-      "value": "Clear",
-      "description": "Clear button/filter"
     },
     {
       "key": "CacheAdmin.Title",
@@ -6086,18 +5882,6 @@
       "description": "Project detail button"
     },
     {
-      "key": "ImageManager.Title",
-      "language": "cs",
-      "value": "Správce obrázků",
-      "description": "Image manager page title"
-    },
-    {
-      "key": "ImageManager.Title",
-      "language": "en",
-      "value": "Image Manager",
-      "description": "Image manager page title"
-    },
-    {
       "key": "ImageManager.Upload.Title",
       "language": "cs",
       "value": "Nahrát obrázky",
@@ -6120,162 +5904,6 @@
       "language": "en",
       "value": "files selected",
       "description": "Selected files count label"
-    },
-    {
-      "key": "ImageManager.Upload.Button",
-      "language": "cs",
-      "value": "Nahrát",
-      "description": "Upload button text"
-    },
-    {
-      "key": "ImageManager.Upload.Button",
-      "language": "en",
-      "value": "Upload",
-      "description": "Upload button text"
-    },
-    {
-      "key": "ImageManager.Filter",
-      "language": "cs",
-      "value": "Filtrovat obrázky...",
-      "description": "Filter images placeholder"
-    },
-    {
-      "key": "ImageManager.Filter",
-      "language": "en",
-      "value": "Filter images...",
-      "description": "Filter images placeholder"
-    },
-    {
-      "key": "ImageManager.NoImages",
-      "language": "cs",
-      "value": "V tomto adresáři nebyly nalezeny žádné obrázky.",
-      "description": "No images message"
-    },
-    {
-      "key": "ImageManager.NoImages",
-      "language": "en",
-      "value": "No images found in this directory.",
-      "description": "No images message"
-    },
-    {
-      "key": "ImageManager.Details.Path",
-      "language": "cs",
-      "value": "Cesta",
-      "description": "Image path label"
-    },
-    {
-      "key": "ImageManager.Details.Path",
-      "language": "en",
-      "value": "Path",
-      "description": "Image path label"
-    },
-    {
-      "key": "ImageManager.Details.Size",
-      "language": "cs",
-      "value": "Velikost",
-      "description": "Image size label"
-    },
-    {
-      "key": "ImageManager.Details.Size",
-      "language": "en",
-      "value": "Size",
-      "description": "Image size label"
-    },
-    {
-      "key": "ImageManager.Details.Modified",
-      "language": "cs",
-      "value": "Poslední změna",
-      "description": "Last modified label"
-    },
-    {
-      "key": "ImageManager.Details.Modified",
-      "language": "en",
-      "value": "Last Modified",
-      "description": "Last modified label"
-    },
-    {
-      "key": "ImageManager.Details.Dimensions",
-      "language": "cs",
-      "value": "Rozměry",
-      "description": "Image dimensions label"
-    },
-    {
-      "key": "ImageManager.Details.Dimensions",
-      "language": "en",
-      "value": "Dimensions",
-      "description": "Image dimensions label"
-    },
-    {
-      "key": "ImageManager.Delete.Title",
-      "language": "cs",
-      "value": "Potvrdit smazání",
-      "description": "Delete confirmation title"
-    },
-    {
-      "key": "ImageManager.Delete.Title",
-      "language": "en",
-      "value": "Confirm Delete",
-      "description": "Delete confirmation title"
-    },
-    {
-      "key": "ImageManager.Delete.Confirmation",
-      "language": "cs",
-      "value": "Opravdu chcete smazat tento obrázek? Tato akce je nevratná.",
-      "description": "Delete confirmation message"
-    },
-    {
-      "key": "ImageManager.Delete.Confirmation",
-      "language": "en",
-      "value": "Are you sure you want to delete this image? This action cannot be undone.",
-      "description": "Delete confirmation message"
-    },
-    {
-      "key": "ImageManager.Upload.Success",
-      "language": "cs",
-      "value": "Obrázky byly úspěšně nahrány.",
-      "description": "Upload success message"
-    },
-    {
-      "key": "ImageManager.Upload.Success",
-      "language": "en",
-      "value": "Images were successfully uploaded.",
-      "description": "Upload success message"
-    },
-    {
-      "key": "ImageManager.Upload.Error",
-      "language": "cs",
-      "value": "Při nahrávání obrázků došlo k chybě.",
-      "description": "Upload error message"
-    },
-    {
-      "key": "ImageManager.Upload.Error",
-      "language": "en",
-      "value": "An error occurred while uploading images.",
-      "description": "Upload error message"
-    },
-    {
-      "key": "ImageManager.Delete.Success",
-      "language": "cs",
-      "value": "Obrázek byl úspěšně smazán.",
-      "description": "Delete success message"
-    },
-    {
-      "key": "ImageManager.Delete.Success",
-      "language": "en",
-      "value": "Image was successfully deleted.",
-      "description": "Delete success message"
-    },
-    {
-      "key": "ImageManager.Delete.Error",
-      "language": "cs",
-      "value": "Při mazání obrázku došlo k chybě.",
-      "description": "Delete error message"
-    },
-    {
-      "key": "ImageManager.Delete.Error",
-      "language": "en",
-      "value": "An error occurred while deleting the image.",
-      "description": "Delete error message"
     },
     {
       "key": "ImageManager.Copy.Success",

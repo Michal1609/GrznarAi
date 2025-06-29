@@ -67,4 +67,22 @@
 ## 4. Testování a dokončení
 - [ ] Otestovat funkčnost na UI i backendu
 - [ ] Aktualizovat README.md a vibememories.md
-- [ ] Spustit build a všechny testy 
+- [ ] Spustit build a všechny testy
+
+# Seedování lokalizací z JSON souboru
+
+## 1. Analýza a návrh
+- [x] Navrhnout řešení pro seedování lokalizací z externího JSON souboru
+
+## 2. Implementace
+- [x] Navrhnout a vytvořit strukturu JSON souboru pro lokalizace (včetně verze)
+- [x] Upravit `LocalizationDataSeeder` pro načítání z JSON souboru
+- [x] Přidat možnost nahrání/aktualizace JSON souboru na disk (např. přes administraci nebo ručně)
+- [x] Upravit administraci lokalizací – přidat tlačítko pro instalaci lokalizací z JSONu
+- [x] Přidat tlačítko pro smazání všech lokalizací v administraci.
+
+## 3. Testování a dokumentace
+- [ ] Otestovat funkčnost (seedování, přepis, chování při změně verze)
+- [ ] Aktualizovat tasks.md a vibememories.md
+- [ ] Aktualizovat README.md
+- [x] Přesunout lokalizační data do JSON a upravit seeder, aby načítal pouze z JSON. Hardcoded data odstraněna. 

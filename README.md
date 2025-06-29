@@ -341,6 +341,12 @@ Pro produkční prostředí:
 - Žádné CAPTCHA výzvy - ověření probíhá na pozadí
 - Prevence spamu při zachování UX
 
+## Lokalizace
+
+- Veškeré lokalizační řetězce jsou nyní spravovány v souboru `wwwroot/data/localization-seed.json`.
+- Seeder (`LocalizationDataSeeder`) načítá pouze z tohoto JSON souboru.
+- Administrace umožňuje nahrání/instalaci lokalizací bez nutnosti build/deploy.
+
 ## Licence
 
 Tento projekt je licencován pod MIT licencí - viz soubor [LICENSE](LICENSE) pro detaily. 

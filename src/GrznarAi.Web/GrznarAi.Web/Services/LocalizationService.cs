@@ -213,5 +213,32 @@ namespace GrznarAi.Web.Services
                  _logger.LogWarning("Attempted to delete non-existent localization string with Id {Id}", id);
             }
         }
+
+        public async Task<bool> InstallFromJsonAsync(string? jsonPath = null)
+        {
+            try
+            {
+                await using var scope = _scopeFactory.CreateAsyncScope();
+                var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+                await LocalizationDataSeeder.SeedAsync(factory, jsonPath);
+                await ReloadCacheAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Chyba při instalaci lokalizací ze seedovacího JSON souboru.");
+                return false;
+            }
+        }
+
+        public async Task DeleteAllStringsAsync()
+        {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var all = await dbContext.LocalizationStrings.ToListAsync();
+            dbContext.LocalizationStrings.RemoveRange(all);
+            await dbContext.SaveChangesAsync();
+            await ReloadCacheAsync();
+        }
     }
 } 

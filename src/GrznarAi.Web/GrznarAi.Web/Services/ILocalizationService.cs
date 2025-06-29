@@ -17,5 +17,15 @@ namespace GrznarAi.Web.Services
         Task UpdateStringAsync(LocalizationString localizationString);
         Task DeleteStringAsync(int id); // Id now refers to the specific language entry row
         Task ReloadCacheAsync(); // Method to reload cache after admin changes
+
+        /// <summary>
+        /// Nainstaluje/aktualizuje lokalizační stringy ze seedovacího JSON souboru.
+        /// </summary>
+        Task<bool> InstallFromJsonAsync(string? jsonPath = null);
+
+        /// <summary>
+        /// Smaže všechny lokalizační řetězce z databáze.
+        /// </summary>
+        Task DeleteAllStringsAsync();
     }
 } 

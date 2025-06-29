@@ -16,7 +16,37 @@
 
 <div class="mb-3">
     <a href="/admin/localization/new" class="btn btn-primary">Add New String Entry</a>
+    <button class="btn btn-success ms-2" @onclick="InstallFromJson" disabled="@isInstalling">
+        @if (isInstalling)
+        {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="ms-1">Instaluji...</span>
+        }
+        else
+        {
+            <span>Instalovat lokalizace z JSON</span>
+        }
+    </button>
+    <button class="btn btn-danger ms-2" @onclick="DeleteAllLocalizations" disabled="@isDeletingAll">
+        @if (isDeletingAll)
+        {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="ms-1">Mažu...</span>
+        }
+        else
+        {
+            <span>Smazat všechny lokalizace</span>
+        }
+    </button>
 </div>
+@if (!string.IsNullOrEmpty(installMessage))
+{
+    <div class="alert @(installSuccess ? "alert-success" : "alert-danger") mt-2">@installMessage</div>
+}
+@if (!string.IsNullOrEmpty(deleteAllMessage))
+{
+    <div class="alert @(deleteAllSuccess ? "alert-success" : "alert-danger") mt-2">@deleteAllMessage</div>
+}
 
 @if (localizationStrings == null)
 {
@@ -60,6 +90,12 @@ else
 
 @code {
     private List<LocalizationString>? localizationStrings;
+    private bool isInstalling = false;
+    private string? installMessage = null;
+    private bool installSuccess = false;
+    private bool isDeletingAll = false;
+    private string? deleteAllMessage = null;
+    private bool deleteAllSuccess = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,5 +136,55 @@ else
             // Optionally show an error message to the user via JS interop or a Blazor component
             await JSRuntime.InvokeVoidAsync("alert", "Error deleting localization string entry.");
         }
+    }
+
+    private async Task InstallFromJson()
+    {
+        isInstalling = true;
+        installMessage = null;
+        installSuccess = false;
+        try
+        {
+            var result = await LocalizationService.InstallFromJsonAsync();
+            if (result)
+            {
+                installMessage = "Lokalizace byly úspěšně nainstalovány ze seedovacího JSON souboru.";
+                installSuccess = true;
+                await LoadStrings();
+            }
+            else
+            {
+                installMessage = "Chyba při instalaci lokalizací ze seedovacího JSON souboru.";
+                installSuccess = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            installMessage = $"Chyba: {ex.Message}";
+            installSuccess = false;
+        }
+        isInstalling = false;
+    }
+
+    private async Task DeleteAllLocalizations()
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", "Opravdu chcete smazat všechny lokalizace? Tato akce je nevratná!"))
+            return;
+        isDeletingAll = true;
+        deleteAllMessage = null;
+        deleteAllSuccess = false;
+        try
+        {
+            await LocalizationService.DeleteAllStringsAsync();
+            deleteAllMessage = "Všechny lokalizace byly smazány.";
+            deleteAllSuccess = true;
+            await LoadStrings();
+        }
+        catch (Exception ex)
+        {
+            deleteAllMessage = $"Chyba při mazání všech lokalizací: {ex.Message}";
+            deleteAllSuccess = false;
+        }
+        isDeletingAll = false;
     }
 } 

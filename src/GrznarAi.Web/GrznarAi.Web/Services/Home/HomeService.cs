@@ -41,7 +41,7 @@ namespace GrznarAi.Web.Services.Home
                 .Include(bc => bc.Blog)
                 .Where(bc => bc.LanguageCode == languageCode && 
                        bc.IsPublished && 
-                       bc.CreatedAt >= since)
+                       bc.UpdatedAt >= since)
                 .ToListAsync();
 
             // Transform blog posts to HomeNewsItems

@@ -2,6 +2,78 @@
   "version": 1,
   "localizations": [
     {
+      "key": "Common.Pagination.ItemsShown",
+      "language": "cs",
+      "value": "Zobrazeno {0} až {1} z celkem {2} položek",
+      "description": "Pagination items shown text"
+    },
+    {
+      "key": "Common.Pagination.ItemsShown",
+      "language": "en",
+      "value": "Showing {0} to {1} of {2} items",
+      "description": "Pagination items shown text"
+    },
+    {
+      "key": "Common.Pagination.ItemsPerPage",
+      "language": "cs",
+      "value": "Počet na stránku:",
+      "description": "Pagination items per page text"
+    },
+    {
+      "key": "Common.Pagination.ItemsPerPage",
+      "language": "en",
+      "value": "Items per page:",
+      "description": "Pagination items per page text"
+    },
+    {
+      "key": "Common.Pagination.Previous",
+      "language": "cs",
+      "value": "Předchozí",
+      "description": "Pagination previous button text"
+    },
+    {
+      "key": "Common.Pagination.Previous",
+      "language": "en",
+      "value": "Previous",
+      "description": "Pagination previous button text"
+    },
+    {
+      "key": "Common.Pagination.Next",
+      "language": "cs",
+      "value": "Další",
+      "description": "Pagination next button text"
+    },
+    {
+      "key": "Common.Pagination.Next",
+      "language": "en",
+      "value": "Next",
+      "description": "Pagination next button text"
+    },
+    {
+      "key": "Common.Search.Placeholder",
+      "language": "cs",
+      "value": "Hledat...",
+      "description": "Search placeholder text"
+    },
+    {
+      "key": "Common.Search.Placeholder",
+      "language": "en",
+      "value": "Search...",
+      "description": "Search placeholder text"
+    },
+    {
+      "key": "Common.Search.Clear",
+      "language": "cs",
+      "value": "Vymazat vyhledávání",
+      "description": "Clear search button text"
+    },
+    {
+      "key": "Common.Search.Clear",
+      "language": "en",
+      "value": "Clear search",
+      "description": "Clear search button text"
+    },
+    {
       "key": "HomePage.Title",
       "language": "cs",
       "value": "GrznarAI - Osobní Web",
@@ -6936,6 +7008,78 @@
       "language": "en",
       "value": "Confirm",
       "description": "Confirm button text"
+    },
+    {
+      "key": "Common.Pagination.ItemsShown",
+      "language": "cs",
+      "value": "Zobrazeno {0} až {1} z celkem {2} položek",
+      "description": "Text showing pagination status (items X to Y of Z)"
+    },
+    {
+      "key": "Common.Pagination.ItemsShown",
+      "language": "en",
+      "value": "Showing {0} to {1} of {2} items",
+      "description": "Text showing pagination status (items X to Y of Z)"
+    },
+    {
+      "key": "Common.Pagination.ItemsPerPage",
+      "language": "cs",
+      "value": "Počet na stránku:",
+      "description": "Label for items per page dropdown"
+    },
+    {
+      "key": "Common.Pagination.ItemsPerPage",
+      "language": "en",
+      "value": "Items per page:",
+      "description": "Label for items per page dropdown"
+    },
+    {
+      "key": "Common.Pagination.Previous",
+      "language": "cs",
+      "value": "Předchozí",
+      "description": "Previous page button text"
+    },
+    {
+      "key": "Common.Pagination.Previous",
+      "language": "en",
+      "value": "Previous",
+      "description": "Previous page button text"
+    },
+    {
+      "key": "Common.Pagination.Next",
+      "language": "cs",
+      "value": "Další",
+      "description": "Next page button text"
+    },
+    {
+      "key": "Common.Pagination.Next",
+      "language": "en",
+      "value": "Next",
+      "description": "Next page button text"
+    },
+    {
+      "key": "Common.Search.Placeholder",
+      "language": "cs",
+      "value": "Hledat...",
+      "description": "Search input placeholder text"
+    },
+    {
+      "key": "Common.Search.Placeholder",
+      "language": "en",
+      "value": "Search...",
+      "description": "Search input placeholder text"
+    },
+    {
+      "key": "Common.Search.Clear",
+      "language": "cs",
+      "value": "Vymazat vyhledávání",
+      "description": "Clear search button tooltip"
+    },
+    {
+      "key": "Common.Search.Clear",
+      "language": "en",
+      "value": "Clear search",
+      "description": "Clear search button tooltip"
     }
   ]
 }

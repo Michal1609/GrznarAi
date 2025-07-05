@@ -249,6 +249,7 @@ Aplikace nyní obsahuje systém pro správu globálních nastavení přes admini
 | Klíč | Typ | Výchozí hodnota | Popis |
 |------|-----|-----------------|-------|
 | Admin.GlobalSettings.PageSize | int | 10 | Počet záznamů na stránku v administraci globálních nastavení |
+| Admin.Localization.PageSize | int | 100 | Počet záznamů na stránku v administraci lokalizací |
 | AiNews.DuplicateCheckDays | int | 10 | Počet dní zpětně pro kontrolu duplicit při importu AI novinek |
 
 ### Příklad použití GlobalSettings v kódu

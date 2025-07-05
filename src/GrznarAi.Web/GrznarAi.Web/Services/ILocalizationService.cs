@@ -12,6 +12,16 @@ namespace GrznarAi.Web.Services
 
         // Methods for administration
         Task<List<LocalizationString>> GetAllStringsAdminAsync();
+        
+        // Metody pro stránkování
+        Task<List<LocalizationString>> GetPagedStringsAdminAsync(
+            string searchText = "", 
+            string sortColumn = "Key", 
+            string sortDirection = "asc", 
+            int page = 1, 
+            int pageSize = 100);
+        Task<int> GetTotalStringsCountAsync(string searchText = "");
+        
         Task<LocalizationString?> GetSingleStringAdminAsync(int id); // Added: Get a specific entry by its Id for editing
         Task AddStringAsync(LocalizationString localizationString);
         Task UpdateStringAsync(LocalizationString localizationString);

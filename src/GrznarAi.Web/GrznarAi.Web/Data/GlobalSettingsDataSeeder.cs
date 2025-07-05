@@ -34,6 +34,9 @@ namespace GrznarAi.Web.Data
             // Pouze jedno nastavení - Admin.GlobalSettings.PageSize
             AddSetting("Admin.GlobalSettings.PageSize", "50", "int", "Počet položek na stránku v administraci globálních nastavení");
             
+            // Nastavení pro správu lokalizací
+            AddSetting("Admin.Localization.PageSize", "100", "int", "Počet položek na stránku v administraci lokalizací");
+            
             // Nastavení pro BroadcastAnnouncements
             AddSetting("BroadcastAnnouncements.PageSize", "10", "int", "Počet hlášení rozhlasu zobrazených na jedné stránce.");
             

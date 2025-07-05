@@ -2,6 +2,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @inherits GlobalSettingsAdminBase
+@using GrznarAi.Web.Services
 
 <PageTitle>Správa globálních nastavení - GrznarAI</PageTitle>
 
@@ -130,14 +131,14 @@
 
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div>
-                        Zobrazeno @((CurrentPage - 1) * PageSize + 1) až @Math.Min(CurrentPage * PageSize, TotalCount) z celkem @TotalCount položek
+                        @((MarkupString)string.Format(Localizer.GetString("Common.Pagination.ItemsShown"), (CurrentPage - 1) * PageSize + 1, Math.Min(CurrentPage * PageSize, TotalCount), TotalCount))
                     </div>
                     <nav aria-label="Page navigation">
                         <ul class="pagination">
                             <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
-                                <button class="page-link" @onclick="@(e => ChangePage(CurrentPage - 1))" disabled="@(CurrentPage <= 1)">
-                                    <i class="bi bi-chevron-left"></i>
-                                </button>
+                                                            <button class="page-link" @onclick="@(e => ChangePage(CurrentPage - 1))" disabled="@(CurrentPage <= 1)">
+                                <i class="bi bi-chevron-left"></i> @Localizer.GetString("Common.Pagination.Previous")
+                            </button>
                             </li>
                             @{
                                 int startPage = Math.Max(1, CurrentPage - 2);
@@ -157,9 +158,9 @@
                                 }
                             }
                             <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
-                                <button class="page-link" @onclick="@(e => ChangePage(CurrentPage + 1))" disabled="@(CurrentPage >= TotalPages)">
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
+                                                            <button class="page-link" @onclick="@(e => ChangePage(CurrentPage + 1))" disabled="@(CurrentPage >= TotalPages)">
+                                @Localizer.GetString("Common.Pagination.Next") <i class="bi bi-chevron-right"></i>
+                            </button>
                             </li>
                         </ul>
                     </nav>

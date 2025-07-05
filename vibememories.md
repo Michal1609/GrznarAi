@@ -3136,3 +3136,62 @@ Přidat na stránku Hlášení rozhlasu možnost fulltextového vyhledávání a
 - Umožní snadné rozšíření testů v budoucnu (např. další filtry).
 - Testy budou rychlé a nezávislé na DB.
 - TDD přístup zajistí, že logika bude správně navržena a pokryta.
+
+## Implementace stránkování pro správu lokalizací (2024-06-24)
+
+Administrační stránka pro správu lokalizačních řetězců (`/admin/localization`) byla vylepšena o stránkování, vyhledávání a řazení pro lepší práci s velkým množstvím lokalizačních záznamů:
+
+### Hlavní implementované funkce
+
+1. **Stránkování:**
+   - Konfigurovatelný počet položek na stránku pomocí globálního nastavení `Admin.Localization.PageSize`
+   - Výchozí hodnota nastavena na 100 položek na stránku
+   - Navigační prvky pro přechod mezi stránkami (předchozí, další, konkrétní stránka)
+   - Zobrazení informace o aktuálně zobrazených položkách a celkovém počtu
+
+2. **Vyhledávání:**
+   - Vyhledávací pole pro filtrování lokalizačních řetězců
+   - Vyhledávání podle klíče, hodnoty, popisu nebo kódu jazyka
+   - Okamžité vyhledávání po stisknutí klávesy Enter
+   - Tlačítko pro vymazání vyhledávacího dotazu
+
+3. **Řazení:**
+   - Možnost řazení podle klíče, hodnoty, kódu jazyka nebo popisu
+   - Přepínání mezi vzestupným a sestupným řazením
+   - Vizuální indikace aktuálně zvoleného řazení pomocí ikon šipek
+
+4. **Optimalizace výkonu:**
+   - Načítání pouze aktuálně zobrazené stránky dat z databáze
+   - Efektivní SQL dotazy s využitím LINQ pro filtrování a řazení
+   - Optimalizované zobrazení velkého množství lokalizačních záznamů
+
+### Technická implementace
+
+1. **Rozšíření rozhraní `ILocalizationService`:**
+   - Přidány metody `GetPagedStringsAdminAsync` a `GetTotalStringsCountAsync`
+   - Parametry pro stránkování, řazení a vyhledávání
+
+2. **Úprava `LocalizationService`:**
+   - Implementace metod pro stránkování s efektivními SQL dotazy
+   - Jednotná logika filtrování pro konzistentní výsledky
+
+3. **Aktualizace UI komponenty:**
+   - Přidání ovládacích prvků pro stránkování a řazení
+   - Implementace obslužných metod pro interakci s uživatelem
+   - Vizuální prvky pro lepší uživatelskou zkušenost
+
+4. **Globální nastavení:**
+   - Přidáno nastavení `Admin.Localization.PageSize` pro konfiguraci počtu položek na stránku
+   - Výchozí hodnota 100 položek je optimalizována pro běžné použití
+
+5. **Lokalizační řetězce pro stránkování:**
+   - Implementovány obecné lokalizační řetězce pro stránkování, které lze použít v celé aplikaci:
+     - `Common.Pagination.ItemsShown` - Text "Zobrazeno X až Y z celkem Z položek" / "Showing X to Y of Z items"
+     - `Common.Pagination.ItemsPerPage` - Text "Počet na stránku:" / "Items per page:"
+     - `Common.Pagination.Previous` - Text "Předchozí" / "Previous"
+     - `Common.Pagination.Next` - Text "Další" / "Next"
+     - `Common.Search.Placeholder` - Text "Hledat..." / "Search..."
+     - `Common.Search.Clear` - Text "Vymazat vyhledávání" / "Clear search"
+   - Tyto řetězce jsou uloženy v souboru `localization-seed.json` a jsou dostupné pro použití ve všech komponentách aplikace
+
+Tato implementace výrazně zlepšuje použitelnost správy lokalizací, zejména při práci s velkými projekty, které mohou obsahovat stovky nebo tisíce lokalizačních řetězců. Díky použití lokalizačních řetězců pro stránkování je zajištěna konzistence napříč celou aplikací a snadná rozšiřitelnost na další jazyky.

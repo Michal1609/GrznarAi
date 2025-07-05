@@ -7,6 +7,9 @@
 
 @inject NavigationManager NavigationManager
 @inject ILocalizationService LocalizationService
+@inject ILocalizationService Localizer
+@* Aliasujeme LocalizationService jako Localizer pro konzistenci s ostatními komponentami *@
+@inject IGlobalSettingsService GlobalSettingsService
 @inject IJSRuntime JSRuntime
 @inject ILogger<LocalizationAdmin> Logger
 
@@ -48,13 +51,43 @@
     <div class="alert @(deleteAllSuccess ? "alert-success" : "alert-danger") mt-2">@deleteAllMessage</div>
 }
 
-@if (localizationStrings == null)
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" @bind="SearchText" @bind:event="oninput" @onkeyup="HandleSearchKeyUp" class="form-control" placeholder="@Localizer.GetString("Common.Search.Placeholder")" />
+            <button class="btn btn-outline-secondary" @onclick="SearchStrings" title="Hledat">
+                <i class="bi bi-search"></i>
+            </button>
+            @if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                <button class="btn btn-outline-secondary" @onclick="ClearSearch" title="@Localizer.GetString("Common.Search.Clear")">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            }
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="d-flex justify-content-end">
+            <div class="form-inline">
+                <label class="me-2">@Localizer.GetString("Common.Pagination.ItemsPerPage")</label>
+                <select @bind="PageSize" @bind:event="oninput" @onchange="PageSizeChanged" class="form-select form-select-sm" style="width: auto;">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (IsLoading)
 {
     <p><em>Loading strings...</em></p>
 }
-else if (!localizationStrings.Any())
+else if (localizationStrings == null || !localizationStrings.Any())
 {
-     <p><em>No localization strings found.</em></p>
+    <p><em>No localization strings found.</em></p>
 }
 else
 {
@@ -62,10 +95,18 @@ else
         <table class="table table-striped table-hover table-sm">
             <thead>
                 <tr>
-                    <th>Key</th>
-                    <th>Language</th>
-                    <th>Value</th>
-                    <th>Description</th>
+                    <th style="cursor: pointer;" @onclick="SortTableByKey">
+                        Key @((MarkupString)GetSortIcon("key"))
+                    </th>
+                    <th style="cursor: pointer;" @onclick="SortTableByLanguageCode">
+                        Language @((MarkupString)GetSortIcon("languagecode"))
+                    </th>
+                    <th style="cursor: pointer;" @onclick="SortTableByValue">
+                        Value @((MarkupString)GetSortIcon("value"))
+                    </th>
+                    <th style="cursor: pointer;" @onclick="SortTableByDescription">
+                        Description @((MarkupString)GetSortIcon("description"))
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -86,6 +127,43 @@ else
             </tbody>
         </table>
     </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>
+            @((MarkupString)string.Format(Localizer.GetString("Common.Pagination.ItemsShown"), (CurrentPage - 1) * PageSize + 1, Math.Min(CurrentPage * PageSize, TotalCount), TotalCount))
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="@(e => ChangePage(CurrentPage - 1))" disabled="@(CurrentPage <= 1)">
+                        <i class="bi bi-chevron-left"></i> @Localizer.GetString("Common.Pagination.Previous")
+                    </button>
+                </li>
+                @{
+                    int startPage = Math.Max(1, CurrentPage - 2);
+                    int endPage = Math.Min(startPage + 4, TotalPages);
+                    
+                    if (endPage - startPage < 4 && startPage > 1)
+                    {
+                        startPage = Math.Max(1, endPage - 4);
+                    }
+                    
+                    for (int i = startPage; i <= endPage; i++)
+                    {
+                        int pageNumber = i;
+                        <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
+                            <button class="page-link" @onclick="@(e => ChangePage(pageNumber))">@pageNumber</button>
+                        </li>
+                    }
+                }
+                <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="@(e => ChangePage(CurrentPage + 1))" disabled="@(CurrentPage >= TotalPages)">
+                        @Localizer.GetString("Common.Pagination.Next") <i class="bi bi-chevron-right"></i>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </div>
 }
 
 @code {
@@ -96,23 +174,127 @@ else
     private bool isDeletingAll = false;
     private string? deleteAllMessage = null;
     private bool deleteAllSuccess = false;
+    
+    // Proměnné pro stránkování
+    private string SearchText { get; set; } = "";
+    private bool IsLoading { get; set; } = true;
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 100;
+    private int TotalCount { get; set; } = 0;
+    private int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+    private string SortColumn { get; set; } = "key";
+    private string SortDirection { get; set; } = "asc";
 
     protected override async Task OnInitializedAsync()
     {
+        PageSize = GlobalSettingsService.GetInt("Admin.Localization.PageSize", 100);
         await LoadStrings();
     }
 
     private async Task LoadStrings()
     {
+        IsLoading = true;
         try
         {
-            localizationStrings = await LocalizationService.GetAllStringsAdminAsync();
-            StateHasChanged(); // Ensure UI updates after loading
+            localizationStrings = await LocalizationService.GetPagedStringsAdminAsync(
+                SearchText, 
+                SortColumn, 
+                SortDirection, 
+                CurrentPage, 
+                PageSize);
+            TotalCount = await LocalizationService.GetTotalStringsCountAsync(SearchText);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading localization strings for admin.");
             localizationStrings = new List<LocalizationString>(); // Initialize to empty list on error
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchStrings()
+    {
+        CurrentPage = 1;
+        await LoadStrings();
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchText = "";
+        CurrentPage = 1;
+        await LoadStrings();
+    }
+
+    private async Task PageSizeChanged(ChangeEventArgs e)
+    {
+        // Resetujeme aktuální stránku na 1 při změně počtu záznamů na stránku
+        CurrentPage = 1;
+        await LoadStrings();
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > TotalPages)
+            return;
+
+        CurrentPage = page;
+        await LoadStrings();
+    }
+
+    private async Task SortTableByKey()
+    {
+        await SortTable("key");
+    }
+
+    private async Task SortTableByValue()
+    {
+        await SortTable("value");
+    }
+
+    private async Task SortTableByLanguageCode()
+    {
+        await SortTable("languagecode");
+    }
+
+    private async Task SortTableByDescription()
+    {
+        await SortTable("description");
+    }
+
+    private async Task SortTable(string column)
+    {
+        if (SortColumn == column)
+        {
+            SortDirection = SortDirection == "asc" ? "desc" : "asc";
+        }
+        else
+        {
+            SortColumn = column;
+            SortDirection = "asc";
+        }
+        
+        await LoadStrings();
+    }
+
+    private string GetSortIcon(string column)
+    {
+        if (SortColumn != column)
+            return "";
+
+        return SortDirection == "asc" 
+            ? "<i class=\"bi bi-arrow-up\"></i>" 
+            : "<i class=\"bi bi-arrow-down\"></i>";
+    }
+
+    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchStrings();
         }
     }
 

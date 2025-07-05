@@ -127,6 +127,73 @@ namespace GrznarAi.Web.Services
             return await dbContext.LocalizationStrings.OrderBy(s => s.Key).ThenBy(s => s.LanguageCode).ToListAsync();
         }
 
+        // Implementace metod pro stránkování
+        public async Task<List<LocalizationString>> GetPagedStringsAdminAsync(
+            string searchText = "", 
+            string sortColumn = "Key", 
+            string sortDirection = "asc", 
+            int page = 1, 
+            int pageSize = 100)
+        {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            IQueryable<LocalizationString> query = dbContext.LocalizationStrings;
+
+            // Filtrování podle textu
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                query = query.Where(s => s.Key.Contains(searchText) || 
+                                        s.Value.Contains(searchText) || 
+                                        (s.Description != null && s.Description.Contains(searchText)) ||
+                                        s.LanguageCode.Contains(searchText));
+            }
+
+            // Řazení
+            query = sortColumn.ToLower() switch
+            {
+                "key" => sortDirection.ToLower() == "asc" 
+                    ? query.OrderBy(s => s.Key) 
+                    : query.OrderByDescending(s => s.Key),
+                "value" => sortDirection.ToLower() == "asc"
+                    ? query.OrderBy(s => s.Value)
+                    : query.OrderByDescending(s => s.Value),
+                "languagecode" => sortDirection.ToLower() == "asc"
+                    ? query.OrderBy(s => s.LanguageCode)
+                    : query.OrderByDescending(s => s.LanguageCode),
+                "description" => sortDirection.ToLower() == "asc"
+                    ? query.OrderBy(s => s.Description)
+                    : query.OrderByDescending(s => s.Description),
+                _ => sortDirection.ToLower() == "asc"
+                    ? query.OrderBy(s => s.Key).ThenBy(s => s.LanguageCode)
+                    : query.OrderByDescending(s => s.Key).ThenBy(s => s.LanguageCode) // Výchozí řazení podle klíče
+            };
+
+            // Stránkování
+            return await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetTotalStringsCountAsync(string searchText = "")
+        {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            IQueryable<LocalizationString> query = dbContext.LocalizationStrings;
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                query = query.Where(s => s.Key.Contains(searchText) || 
+                                        s.Value.Contains(searchText) || 
+                                        (s.Description != null && s.Description.Contains(searchText)) ||
+                                        s.LanguageCode.Contains(searchText));
+            }
+
+            return await query.CountAsync();
+        }
+
         public async Task<LocalizationString?> GetSingleStringAdminAsync(int id)
         {
             await using var scope = _scopeFactory.CreateAsyncScope();

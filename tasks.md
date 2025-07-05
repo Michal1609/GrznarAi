@@ -86,3 +86,33 @@
 - [ ] Aktualizovat tasks.md a vibememories.md
 - [ ] Aktualizovat README.md
 - [x] Přesunout lokalizační data do JSON a upravit seeder, aby načítal pouze z JSON. Hardcoded data odstraněna. 
+
+# Stránkování pro správu lokalizací
+
+## 1. Analýza a návrh
+- [x] Analyzovat existující implementaci stránkování v GlobalSettingsAdmin
+- [x] Navrhnout řešení pro stránkování lokalizací
+
+## 2. Implementace
+- [x] Rozšířit rozhraní ILocalizationService o metody pro stránkování
+- [x] Implementovat metody pro stránkování v LocalizationService
+- [x] Upravit UI komponenty v LocalizationAdmin.razor
+- [x] Přidat globální nastavení Admin.Localization.PageSize
+
+## 3. Testování a dokumentace
+- [x] Otestovat funkčnost stránkování, vyhledávání a řazení
+- [x] Aktualizovat README.md
+- [x] Aktualizovat vibememories.md 
+
+## 4. Lokalizace stránkování
+- [x] Přidat lokalizační řetězce pro stránkování do localization-seed.json
+- [x] Upravit komponenty, aby používaly lokalizační řetězce místo pevných textů
+- [x] Aktualizovat dokumentaci v README.md a vibememories.md 
+
+## Úkoly 24.6.2024
+
+- [x] Implementace stránkování pro správu lokalizací
+  - Přidáno stránkování do stránky LocalizationAdmin.razor
+  - Přidány lokalizační řetězce pro stránkování v Common.Pagination.*
+  - Přidány lokalizační řetězce pro vyhledávání v Common.Search.*
+  - Opraveny problémy s injektováním LocalizationService vs Localizer 
